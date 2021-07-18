@@ -10,7 +10,75 @@ import {
   SUBS_CHARACTERISTIC,
 } from '../../globals/constants';
 
-const Bluetooth = {
+export class Bluetooth {
+
+	public devices: BluetoothDevice[] = [];
+
+	constructor () {
+
+		navigator.bluetooth.getDevices()
+			.then((devices:BluetoothDevice[]) => {
+				this.devices = devices;
+				console.log('> Got ' + devices.length + ' Bluetooth devices.');
+				for (const device of devices) {
+					console.log('  > ' + device.name + ' (' + device.id + ')');
+				}
+			})
+			.catch(error => {
+				console.log('Argh! ' + error);
+			})
+		;
+
+	}
+
+	isAvailable () {
+		return !!navigator.bluetooth;
+	}
+
+	async autopair (namePrefix:string) {
+
+		return navigator.bluetooth.getDevices()
+			.then((devices:BluetoothDevice[]) => {
+				this.devices = devices;
+				console.log('> Got ' + devices.length + ' Bluetooth devices.');
+				for (const device of devices) {
+					console.log('  > ' + device.name + ' (' + device.id + ')');
+				}
+			})
+			.catch(error => {
+				console.log('Argh! ' + error);
+			})
+		;
+
+
+	}
+
+	async pair (namePrefix:string) {
+
+		const devices = await navigator.bluetooth.requestDevice({
+			filters: [{
+				namePrefix: namePrefix,				
+				services: [UUID_SPHERO_SERVICE],
+			}],
+			optionalServices : [UUID_SPHERO_SERVICE_INITIALIZE],
+		})
+
+		console.log('connect.devices', devices);
+
+		const server = await devices.gatt.connect();
+		const services = await server.getPrimaryServices();
+
+		console.log('BT.Device', devices);
+		console.log('GATT.Server', server);
+		console.log('GATT.Server.services', services);
+
+		return devices;
+
+	}
+
+};
+
+const BluetoothX = {
 
   async disconnect(){
 		if (this.connected){
@@ -78,4 +146,6 @@ const Bluetooth = {
 
 }
 
-export { Bluetooth }
+// export {
+// 	Bluetooth: new Bluetooth(),
+// }
