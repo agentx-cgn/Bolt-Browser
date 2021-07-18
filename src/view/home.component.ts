@@ -1,50 +1,33 @@
 import m from "mithril";
 
-import  {Bluetooth}  from '../services/bluetooth/bluetooth.service';
+import  { Bolts }  from '../devices/bolt/bolts';
 
 
 const HomeComponent = class {
 
-  private BT;
+  private bolts;
 
   constructor (
-    // Bluetooth:any
   ) {
-    this.BT = new Bluetooth();
+    this.bolts = Bolts;
+    this.bolts.onUpdate(this.onUpdate.bind(this));
+  }
+
+  onUpdate () {
+    m.redraw();
   }
 
   disconnect () {}
-  connect ( ) {
-
-    console.log('connect');
-
-    this.BT = new Bluetooth();
-
-    (async () => {
-      const devices = await this.BT.pair('SB-');      
-      console.log(devices);
-    })();
-
-  
-  }
-
-  oninit () {
-    this.BT.autopair('SB-')
-      .then( () => {
-        m.redraw();
-      })
-    ;
-  }
 
   view (  ) { 
 
     return m('[', [
       m('div.w-100',     'HOME'),
-      m('div.w-100',     this.BT.devices.map( (device:any) => {
+      m('div.w-100',     this.bolts.map( (device:any) => {
         return m('div', device.name);
       })),
       m('div.w-100',     [
-        m('button', { onclick: this.connect }, 'Pair'),
+        m('button', { onclick: this.bolts.pair.bind(this.bolts) }, 'Pair'),
       ]),
       m('div.w-100',     [
         m('button', { onclick: this.disconnect }, 'DisConnect')
