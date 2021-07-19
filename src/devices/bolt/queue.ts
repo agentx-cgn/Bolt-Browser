@@ -14,11 +14,11 @@ export class Queue {
 	}
 
 	/*  Write a command on a specific characteristic*/
-	async write ( data:any, callback:any ) {
+	async write ( paket:any, callback:any ) {
 
 		try {
-			await data.charac.writeValue(new Uint8Array(data.command));
-			console.log('write', data.charac.uuid, data.command);
+			await paket.charac.writeValue(new Uint8Array(paket.command));
+			console.log('Write', paket.bolt.name, paket.command);
 
 		} catch(error) { 
 			console.log(error.message);	
@@ -30,9 +30,9 @@ export class Queue {
 
 	}
 
-	runCommand (data: any) {
+	runCommand (paket: any) {
 		this.running = true;
-		this.write( data, () => {
+		this.write( paket, () => {
 			this.running = false;
 			if (this.queue.length > 0) {
 				this.runCommand(this.queue.shift());
@@ -40,8 +40,8 @@ export class Queue {
 		})
 	}
 
-	append (data: any) {
-		!this.running ? this.runCommand(data) : this.queue.push(data);
+	append (paket: any) {
+		!this.running ? this.runCommand(paket) : this.queue.push(paket);
 	}
 
 }

@@ -32,14 +32,14 @@ class bolts {
       const success = await this.initDevice(bolt, device);
 
       if (success) {
+        device.addEventListener('gattserverdisconnected', bolt.onGattServerDisconnected.bind(bolt));
         await bolt.awake();
         this.bolts.push(bolt);
         m.redraw();
+        console.log('Bolts.initialized', device.name);
       }
 
     }
-
-    console.log('Bolts.initialize', devices);
 
   }
 

@@ -17,9 +17,9 @@ export class Actuators {
   }
 
   /* Packet encoder */
-	createCommand( commandInfo: any ) {
+	createCommand( message: any ) {
 
-		const { deviceId, commandId, targetId, data } = commandInfo;
+		const { name, deviceId, commandId, targetId, data } = message;
 	  
     this.seqNumber = (this.seqNumber + 1) % 255;
     var sum = 0;
@@ -48,27 +48,26 @@ export class Actuators {
     return command;
 	}
 
-	/* Put a command on the queue */
-	queueCommand( commandInfo: any ){
-
-    const command = this.createCommand(commandInfo);
+	/* Put a command message on the queue */
+	queueMessage( message: any ){
 
 		this.queue.append({
-      command, 
-      charac: this.bolt.characs.get(C.APIV2_CHARACTERISTIC), 
+      bolt:    this.bolt,
+      command: this.createCommand(message),
+      charac:  this.bolt.characs.get(C.APIV2_CHARACTERISTIC), 
     });
 
 	}
 
   /* Waking up Sphero */
 	wake () {
-		let commandInfo = {
+		const message = {
+      name: 'wake',
 			deviceId: C.DeviceId.powerInfo,
 			commandId: C.Cmds.power.wake, // PowerCommandIds.wake,
 			data: [] as any[],
 		}
-		// let command = this.createCommand(commandInfo);
-		this.queueCommand(commandInfo);
+		this.queueMessage(message);
 	}
 
   /* Set the color of the LEd matrix and front and back LED */
@@ -79,35 +78,35 @@ export class Actuators {
 
   	/* Resets the locator */
 	resetLocator(){
-		const commandInfo = {
+		const message = {
+      name:      'resetLocator',
       deviceId:  C.DeviceId.sensor,
       commandId: C.Cmds.sensor.resetLocator, // SensorCommandIds.resetLocator,
       targetId:  0x12,
       data:      [] as any,
 		}
-		// let command = this.createCommand(commandInfo)
-		this.queueCommand(commandInfo);
+		this.queueMessage(message);
 	}
 
   setLedsColor(r:any, g:any, b:any){
-		let commandInfo = {
+		const message = {
+      name: 'setLedsColor',
 			deviceId: C.DeviceId.userIO,
 			commandId: C.Cmds.io.allLEDs,
 			data: [0x3f, r, g, b, r, g, b],
 		};
-		// let command = this.createCommand(commandInfo);
-		this.queueCommand(commandInfo);
+		this.queueMessage(message);
 	}
 
   setMatrixColor(r:any, g:any, b:any){
-		let commandInfo = {
+		const message = {
+      name: 'setMatrixColor',
 			deviceId: C.DeviceId.userIO,
 			commandId: C.Cmds.io.matrixColor, // UserIOCommandIds.matrixColor,
 			targetId: 0x12,
 			data: [r, g, b], 
 		}
-		// let command = this.createCommand(commandInfo);
-		this.queueCommand(commandInfo);
+		this.queueMessage(message);
 	}
 
 
