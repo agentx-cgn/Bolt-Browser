@@ -2,6 +2,7 @@ const path = require('path');
 const fs   = require('fs');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const webpack = require('webpack');
+const FaviconsWebpackPlugin = require('favicons-webpack-plugin')
 
 module.exports = {
   mode: 'development',
@@ -16,6 +17,10 @@ module.exports = {
   }
   },
   plugins: [
+    new FaviconsWebpackPlugin({
+      logo: './src/assets/automaton.logo.org.png',
+      cache: true,
+    }),
     new HtmlWebpackPlugin({
       title: 'Bolt-Browser',
     }),

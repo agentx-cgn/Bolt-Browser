@@ -17,6 +17,26 @@ class bluetooth {
 	public devices: BluetoothDevice[] = [];
 
 	constructor () {
+
+		window.addEventListener("unload", (event) => { 
+			this.devices.forEach( device => {
+				console.log('Disconnecting...', device.name);
+				if (device.gatt.connected) {
+					device.gatt.disconnect();
+				} else {
+					console.log(device.name, 'is already disconnected');
+				}
+			})
+			this.devices = [];
+			console.log(' - - - BYE - - - ', '\n');
+
+		});
+		document.addEventListener('visibilitychange', function logData() {
+			if (document.visibilityState === 'hidden') {
+				console.log("visibilityState === 'hidden'");
+			}
+		});
+
 		this.find('SB-');
 
 	}
@@ -40,13 +60,18 @@ class bluetooth {
 
 	async pair (namePrefix:string) {
 
-		return navigator.bluetooth.requestDevice({
-			filters: [{
-				namePrefix: namePrefix,				
-				services: [C.UUID_SPHERO_SERVICE],
-			}],
-			optionalServices : [C.UUID_SPHERO_SERVICE_INITIALIZE],
-		})
+		return navigator.bluetooth
+			.requestDevice({
+				filters: [{
+					namePrefix: namePrefix,				
+					services: [C.UUID_SPHERO_SERVICE],
+				}],
+				optionalServices : [C.UUID_SPHERO_SERVICE_INITIALIZE],
+			})
+			.then( devices => {
+				this.devices.push(devices);
+				return devices;
+			})
 
 		// console.log('connect.devices', devices);
 

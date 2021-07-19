@@ -4,13 +4,13 @@ export function commandPushByte(command, b){
     switch (b){
     	case C.APIConstants.startOfPacket:
     		command.push(C.APIConstants.escape, C.APIConstants.escapedStartOfPacket);
-    		break;
+			break;
     	case C.APIConstants.escape:
     		command.push(C.APIConstants.escape, C.APIConstants.escapedEscape);
-    		break;
+			break;
     	case C.APIConstants.endOfPacket:
     		command.push(C.APIConstants.escape, C.APIConstants.escapedEndOfPacket);
-    		break;
+			break;
     	default:
     		command.push(b);
     }	    
@@ -37,19 +37,19 @@ const wait = (time) =>  {return new Promise(callback => setTimeout(callback, tim
 
 // const maskToRaw = (sensorMask) => {
 export function maskToRaw (sensorMask) {
-	return{
-		aol: sensorMask.reduce((aol,m) => {
+	return {
+		aol: sensorMask.reduce((aol, m) => {
 			let mask;
 			switch(m){
 				case C.SensorMaskValues.accelerometer:
 					mask = C.SensorMask.accelerometerFilteredAll;
-					break;
+				break;
 				case C.SensorMaskValues.locator:
 					mask = C.SensorMask.locatorFilteredAll;
-					break;
+				break;
 				case C.SensorMaskValues.orientation:
 					mask = C.SensorMask.orientationFilteredAll;
-					break;
+				break;
 			}
 			if (mask){
 				return [...aol, mask];
