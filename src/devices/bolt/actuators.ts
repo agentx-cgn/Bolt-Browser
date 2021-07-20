@@ -4,147 +4,159 @@ import { CONSTANTS as C } from '../../globals/constants';
 import { commandPushByte } from './utils';
 import { Queue } from './queue';
 import { Bolt } from './bolt';
+import { ICmdMessage } from './interfaces';
+
+let counter: number = 0;
 
 export class Actuators {
 
-  private seqNumber = 0;
   private queue: Queue;
   private heading: number;
   private bolt: Bolt;
 
   constructor (bolt: Bolt) {
-    this.bolt = bolt;
-    this.queue  = new Queue();
+    this.bolt  = bolt;
+    this.queue = new Queue();
   }
 
   /* Packet encoder */
-	createCommand( message: any ) {
+	createCommand( id: number, message: ICmdMessage ) {
 
-		const { name, deviceId, commandId, targetId, data } = message;
-	  
-    this.seqNumber = (this.seqNumber + 1) % 255;
-    var sum = 0;
-    var command = [];
-    command.push(C.APIConstants.startOfPacket);
-    var cmdflg = C.Flags.requestsResponse | C.Flags.resetsInactivityTimeout | (targetId ? C.Flags.commandHasTargetId : 0) ;
-    command.push(cmdflg);
-    sum += cmdflg;
-    if (targetId){
-      command.push(targetId);
-      sum+=targetId;
+		const { device, command, target, data } = message;
+    const cmdflg = C.Flags.requestsResponse | C.Flags.resetsInactivityTimeout | (target ? C.Flags.commandHasTargetId : 0) ;
+    const bytes  = [];	  
+    
+    let checkSum: number = 0;
+
+    bytes.push(C.APIConstants.startOfPacket);
+
+    bytes.push(cmdflg);
+    checkSum += cmdflg;
+
+    if (target){
+      bytes.push(target);
+      checkSum += target;
     }
-    commandPushByte(command, deviceId);
-    sum += deviceId;
-    commandPushByte(command, commandId);
-    sum += commandId;
-    commandPushByte(command, this.seqNumber);
-    sum += this.seqNumber;
+
+    commandPushByte(bytes, device);
+    checkSum += device;
+
+    commandPushByte(bytes, command);
+    checkSum += command;
+
+    commandPushByte(bytes, id);
+    checkSum += id;
+
     for( var i = 0 ; i < data.length ; i++ ){
-        commandPushByte(command, data[i]);
-        sum += data[i];
+      commandPushByte(bytes, data[i]);
+      checkSum += data[i];
     }
-    var chk = (~sum) & 0xff;
-    commandPushByte(command, chk);
-    command.push(C.APIConstants.endOfPacket);
-    return command;
+
+    checkSum = (~checkSum) & 0xff;
+    commandPushByte(bytes, checkSum);
+
+    bytes.push(C.APIConstants.endOfPacket);
+
+    return bytes;
+
 	}
 
 	/* Put a command message on the queue */
-	queueMessage( message: any ){
+	queueMessage( message: ICmdMessage ){
+
+    const id = (counter + 1) % 255;
 
 		this.queue.append({
+      id,     
+      name:    message.name,
       bolt:    this.bolt,
-      command: this.createCommand(message),
+      command: this.createCommand(id, message),
       charac:  this.bolt.characs.get(C.APIV2_CHARACTERISTIC), 
     });
 
 	}
 
+
+  // - - - - - ACTUATORS - - - - //
+  
+  /* Set the color of the LEd matrix and front and back LED */
+  setAllLeds(r: number, g: number, b: number){
+    this.setLedsColor(r, g, b);
+    this.setMatrixColor(r, g, b);
+  }
+
   /* Waking up Sphero */
 	wake () {
-		const message = {
-      name: 'wake',
-			deviceId: C.DeviceId.powerInfo,
-			commandId: C.Cmds.power.wake, // PowerCommandIds.wake,
-			data: [] as any[],
-		}
-		this.queueMessage(message);
-	}
-
-  /* Set the color of the LEd matrix and front and back LED */
-	setAllLeds(r:any, g:any, b:any){
-		this.setLedsColor(r, g, b);
-		this.setMatrixColor(r, g, b);
+		this.queueMessage({
+      name:      'wake',
+			device:    C.DeviceId.powerInfo,
+			command:   C.Cmds.power.wake, // PowerCommandIds.wake,
+			data:      [] as any[],
+		});
 	}
 
   	/* Resets the locator */
 	resetLocator(){
-		const message = {
+		this.queueMessage({
       name:      'resetLocator',
-      deviceId:  C.DeviceId.sensor,
-      commandId: C.Cmds.sensor.resetLocator, // SensorCommandIds.resetLocator,
-      targetId:  0x12,
+      device:    C.DeviceId.sensor,
+      command:   C.Cmds.sensor.resetLocator, // SensorCommandIds.resetLocator,
+      target:    0x12,
       data:      [] as any,
-		}
-		this.queueMessage(message);
+		});
 	}
 
-  setLedsColor(r:any, g:any, b:any){
-		const message = {
-      name: 'setLedsColor',
-			deviceId: C.DeviceId.userIO,
-			commandId: C.Cmds.io.allLEDs,
-			data: [0x3f, r, g, b, r, g, b],
-		};
-		this.queueMessage(message);
+  setLedsColor(r: number, g: number, b: number){
+		this.queueMessage({
+      name:      'setLedsColor',
+			device:    C.DeviceId.userIO,
+			command:   C.Cmds.io.allLEDs,
+			data:      [0x3f, r, g, b, r, g, b],
+		});
 	}
 
-  setMatrixColor(r:any, g:any, b:any){
-		const message = {
-      name: 'setMatrixColor',
-			deviceId: C.DeviceId.userIO,
-			commandId: C.Cmds.io.matrixColor, // UserIOCommandIds.matrixColor,
-			targetId: 0x12,
-			data: [r, g, b], 
-		}
-		this.queueMessage(message);
+  setMatrixColor(r: number, g: number, b: number){
+		this.queueMessage({
+      name:      'setMatrixColor',
+			device:    C.DeviceId.userIO,
+			command:   C.Cmds.io.matrixColor, // UserIOCommandIds.matrixColor,
+			target:    0x12,
+			data:      [r, g, b], 
+		});
 	}
 
   /* Finds the north */
 	calibrateToNorth () {
-		let message = {
+		this.queueMessage({
       name:      'calibrateToNorth', 
-			deviceId:  C.DeviceId.sensor,
-			commandId: C.Cmds.sensor.calibrateToNorth, // SensorCommandIds.calibrateToNorth,
-			targetId:  0x12,
+			device:    C.DeviceId.sensor,
+			command:   C.Cmds.sensor.calibrateToNorth, // SensorCommandIds.calibrateToNorth,
+			target:    0x12,
 			data:      [] as any,
-		}
-		this.queueMessage(message);
+		});
 	}
 
   /* Sets the current orientation as orientation 0° */
 	resetYaw () {
-		const message = {
+    this.heading = 0;
+		this.queueMessage({
       name:       'resetYaw',
-			deviceId:   C.DeviceId.driving,
-			commandId:  C.Cmds.driving.resetYaw, // DrivingCommandIds.resetYaw,
-			targetId:   0x12,
+			device:     C.DeviceId.driving,
+			command:    C.Cmds.driving.resetYaw, // DrivingCommandIds.resetYaw,
+			target:     0x12,
 			data:       [] as any,
-		}
-		this.heading = 0;
-		this.queueMessage(message);
+		});
 	}
 
   /* Prints a char on the LED matrix  */
 	printChar(char: string, r: number, g: number, b: number){
-		let message = {
+		this.queueMessage({
       name:      'printChar', 
-			deviceId:  C.DeviceId.userIO,
-			commandId: C.Cmds.io.printChar, //UserIOCommandIds.printChar,
-			targetId:  0x12,
+			device:    C.DeviceId.userIO,
+			command:   C.Cmds.io.printChar, //UserIOCommandIds.printChar,
+			target:    0x12,
 			data:      [r, g, b, char.charCodeAt(0)]
-		}
-		this.queueMessage(message);
+		});
 	}
 
 }

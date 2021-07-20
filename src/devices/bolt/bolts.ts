@@ -82,13 +82,13 @@ class bolts {
 
     try {
 
-      const server   = await device.gatt.connect();
-      const services = await server.getPrimaryServices();
+      const server: BluetoothRemoteGATTServer      = await device.gatt.connect();
+      const services: BluetoothRemoteGATTService[] = await server.getPrimaryServices();
 
       for ( let service of services ){
 
         if (service.uuid === C.UUID_SPHERO_SERVICE) {
-          let characteristics = await service.getCharacteristics();
+          let characteristics: BluetoothRemoteGATTCharacteristic[] = await service.getCharacteristics();
           for ( let charac of characteristics){
             if ( charac.uuid === C.APIV2_CHARACTERISTIC ){
               await this.mapCharacteristic(bolt, charac);
@@ -114,14 +114,14 @@ class bolts {
       return true;
 
     } catch (err) {
-      console.log(device.name, err);
+      console.log('Bolts.initDevice', device.name, err);
       return false;
     
 	  }
 
 	}
 
-	async mapCharacteristic(bolt: Bolt, charac:any){
+	async mapCharacteristic(bolt: Bolt, charac: BluetoothRemoteGATTCharacteristic){
 
     if (charac.properties.notify){
       await charac.startNotifications();

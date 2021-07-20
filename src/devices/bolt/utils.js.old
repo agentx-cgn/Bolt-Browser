@@ -1,19 +1,19 @@
 import { CONSTANTS as C } from '../../globals/constants';
 
-export function commandPushByte(command, b){
-    switch (b){
-    	case C.APIConstants.startOfPacket:
-    		command.push(C.APIConstants.escape, C.APIConstants.escapedStartOfPacket);
-			break;
-    	case C.APIConstants.escape:
-    		command.push(C.APIConstants.escape, C.APIConstants.escapedEscape);
-			break;
-    	case C.APIConstants.endOfPacket:
-    		command.push(C.APIConstants.escape, C.APIConstants.escapedEndOfPacket);
-			break;
-    	default:
-    		command.push(b);
-    }	    
+export function commandPushByte(byteArray, b){
+	switch (b){
+		case C.APIConstants.startOfPacket:
+			byteArray.push(C.APIConstants.escape, C.APIConstants.escapedStartOfPacket);
+		break;
+		case C.APIConstants.escape:
+			byteArray.push(C.APIConstants.escape, C.APIConstants.escapedEscape);
+		break;
+		case C.APIConstants.endOfPacket:
+			byteArray.push(C.APIConstants.escape, C.APIConstants.escapedEndOfPacket);
+		break;
+		default:
+			byteArray.push(b);
+	}	    
 }
 
 export function decodeFlags(flags){

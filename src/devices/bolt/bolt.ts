@@ -1,6 +1,5 @@
 
 import { CONSTANTS as C }  from '../../globals/constants';
-// import { Bluetooth as BT }  from '../../services/bluetooth.service';
 import { Actuators } from './actuators';
 
 export class Bolt { 
@@ -37,12 +36,12 @@ export class Bolt {
 
   onCharacteristicValueChanged (event: any) {
 
-    const tgt = event.currentTarget;
+    const tgt  = event.currentTarget;
     const mesg = {
       uuid: tgt.uuid,
       value: JSON.stringify(tgt.value),
     }
-    // console.log(this.name, 'onCharacteristicValueChanged', mesg);
+    console.log(this.name, 'onCharacteristicValueChanged', tgt.uuid, JSON.stringify(tgt.value));
   }
 
   onGattServerDisconnected (event: any) {
@@ -55,8 +54,4 @@ export class Bolt {
     console.log(this.name, 'onGattServerDisconnected', tgt.name);
   }
 
-  
-
 }
-
-// export const Bolts = new bolts(BT);

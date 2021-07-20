@@ -1,24 +1,22 @@
-import { Bolt } from './bolt';
+import { IAction } from './interfaces';
 
 /* The objective of this queue is to send packets in turns to avoid GATT error */
 export class Queue {
 
-  private running: any;
-  private queue: any[]
-  // private bolt:Bolt;
+  private running: boolean;
+  private queue:   IAction[];
 
 	constructor () {
-    // this.bolt = bolt;
 		this.running = false;
 		this.queue = [];
 	}
 
-	/*  Write a command on a specific characteristic*/
-	async write ( paket:any, callback:any ) {
+	/*  Write a command on a specific characteristic */
+	async write ( action: IAction, callback:any ) {
 
 		try {
-			await paket.charac.writeValue(new Uint8Array(paket.command));
-			console.log('Write', paket.bolt.name, paket.command);
+			await action.charac.writeValue(new Uint8Array(action.command));
+			console.log(action.bolt.name, action.name, action.command);
 
 		} catch(error) { 
 			console.log(error.message);	
@@ -30,18 +28,24 @@ export class Queue {
 
 	}
 
-	runCommand (paket: any) {
+	runCommand (action: IAction) {
+
 		this.running = true;
-		this.write( paket, () => {
+
+		this.write( action, () => {
+
 			this.running = false;
+
 			if (this.queue.length > 0) {
 				this.runCommand(this.queue.shift());
 			}
-		})
+
+		});
+
 	}
 
-	append (paket: any) {
-		!this.running ? this.runCommand(paket) : this.queue.push(paket);
+	append (action: IAction) {
+		!this.running ? this.runCommand(action) : this.queue.push(action);
 	}
 
 }

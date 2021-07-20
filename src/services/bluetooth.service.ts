@@ -33,7 +33,7 @@ class bluetooth {
 		});
 		document.addEventListener('visibilitychange', function logData() {
 			if (document.visibilityState === 'hidden') {
-				console.log("visibilityState === 'hidden'");
+				// console.log("visibilityState === 'hidden'");
 			}
 		});
 
