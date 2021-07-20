@@ -1,4 +1,4 @@
-import { Bolt } from './bolts';
+import { Bolt } from './bolt';
 
 /* The objective of this queue is to send packets in turns to avoid GATT error */
 export class Queue {

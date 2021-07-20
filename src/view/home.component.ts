@@ -22,18 +22,19 @@ const HomeComponent = class {
   view (  ) { 
 
     return m('div.fl.w-100', [
-      m('div.w-100.pointer',     {onclick: m.redraw }, 'HOME', ),
-      m('div.w-100.bg-gold.p3',     this.bolts.map( (bolt:any) => {
+      m('div.w-100.pointer.f2',     {onclick: m.redraw }, 'HOME', ),
+      m('div.w-100.bg-gold.pa2',     this.bolts.map( (bolt:any) => {
         return m('div.w-100', [
-          m('div', bolt.name),
+          m('span.pa1.f3', bolt.name),
           m('button', { onclick: this.bolts.disconnect.bind(this.bolts, bolt) }, 'DisConnect')
         ]);
       })),
-      m('div.w-100',     [
+      m('div.w-100.bg-light-blue.pa2',     [
         m('button', { onclick: this.bolts.pair.bind(this.bolts) }, 'Pair'),
+        m('button', { onclick: this.bolts.disconnect.bind(this.bolts) }, 'DisConnect All'),
+        m('button', { onclick: location.reload.bind(location) }, 'Reload'),
       ]),
       m('div.w-100',     [
-        m('button', { onclick: this.bolts.disconnect.bind(this.bolts) }, 'DisConnect')
       ]),
     ]);
 

@@ -3,13 +3,14 @@
 import { CONSTANTS as C } from '../../globals/constants';
 import { commandPushByte } from './utils';
 import { Queue } from './queue';
-import { Bolt } from './bolts';
+import { Bolt } from './bolt';
 
 export class Actuators {
 
   private seqNumber = 0;
-  private queue;
-  private bolt;
+  private queue: Queue;
+  private heading: number;
+  private bolt: Bolt;
 
   constructor (bolt: Bolt) {
     this.bolt = bolt;
@@ -109,6 +110,41 @@ export class Actuators {
 		this.queueMessage(message);
 	}
 
+  /* Finds the north */
+	calibrateToNorth () {
+		let message = {
+      name:      'calibrateToNorth', 
+			deviceId:  C.DeviceId.sensor,
+			commandId: C.Cmds.sensor.calibrateToNorth, // SensorCommandIds.calibrateToNorth,
+			targetId:  0x12,
+			data:      [] as any,
+		}
+		this.queueMessage(message);
+	}
 
+  /* Sets the current orientation as orientation 0° */
+	resetYaw () {
+		const message = {
+      name:       'resetYaw',
+			deviceId:   C.DeviceId.driving,
+			commandId:  C.Cmds.driving.resetYaw, // DrivingCommandIds.resetYaw,
+			targetId:   0x12,
+			data:       [] as any,
+		}
+		this.heading = 0;
+		this.queueMessage(message);
+	}
+
+  /* Prints a char on the LED matrix  */
+	printChar(char: string, r: number, g: number, b: number){
+		let message = {
+      name:      'printChar', 
+			deviceId:  C.DeviceId.userIO,
+			commandId: C.Cmds.io.printChar, //UserIOCommandIds.printChar,
+			targetId:  0x12,
+			data:      [r, g, b, char.charCodeAt(0)]
+		}
+		this.queueMessage(message);
+	}
 
 }

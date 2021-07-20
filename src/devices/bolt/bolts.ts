@@ -1,9 +1,9 @@
 
-import { CONSTANTS as C }  from '../../globals/constants';
-import { Bluetooth as BT }  from '../../services/bluetooth.service';
-import { Actuators } from './actuators';
 import m from "mithril";
 
+import { CONSTANTS as C }  from '../../globals/constants';
+import { Bluetooth as BT }  from '../../services/bluetooth.service';
+import { Bolt } from './bolt';
 
 class bolts {
 
@@ -58,13 +58,22 @@ class bolts {
 
   }
 
+  remove (bolt:Bolt) {
+    const index = this.bolts.indexOf(bolt);
+    if (index > -1) {
+      this.bolts.splice(index, 1);
+    }
+  }
+
   async disconnect (bolt?:Bolt) {
     console.log('Disconnecting...', bolt.name);
     if (bolt.device.gatt.connected) {
-      bolt.device.gatt.disconnect();
+      await bolt.device.gatt.disconnect();
+      this.remove(bolt);
     } else {
       console.log(bolt.name, 'is already disconnected');
     }
+    m.redraw();
 
   }
 
@@ -125,61 +134,60 @@ class bolts {
 
 }
 
+// export class Bolt { 
 
+//   public name:any;
+//   public characs = new Map();
+//   public device:any;
 
-/* The objective of this queue is to send packets in turns to avoid GATT error */
+//   private connected:boolean;
+//   private actuators;
 
+//   constructor (device: BluetoothDevice) {
+//     this.name      = device.name;
+//     this.device    = device;
+//     this.actuators = new Actuators(this);
+// 	}
 
+//   append () {}
 
-export class Bolt { 
+//   async awake(){
+//     const color = Math.round(0xffffff * Math.random());
+//     const r = color >> 16, g = color >> 8 & 255, b = color & 255;
 
-  public name:any;
-  public characs = new Map();
-  public device:any;
+// 		await this.characs.get(C.ANTIDOS_CHARACTERISTIC).writeValue(C.useTheForce);
+// 		this.connected = true;
+// 		this.actuators.wake();	
+// 		// this.resetYaw();
+// 		this.actuators.resetLocator();	
+//     this.actuators.setLedsColor(2, 4, 2);
+// 		this.actuators.setMatrixColor(r, g, b);
+// 		this.actuators.calibrateToNorth();
+// 		this.actuators.printChar('K', 10, 40, 10);
+// 	};
 
-  private connected:boolean;
-  private actuators;
+//   onCharacteristicValueChanged (event: any) {
 
-  constructor (device: BluetoothDevice) {
-    this.name      = device.name;
-    this.device    = device;
-    this.actuators = new Actuators(this);
-	}
+//     const tgt = event.currentTarget;
+//     const mesg = {
+//       uuid: tgt.uuid,
+//       value: JSON.stringify(tgt.value),
+//     }
+//     // console.log(this.name, 'onCharacteristicValueChanged', mesg);
+//   }
 
-  append () {}
+//   onGattServerDisconnected (event: any) {
 
-  async awake(){
-		await this.characs.get(C.ANTIDOS_CHARACTERISTIC).writeValue(C.useTheForce);
-		this.connected = true;
-		this.actuators.wake();	
-		// this.resetYaw();
-		this.actuators.resetLocator();	
-    this.actuators.setLedsColor(5, 5, 10);
-		this.actuators.setMatrixColor(64, 128, 64);
-	};
-
-  onCharacteristicValueChanged (event: any) {
-
-    const tgt = event.currentTarget;
-    const mesg = {
-      uuid: tgt.uuid,
-      value: JSON.stringify(tgt.value),
-    }
-    // console.log(this.name, 'onCharacteristicValueChanged', mesg);
-  }
-
-  onGattServerDisconnected (event: any) {
-
-    const tgt = event.currentTarget;
-    const mesg = {
-      uuid: tgt.uuid,
-      value: JSON.stringify(tgt.value),
-    }
-    console.log(this.name, 'onGattServerDisconnected', tgt.name);
-  }
+//     const tgt = event.currentTarget;
+//     const mesg = {
+//       uuid: tgt.uuid,
+//       value: JSON.stringify(tgt.value),
+//     }
+//     console.log(this.name, 'onGattServerDisconnected', tgt.name);
+//   }
 
   
 
-}
+// }
 
 export const Bolts = new bolts(BT);
