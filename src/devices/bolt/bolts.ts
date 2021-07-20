@@ -128,7 +128,7 @@ class bolts {
     }
 
 		bolt.characs.set(charac.uuid, charac);
-    charac.addEventListener('characteristicvaluechanged', bolt.onCharacteristicValueChanged.bind(bolt));
+    charac.addEventListener('characteristicvaluechanged', bolt.sensors.onCharacteristicValueChanged.bind(bolt));
 
   }
 

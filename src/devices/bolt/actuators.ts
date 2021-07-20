@@ -6,7 +6,7 @@ import { Queue } from './queue';
 import { Bolt } from './bolt';
 import { ICmdMessage } from './interfaces';
 
-let counter: number = 0;
+// let counter: number = 0;
 
 export class Actuators {
 
@@ -16,7 +16,7 @@ export class Actuators {
 
   constructor (bolt: Bolt) {
     this.bolt  = bolt;
-    this.queue = new Queue();
+    this.queue = bolt.queue;
   }
 
   /* Packet encoder */
@@ -63,17 +63,12 @@ export class Actuators {
 
 	/* Put a command message on the queue */
 	queueMessage( message: ICmdMessage ){
-
-    const id = (counter + 1) % 255;
-
 		this.queue.append({
-      id,     
       name:    message.name,
       bolt:    this.bolt,
-      command: this.createCommand(id, message),
+      command: this.createCommand(message),
       charac:  this.bolt.characs.get(C.APIV2_CHARACTERISTIC), 
     });
-
 	}
 
 
@@ -157,6 +152,30 @@ export class Actuators {
 			target:    0x12,
 			data:      [r, g, b, char.charCodeAt(0)]
 		});
+	}
+
+  	/* Rolls the Sphero */
+	roll(speed: number , heading: number, flags: number){
+		this.queueMessage({
+      name:    'roll',
+			device:  C.DeviceId.driving,
+			command: C.Cmds.driving.driveWithHeading, // DrivingCommandIds.driveWithHeading,
+			target:  0x12,
+			data:    [speed, (heading >> 8) & 0xff, heading & 0xff, flags],
+		});
+
+		this.heading = heading;
+
+	}
+
+  	/* Sets Sphero heading */
+	async setHeading(heading: number){
+		if (heading < 0 ){
+			heading += 360 ;
+		}
+		this.roll(0, heading, [] as any);
+		// await wait(1000);
+		this.resetYaw();
 	}
 
 }

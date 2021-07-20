@@ -1,5 +1,7 @@
 import { IAction } from './interfaces';
 
+let counter: number = 0;
+
 /* The objective of this queue is to send packets in turns to avoid GATT error */
 export class Queue {
 
@@ -10,6 +12,27 @@ export class Queue {
 		this.running = false;
 		this.queue = [];
 	}
+	
+		append (action: IAction) {
+			action.id = (counter +1) % 255;
+			!this.running ? this.runCommand(action) : this.queue.push(action);
+		}
+
+		runCommand (action: IAction) {
+	
+			this.running = true;
+	
+			this.write( action, () => {
+	
+				this.running = false;
+	
+				if (this.queue.length > 0) {
+					this.runCommand(this.queue.shift());
+				}
+	
+			});
+	
+		}
 
 	/*  Write a command on a specific characteristic */
 	async write ( action: IAction, callback:any ) {
@@ -26,26 +49,6 @@ export class Queue {
 
 		}
 
-	}
-
-	runCommand (action: IAction) {
-
-		this.running = true;
-
-		this.write( action, () => {
-
-			this.running = false;
-
-			if (this.queue.length > 0) {
-				this.runCommand(this.queue.shift());
-			}
-
-		});
-
-	}
-
-	append (action: IAction) {
-		!this.running ? this.runCommand(action) : this.queue.push(action);
 	}
 
 }

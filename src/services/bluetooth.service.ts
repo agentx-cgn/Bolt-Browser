@@ -161,7 +161,7 @@ const BluetoothX = {
 					namePrefix: 'SB-',				
 					services: [C.UUID_SPHERO_SERVICE],
 				}],
-				optionalServices : [UUID_SPHERO_SERVICE_INITIALIZE],
+				optionalServices : [C.UUID_SPHERO_SERVICE_INITIALIZE],
 			})
 			const server = await this.device.gatt.connect();
 			const services = await server.getPrimaryServices();

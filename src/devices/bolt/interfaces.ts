@@ -5,7 +5,7 @@ export interface IUuid {
   uuid:    string,
 }
 export interface IAction {
-  id:      number,     
+  id?:      number,     
   name:    string,
   bolt:    Bolt,
   command: number[],
