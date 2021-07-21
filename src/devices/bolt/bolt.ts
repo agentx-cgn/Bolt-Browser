@@ -3,6 +3,8 @@ import { CONSTANTS as C }  from '../../globals/constants';
 import { Actuators } from './actuators';
 import { Sensors } from './sensors';
 import { Queue  } from './queue';
+import { commandPushByte } from './utils'
+import { ICmdMessage } from './interfaces'
 
 export class Bolt { 
 
@@ -11,6 +13,7 @@ export class Bolt {
   public device:     BluetoothDevice;
   private actuators: Actuators;
   public sensors:    Sensors;
+  private counter:   number = 0;
   
   public characs = new Map();
   private connected: boolean;
@@ -18,14 +21,56 @@ export class Bolt {
   constructor (device: BluetoothDevice) {
     this.name      = device.name;
     this.device    = device;
+    this.queue     = new Queue();
     this.actuators = new Actuators(this);
     this.sensors   = new Sensors(this);
-    this.queue     = new Queue();
 	}
 
-  // append () {}
+  /* Packet encoder */
+	createCommand( message: ICmdMessage ) {
+
+		const { device, command, target, data } = message;
+    const cmdflg = C.Flags.requestsResponse | C.Flags.resetsInactivityTimeout | (target ? C.Flags.commandHasTargetId : 0) ;
+    const bytes  = [];	  
+    let checkSum: number = 0;
+    
+    this.counter = (this.counter +1) % 255
+
+    bytes.push(C.APIConstants.startOfPacket);
+
+    bytes.push(cmdflg);
+    checkSum += cmdflg;
+
+    if (target){
+      bytes.push(target);
+      checkSum += target;
+    }
+
+    commandPushByte(bytes, device);
+    checkSum += device;
+
+    commandPushByte(bytes, command);
+    checkSum += command;
+
+    commandPushByte(bytes, this.counter);
+    checkSum += this.counter;
+
+    for( var i = 0 ; i < data.length ; i++ ){
+      commandPushByte(bytes, data[i]);
+      checkSum += data[i];
+    }
+
+    checkSum = (~checkSum) & 0xff;
+    commandPushByte(bytes, checkSum);
+
+    bytes.push(C.APIConstants.endOfPacket);
+
+    return bytes;
+
+	}
 
   async awake(){
+
     const color = Math.round(0xffffff * Math.random());
     const r = color >> 16, g = color >> 8 & 255, b = color & 255;
 

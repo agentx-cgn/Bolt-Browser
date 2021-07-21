@@ -36,14 +36,16 @@ export function decodeFlags(flags: number){
 
 }
 
-const wait = (time: number) =>  {return new Promise(callback => setTimeout(callback, time))};
+export function wait (time: number) {
+  return new Promise(callback => setTimeout(callback, time))
+};
 
 // const maskToRaw = (sensorMask) => {
 export function maskToRaw (sensorMask: number[]) {
 
 	return {
 
-		aol: sensorMask.reduce((aol: any[], m: number) => {
+		aol: sensorMask.reduce((aol: number[], m: number) => {
 
 			let mask;
 
@@ -67,7 +69,7 @@ export function maskToRaw (sensorMask: number[]) {
 
 		}, []),
 
-		gyro: sensorMask.reduce((gyro,m) => {
+		gyro: sensorMask.reduce((gyro: number[], m: number) => {
 			let mask;
 			if ( m === C.SensorMaskValues.gyro){
 				mask = C.SensorMask.gyroFilteredAll;
@@ -84,7 +86,7 @@ export function maskToRaw (sensorMask: number[]) {
 
 // const flatSensorMask = (sensorMask) => 
 export function flatSensorMask (sensorMask: number[]) {
-  sensorMask.reduce((bits, m) => { return (bits |= m); }, 0);
+  return sensorMask.reduce((bits, m) => { return (bits |= m); }, 0);
 } 
 
 // const parseSensorResponse = (data, mask) => {

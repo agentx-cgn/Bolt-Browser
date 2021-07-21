@@ -8,47 +8,47 @@ export class Queue {
   private running: boolean;
   private queue:   IAction[];
 
-	constructor () {
-		this.running = false;
-		this.queue = [];
-	}
-	
-		append (action: IAction) {
-			action.id = (counter +1) % 255;
-			!this.running ? this.runCommand(action) : this.queue.push(action);
-		}
+  constructor () {
+    this.running = false;
+    this.queue = [];
+  }
+  
+  append (action: IAction) {
+    action.id = (counter +1) % 255;
+    !this.running ? this.runCommand(action) : this.queue.push(action);
+  }
 
-		runCommand (action: IAction) {
-	
-			this.running = true;
-	
-			this.write( action, () => {
-	
-				this.running = false;
-	
-				if (this.queue.length > 0) {
-					this.runCommand(this.queue.shift());
-				}
-	
-			});
-	
-		}
+  runCommand (action: IAction) {
 
-	/*  Write a command on a specific characteristic */
-	async write ( action: IAction, callback:any ) {
+    this.running = true;
 
-		try {
-			await action.charac.writeValue(new Uint8Array(action.command));
-			console.log(action.bolt.name, action.name, action.command);
+    this.write( action, () => {
 
-		} catch(error) { 
-			console.log(error.message);	
-		
-		} finally {
-			callback && callback();
+      this.running = false;
 
-		}
+      if (this.queue.length > 0) {
+        this.runCommand(this.queue.shift());
+      }
 
-	}
+    });
+
+  }
+
+  /*  Write a command on a specific characteristic */
+  async write ( action: IAction, callback:any ) {
+
+    try {
+      await action.charac.writeValue(new Uint8Array(action.command));
+      console.log(action.bolt.name, action.name, action.command);
+
+    } catch(error) { 
+      console.log(error.message);	
+    
+    } finally {
+      callback && callback();
+
+    }
+
+  }
 
 }
