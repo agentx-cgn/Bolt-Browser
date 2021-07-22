@@ -3,7 +3,7 @@ import { CONSTANTS as C }  from '../../globals/constants';
 import { Actuators } from './actuators';
 import { Sensors } from './sensors';
 import { Queue  } from './queue';
-import { commandPushByte } from './utils'
+import { commandPushByte, bufferToHex } from './utils'
 import { ICmdMessage } from './interfaces'
 
 export class Bolt { 
@@ -11,7 +11,7 @@ export class Bolt {
   public name:       string;
   public queue:      Queue;
   public device:     BluetoothDevice;
-  private actuators: Actuators;
+  public actuators:  Actuators;
   public sensors:    Sensors;
   private counter:   number = 0;
   
@@ -71,8 +71,8 @@ export class Bolt {
 
   async awake(){
 
-    const color = Math.round(0xffffff * Math.random());
-    const r = color >> 16, g = color >> 8 & 255, b = color & 255;
+    // const color = Math.round(0xffffff * Math.random());
+    // const r = color >> 16, g = color >> 8 & 255, b = color & 255;
 
 		await this.characs.get(C.ANTIDOS_CHARACTERISTIC).writeValue(C.useTheForce);
 		// this.connected = true;
@@ -83,7 +83,8 @@ export class Bolt {
     // this.resetYaw();‚
 		this.actuators.resetLocator();	
     this.actuators.setLedsColor(2, 4, 2);
-		this.actuators.setMatrixColor(r, g, b);
+		// this.actuators.setMatrixColor(r, g, b);
+		this.actuators.setMatrixRandomColor();
 		this.actuators.calibrateToNorth();
 		this.actuators.printChar('K', 10, 40, 10);
 
@@ -93,21 +94,26 @@ export class Bolt {
   onCharacteristicValueChanged (event: any) {
 
     const tgt  = event.currentTarget;
+    const val: DataView  = event.target.value;
+    const buf: ArrayBuffer = val.buffer;
     const mesg = {
-      uuid: tgt.uuid,
+      uuid:  tgt.uuid,
+      len:   event.target.value.byteLength,
       value: JSON.stringify(tgt.value),
     }
-    console.log(this.name, 'onCharacteristicValueChanged', tgt.uuid, JSON.stringify(tgt.value));
+    // console.log(this.name, 'onCharacteristicValueChanged', tgt.uuid, mesg.len, JSON.stringify(tgt.value));
+    console.log(this.name, 'onCharacteristicValueChanged', mesg.len, bufferToHex(buf));
   }
 
   onGattServerDisconnected (event: any) {
 
     const tgt = event.currentTarget;
     const mesg = {
-      uuid: tgt.uuid,
+      uuid:  tgt.uuid,
       value: JSON.stringify(tgt.value),
     }
     console.log(this.name, 'onGattServerDisconnected', tgt.name);
+
   }
 
 }

@@ -1,6 +1,7 @@
 import m from "mithril";
 
 import  { Bolts }  from '../devices/bolt/bolts';
+import  { Bolt }   from '../devices/bolt/bolt';
 
 const HomeComponent = class {
 
@@ -19,6 +20,11 @@ const HomeComponent = class {
 
   disconnect () {}
 
+  setMatrixRandomColor(name: string) {
+    const bolt: Bolt = this.bolts.find(name);
+    bolt.actuators.setMatrixRandomColor();
+  }
+
   view (  ) { 
 
     return m('div.fl.w-100', [
@@ -26,6 +32,7 @@ const HomeComponent = class {
       m('div.w-100.bg-gold.pa2',     this.bolts.map( (bolt:any) => {
         return m('div.w-100', [
           m('span.pa1.f3', bolt.name),
+          m('button', { onclick: () => this.setMatrixRandomColor(bolt.name) }, 'Colorize'),
           m('button', { onclick: this.bolts.disconnect.bind(this.bolts, bolt) }, 'DisConnect')
         ]);
       })),

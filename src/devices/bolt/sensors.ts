@@ -332,7 +332,7 @@ export class Sensors {
 	printCommandStatus(command: any){
 		switch(command.data[0]){
 			case C.Errors.success:
-				//console.log('Command succefully executed!');
+				console.log('Command successfully executed!', command);
 				break;
 			case C.Errors.badDeviceId:
 				console.log('Error: Bad device id');

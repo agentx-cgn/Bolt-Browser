@@ -1,5 +1,16 @@
 import { CONSTANTS as C } from '../../globals/constants';
 
+export function  ab2str(buf: ArrayBuffer): string {
+  return String.fromCharCode.apply(null, new Uint16Array(buf));
+}
+
+export function bufferToHex (buffer: ArrayBuffer) {
+  return [...new Uint8Array (buffer)]
+    .map (b => b.toString (16).padStart (2, "0"))
+    .join ("")
+  ;
+}
+
 export function commandPushByte(byteArray: number[], b: number ){
 	switch (b){
 		case C.APIConstants.startOfPacket:

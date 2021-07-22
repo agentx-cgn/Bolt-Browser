@@ -39,6 +39,13 @@ export class Actuators {
     this.setMatrixColor(r, g, b);
   }
 
+  /* Set the color of the matrix to random color */
+  setMatrixRandomColor(){
+    const color = Math.round(0xffffff * Math.random());
+    const r = color >> 16, g = color >> 8 & 255, b = color & 255;
+    this.setMatrixColor(r, g, b);
+  }
+
   /* Waking up Sphero */
   wake () {
     this.queueMessage({
