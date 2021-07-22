@@ -25,6 +25,10 @@ const HomeComponent = class {
     bolt.actuators.setMatrixRandomColor();
   }
 
+  action(name: string) {
+    this.bolts.find(name).action();
+  }
+
   view (  ) { 
 
     return m('div.fl.w-100', [
@@ -32,6 +36,7 @@ const HomeComponent = class {
       m('div.w-100.bg-gold.pa2',     this.bolts.map( (bolt:any) => {
         return m('div.w-100', [
           m('span.pa1.f3', bolt.name),
+          m('button', { onclick: () => this.action(bolt.name) }, 'Action'),
           m('button', { onclick: () => this.setMatrixRandomColor(bolt.name) }, 'Colorize'),
           m('button', { onclick: this.bolts.disconnect.bind(this.bolts, bolt) }, 'DisConnect')
         ]);

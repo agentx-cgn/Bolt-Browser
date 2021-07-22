@@ -121,7 +121,7 @@ export class Actuators {
   }
 
     /* Rolls the Sphero */
-  roll(speed: number , heading: number, flags: number){
+  roll(speed: number , heading: number, flags=[]as any){
     this.queueMessage({
       name:    'roll',
       device:  C.DeviceId.driving,
@@ -141,7 +141,7 @@ export class Actuators {
     }
     this.roll(0, heading, [] as any);
     // await wait(1000);
-    this.resetYaw();
+    // this.resetYaw();
   }
 
 }

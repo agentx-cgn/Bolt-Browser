@@ -3,7 +3,7 @@ import { CONSTANTS as C }  from '../../globals/constants';
 import { Actuators } from './actuators';
 import { Sensors } from './sensors';
 import { Queue  } from './queue';
-import { commandPushByte, bufferToHex } from './utils'
+import { commandPushByte, bufferToHex, wait } from './utils'
 import { ICmdMessage } from './interfaces'
 
 export class Bolt { 
@@ -71,11 +71,7 @@ export class Bolt {
 
   async awake(){
 
-    // const color = Math.round(0xffffff * Math.random());
-    // const r = color >> 16, g = color >> 8 & 255, b = color & 255;
-
 		await this.characs.get(C.ANTIDOS_CHARACTERISTIC).writeValue(C.useTheForce);
-		// this.connected = true;
 		this.actuators.wake();	
 
     this.sensors.configureCollisionDetection();
@@ -88,8 +84,11 @@ export class Bolt {
 		this.actuators.calibrateToNorth();
 		this.actuators.printChar('K', 10, 40, 10);
 
-
 	};
+
+  async shake () {
+    this.actuators.roll(1, this.sensors.heading, 0);
+  }
 
   onCharacteristicValueChanged (event: any) {
 
@@ -114,6 +113,14 @@ export class Bolt {
     }
     console.log(this.name, 'onGattServerDisconnected', tgt.name);
 
+  }
+
+  action () {
+    (async () => {
+      await this.actuators.setHeading(this.sensors.heading -180);
+      await wait(1000);
+      await this.actuators.setHeading(this.sensors.heading );
+    })()
   }
 
 }

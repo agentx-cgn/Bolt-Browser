@@ -5,14 +5,14 @@ import { commandPushByte } from './utils';
 import { Queue } from './queue';
 import { Bolt } from './bolt';
 import { ICmdMessage } from './interfaces';
-import { decodeFlags, maskToRaw, parseSensorResponse,flatSensorMask } from './utils';
+import { decodeFlags, maskToRaw, parseSensorResponse,flatSensorMask, wait } from './utils';
 
 let counter: number = 0;
 
 export class Sensors {
 
   private queue: Queue;
-  private heading: number;
+  public heading: number;
   private bolt: Bolt;
   private listeners: any = [];
   private rawMask: any;
@@ -20,6 +20,24 @@ export class Sensors {
   constructor (bolt: Bolt) {
     this.bolt  = bolt;
     this.queue = bolt.queue;
+    this.activate();
+  }
+
+  activate () {
+    this.on('onCompassNotify',   (angle: number) => {
+      console.log(this.bolt.name, 'onCompassNotify',  angle);
+      this.heading = angle;
+    });
+    this.on('onWillSleepAsync',  (...args: any) => {
+      console.log(this.bolt.name, 'onWillSleepAsync', args);
+      this.bolt.actuators.wake();
+      (async () => {
+        await this.bolt.actuators.setHeading(this.heading -180);
+        await wait(1000);
+        await this.bolt.actuators.setHeading(this.heading );
+      })();
+    } );
+    this.on('onSleepAsync',      (...args: any) => console.log(this.bolt.name, 'onSleepAsync',     args) );
   }
 
 
@@ -203,7 +221,6 @@ export class Sensors {
 		});
 	}
 
-
 	/* If the packet is a notification , calls the right handler, else print the command status*/
 	readCommand(command: any){
 
@@ -332,7 +349,7 @@ export class Sensors {
 	printCommandStatus(command: any){
 		switch(command.data[0]){
 			case C.Errors.success:
-				console.log('Command successfully executed!', command);
+				console.log(this.bolt.name, 'Success', command.seqNumber, command.data, command.flags);
 				break;
 			case C.Errors.badDeviceId:
 				console.log('Error: Bad device id');

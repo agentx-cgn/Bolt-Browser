@@ -39,7 +39,7 @@ export class Queue {
 
     try {
       await action.charac.writeValue(new Uint8Array(action.command));
-      console.log(action.bolt.name, action.name, action.command);
+      console.log(action.bolt.name, action.name, action.id, action.command);
 
     } catch(error) { 
       console.log(error.message);	
