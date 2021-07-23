@@ -61,6 +61,15 @@ const DeviceId = {
 }
 
 const Cmds = {
+
+  systeminfo: {
+    mainApplicationVersion: 0x00,
+    bootloaderVersion:      0x01,
+    something:              0x06,
+    something6:             0x12,
+    something7:             0x28,
+  },
+
   driving: {
     rawMotor:            1,
     driveAsRc:           2,
@@ -80,21 +89,21 @@ const Cmds = {
     batteryStateChange: 33,
   },
   io : {
-    playAudioFile:       7,
-    audioVolume:         8,
-    stopAudio:          10,
-    testSound:          24,
-    allLEDs:            28,
-    setUserProfile:     35,
-    matrixPixel:        45,
-    matrixColor:        47,
-    clearMatrix:        56, 
-    matrixRotation:     58,
-    matrixScrollText:   59,
-    matrixScrollNotification: 60,
-    matrixLine:         61,
-    matrixFill:         62,
-    printChar:          66,
+    playAudioFile:              7,
+    audioVolume:                8,
+    stopAudio:                 10,
+    testSound:                 24,
+    allLEDs:                   28,
+    setUserProfile:            35,
+    matrixPixel:               45,
+    matrixColor:               47,
+    clearMatrix:               56, 
+    matrixRotation:            58,
+    matrixScrollText:          59,
+    matrixScrollNotification:  60,
+    matrixLine:                61,
+    matrixFill:                62,
+    printChar:                 66,
   },
   sensor: {
     sensorMask:              0,
@@ -109,6 +118,15 @@ const Cmds = {
     calibrateToNorth:       37,
     compassNotify:          38,
   }
+}
+
+const StabilizationIndex = {
+    no_control_system:            0x00,
+    full_control_system:          0x01,
+    pitch_control_system:         0x02,
+    roll_control_system:          0x03,
+    yaw_control_system:           0x04,
+    speed_and_yaw_control_system: 0x05,
 }
 
 // const DrivingCommandIds = {
@@ -214,4 +232,5 @@ export const CONSTANTS = {
   DFU_CONTROL_CHARACTERISTIC,
   DFU_INFO_CHARACTERISTIC,
   SUBS_CHARACTERISTIC,
+  StabilizationIndex,
 }

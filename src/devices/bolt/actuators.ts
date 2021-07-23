@@ -1,12 +1,10 @@
 
 
-import { CONSTANTS as C } from '../../globals/constants';
-import { commandPushByte } from './utils';
+import { CONSTANTS as C } from '../constants';
+import { wait, commandPushByte } from './utils';
 import { Queue } from './queue';
 import { Bolt } from './bolt';
 import { ICmdMessage } from './interfaces';
-
-
 
 export class Actuators {
 
@@ -33,19 +31,6 @@ export class Actuators {
 
   // - - - - - ACTUATORS - - - - //
   
-  /* Set the color of the LEd matrix and front and back LED */
-  setAllLeds(r: number, g: number, b: number){
-    this.setLedsColor(r, g, b);
-    this.setMatrixColor(r, g, b);
-  }
-
-  /* Set the color of the matrix to random color */
-  setMatrixRandomColor(){
-    const color = Math.round(0xffffff * Math.random());
-    const r = color >> 16, g = color >> 8 & 255, b = color & 255;
-    this.setMatrixColor(r, g, b);
-  }
-
   /* Waking up Sphero */
   wake () {
     this.queueMessage({
@@ -56,7 +41,20 @@ export class Actuators {
     });
   }
 
-    /* Resets the locator */
+
+  // - - - - - COMPASS
+
+  /* Sets Sphero heading */
+  async rotate (degrees: number){
+    // if (heading < 0 ){
+    //   heading += 360 ;
+    // }
+    this.roll(0, degrees, [] as any);
+    await wait(100);
+    // this.resetYaw();
+  }
+
+  /* Resets the locator */
   resetLocator(){
     this.queueMessage({
       name:      'resetLocator',
@@ -64,28 +62,9 @@ export class Actuators {
       command:   C.Cmds.sensor.resetLocator, // SensorCommandIds.resetLocator,
       target:    0x12,
       data:      [] as any,
-    });
-  }
-
-  setLedsColor(r: number, g: number, b: number){
-    this.queueMessage({
-      name:      'setLedsColor',
-      device:    C.DeviceId.userIO,
-      command:   C.Cmds.io.allLEDs,
-      data:      [0x3f, r, g, b, r, g, b],
-    });
-  }
-
-  setMatrixColor(r: number, g: number, b: number){
-    this.queueMessage({
-      name:      'setMatrixColor',
-      device:    C.DeviceId.userIO,
-      command:   C.Cmds.io.matrixColor, // UserIOCommandIds.matrixColor,
-      target:    0x12,
-      data:      [r, g, b], 
-    });
-  }
-
+    });  
+  }  
+  
   /* Finds the north */
   calibrateToNorth () {
     this.queueMessage({
@@ -94,8 +73,8 @@ export class Actuators {
       command:   C.Cmds.sensor.calibrateToNorth, // SensorCommandIds.calibrateToNorth,
       target:    0x12,
       data:      [] as any,
-    });
-  }
+    });  
+  }  
 
   /* Sets the current orientation as orientation 0° */
   resetYaw () {
@@ -106,8 +85,43 @@ export class Actuators {
       command:    C.Cmds.driving.resetYaw, // DrivingCommandIds.resetYaw,
       target:     0x12,
       data:       [] as any,
-    });
-  }
+    });  
+  }  
+
+  // - - - - - LIGHT
+  
+  /* Set the color of the LEd matrix and front and back LED */
+  setAllLeds(r: number, g: number, b: number){
+    this.setLedsColor(r, g, b);
+    this.setMatrixColor(r, g, b);
+  }      
+
+  /* Set the color of the matrix to random color */
+  setMatrixRandomColor(){
+    const color = Math.round(0xffffff * Math.random());
+    const r = color >> 16, g = color >> 8 & 255, b = color & 255;
+    this.setMatrixColor(r, g, b);
+  }      
+
+
+  setLedsColor(r: number, g: number, b: number){
+    this.queueMessage({
+      name:      'setLedsColor',
+      device:    C.DeviceId.userIO,
+      command:   C.Cmds.io.allLEDs,
+      data:      [0x3f, r, g, b, r, g, b],
+    });  
+  }  
+
+  setMatrixColor(r: number, g: number, b: number){
+    this.queueMessage({
+      name:      'setMatrixColor',
+      device:    C.DeviceId.userIO,
+      command:   C.Cmds.io.matrixColor, // UserIOCommandIds.matrixColor,
+      target:    0x12,
+      data:      [r, g, b], 
+    });  
+  }  
 
   /* Prints a char on the LED matrix  */
   printChar(char: string, r: number, g: number, b: number){
@@ -117,10 +131,33 @@ export class Actuators {
       command:   C.Cmds.io.printChar, //UserIOCommandIds.printChar,
       target:    0x12,
       data:      [r, g, b, char.charCodeAt(0)]
-    });
+    });  
+  }  
+
+  setMatrixPixel (x: number, y: number, r: number, g: number, b: number) {
+    this.queueMessage({
+      name:      'setMatrixPixel', 
+      device:    C.DeviceId.userIO,
+      command:   C.Cmds.io.matrixPixel, //UserIOCommandIds.printChar,
+      target:    0x12,
+      data:      [x, y, r, g, b]
+    });  
   }
 
-    /* Rolls the Sphero */
+  
+  // - - - - - MOVEMENT  
+  
+  /* Sets Sphero heading */
+  async setHeading(heading: number){
+    if (heading < 0 ){
+      heading += 360 ;
+    }  
+    this.roll(0, heading, [] as any);
+    // await wait(1000);
+    // this.resetYaw();
+  }  
+  
+  /* Rolls the Sphero */
   roll(speed: number , heading: number, flags=[]as any){
     this.queueMessage({
       name:    'roll',
@@ -128,20 +165,25 @@ export class Actuators {
       command: C.Cmds.driving.driveWithHeading, // DrivingCommandIds.driveWithHeading,
       target:  0x12,
       data:    [speed, (heading >> 8) & 0xff, heading & 0xff, flags],
-    });
-
+    });  
+  
     this.heading = heading;
+  
+  }  
 
-  }
+  /* Rolls the Sphero */
+  stabilize(index: number){
+    this.queueMessage({
+      name:    'roll',
+      device:  C.DeviceId.driving,
+      command: C.Cmds.driving.stabilization, // .driveWithHeading, // DrivingCommandIds.driveWithHeading,
+      target:  0x12,
+      data:    [C.StabilizationIndex.full_control_system ],
+    });  
+  
+    // this.heading = heading;
+  
+  }  
 
-    /* Sets Sphero heading */
-  async setHeading(heading: number){
-    if (heading < 0 ){
-      heading += 360 ;
-    }
-    this.roll(0, heading, [] as any);
-    // await wait(1000);
-    // this.resetYaw();
-  }
-
-}
+  
+}  

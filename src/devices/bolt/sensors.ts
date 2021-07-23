@@ -1,7 +1,6 @@
 
 
-import { CONSTANTS as C } from '../../globals/constants';
-import { commandPushByte } from './utils';
+import { CONSTANTS as C } from '../constants';
 import { Queue } from './queue';
 import { Bolt } from './bolt';
 import { ICmdMessage } from './interfaces';
@@ -24,10 +23,12 @@ export class Sensors {
   }
 
   activate () {
+
     this.on('onCompassNotify',   (angle: number) => {
       console.log(this.bolt.name, 'onCompassNotify',  angle);
       this.heading = angle;
     });
+    
     this.on('onWillSleepAsync',  (...args: any) => {
       console.log(this.bolt.name, 'onWillSleepAsync', args);
       this.bolt.actuators.wake();
@@ -37,9 +38,11 @@ export class Sensors {
         await this.bolt.actuators.setHeading(this.heading );
       })();
     } );
-    this.on('onSleepAsync',      (...args: any) => console.log(this.bolt.name, 'onSleepAsync',     args) );
-  }
+    this.on('onSleepAsync',    (...args: any) => console.log(this.bolt.name, 'onSleepAsync',     args) );
+    this.on('onCharging',      (...args: any) => console.log(this.bolt.name, 'onCharging',     args) );
+    this.on('onNotCharging',   (...args: any) => console.log(this.bolt.name, 'onNotCharging',     args) );
 
+  }
 
 	/* Put a command message on the queue */
 	queueMessage( message: ICmdMessage ){

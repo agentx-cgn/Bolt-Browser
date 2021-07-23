@@ -234,7 +234,7 @@ class SpheroBolt{
 	}
 
 	/* Rolls the Sphero */
-	roll(speed, heading, flags=[]){
+	roll(speed, heading, flags){
 		let commandInfo = {
 			deviceId: DeviceId.driving,
 			commandId: DrivingCommandIds.driveWithHeading,

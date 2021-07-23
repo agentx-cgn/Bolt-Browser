@@ -1,5 +1,5 @@
 
-import { CONSTANTS as C }  from '../../globals/constants';
+import { CONSTANTS as C }  from '../constants';
 import { Actuators } from './actuators';
 import { Sensors } from './sensors';
 import { Queue  } from './queue';
@@ -69,6 +69,17 @@ export class Bolt {
 
 	}
 
+  /* Put a command message on the queue */
+  queueMessage( message: ICmdMessage ){
+    this.queue.append({
+      name:    message.name,
+      bolt:    this,
+      command: this.createCommand(message),
+      charac:  this.characs.get(C.APIV2_CHARACTERISTIC), 
+    });
+  }
+
+
   async awake(){
 
 		await this.characs.get(C.ANTIDOS_CHARACTERISTIC).writeValue(C.useTheForce);
@@ -115,11 +126,32 @@ export class Bolt {
 
   }
 
+  getInfo (what: number) {
+    this.queueMessage({
+      name:      'getInfo', 
+      device:    C.DeviceId.systemInfo,
+      // command:   C.Cmds.systeminfo.mainApplicationVersion,
+      command:   what,
+      target:    0x12,
+      data:      []
+    });  
+  }
+
   action () {
     (async () => {
-      await this.actuators.setHeading(this.sensors.heading -180);
-      await wait(1000);
-      await this.actuators.setHeading(this.sensors.heading );
+
+      // ## read system info
+      this.getInfo(C.Cmds.systeminfo.mainApplicationVersion);
+
+      // ## overwrites single pixels
+      // this.actuators.setMatrixPixel(0, 0, 100, 80, 70);
+      // this.actuators.setMatrixPixel(1, 2, 100, 80, 70);
+
+      // ## rotates t0 absolute degrees
+      // await this.actuators.rotate(90);
+      // await wait(1000);
+      // await this.actuators.rotate(0);
+
     })()
   }
 

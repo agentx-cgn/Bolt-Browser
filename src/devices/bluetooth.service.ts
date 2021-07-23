@@ -1,16 +1,6 @@
 /// <reference types="web-bluetooth" />
 
-// import { 
-//   UUID_SPHERO_SERVICE,
-//   UUID_SPHERO_SERVICE_INITIALIZE,
-//   APIV2_CHARACTERISTIC,
-//   ANTIDOS_CHARACTERISTIC,
-//   DFU_CONTROL_CHARACTERISTIC,
-//   DFU_INFO_CHARACTERISTIC,
-//   SUBS_CHARACTERISTIC,
-// } from '../globals/constants';
-
-import { CONSTANTS as C } from '../globals/constants';
+import { CONSTANTS as C } from './constants';
 
 class bluetooth {
 

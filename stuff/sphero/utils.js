@@ -21,7 +21,7 @@ function decodeFlags(flags){
 	let resetsInactivityTimeout = flags & Flags.resetsInactivityTimeout;
 	let hasTargetId = flags & Flags.commandHasTargetId;
 	let hasSourceId = flags & Flags.commandHasSourceId;
-	return{
+	return {
 		isResponse,
 		requestsResponse,
 		requestOnlyErrorResponse,
@@ -31,7 +31,7 @@ function decodeFlags(flags){
 	}
 }
 
-const wait = (time) =>  {return new Promise(callback => setTimeout(callback, time))};
+const wait = (msecs) =>  {return new Promise(callback => setTimeout(callback, msecs))};
 
 const maskToRaw = (sensorMask) => {
 	return{

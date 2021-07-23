@@ -1,8 +1,8 @@
 
 import m from "mithril";
 
-import { CONSTANTS as C }  from '../../globals/constants';
-import { Bluetooth as BT }  from '../../services/bluetooth.service';
+import { CONSTANTS as C }  from '../constants';
+import { Bluetooth as BT }  from '../bluetooth.service';
 import { Bolt } from './bolt';
 
 class bolts {
