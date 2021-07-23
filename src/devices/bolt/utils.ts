@@ -234,3 +234,19 @@ export function  fillGyro (state: any) {
 	return { data, mask, offset, response	};
 
 }
+
+export function logDataView (labelOfDataSource: string, key: string, valueDataView: DataView) {
+
+	// https://googlechrome.github.io/samples/web-bluetooth/watch-advertisements.html
+
+  const hexString = [...new Uint8Array(valueDataView.buffer)].map(b => {
+    return b.toString(16).padStart(2, '0');
+  }).join(' ');
+
+  const textDecoder = new TextDecoder('ascii');
+  const asciiString = textDecoder.decode(valueDataView.buffer);
+
+  console.log(`  ${labelOfDataSource} Data: ` + key +
+      '\n    (Hex) ' + hexString +
+      '\n    (ASCII) ' + asciiString);
+};

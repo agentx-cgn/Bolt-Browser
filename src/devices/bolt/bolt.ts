@@ -1,10 +1,11 @@
+import m from "mithril";
 
 import { CONSTANTS as C }  from '../constants';
 import { Actuators } from './actuators';
 import { Sensors } from './sensors';
 import { Queue  } from './queue';
-import { commandPushByte, bufferToHex, wait } from './utils'
-import { ICmdMessage } from './interfaces'
+import { commandPushByte, bufferToHex, wait, logDataView } from './utils'
+import { IAction, ICmdMessage } from './interfaces'
 
 export class Bolt { 
 
@@ -21,7 +22,7 @@ export class Bolt {
   constructor (device: BluetoothDevice) {
     this.name      = device.name;
     this.device    = device;
-    this.queue     = new Queue();
+    this.queue     = new Queue(this);
     this.actuators = new Actuators(this);
     this.sensors   = new Sensors(this);
 	}
@@ -70,30 +71,58 @@ export class Bolt {
 	}
 
   /* Put a command message on the queue */
-  queueMessage( message: ICmdMessage ){
-    this.queue.append({
-      name:    message.name,
-      bolt:    this,
-      command: this.createCommand(message),
-      charac:  this.characs.get(C.APIV2_CHARACTERISTIC), 
+  async queueMessage( message: ICmdMessage ): Promise<any> {
+
+    return new Promise( (resolve, reject) => {
+
+      const action: IAction = {
+        name:         message.name,
+        bolt:         this,
+        command:      this.createCommand(message),
+        charac:       this.characs.get(C.APIV2_CHARACTERISTIC), 
+        acknowledged: false,
+        executed:     false,
+        onSuccess:    (command: any) => {
+          action.acknowledged = true;
+          resolve(command);
+          m.redraw();
+        },
+        onError:      ( error: string ) => {
+          console.log(error);
+          action.acknowledged = true;
+          reject(error);
+          m.redraw();
+        },
+      }
+
+      this.queue.append(action);
+
     });
+
   }
 
 
   async awake(){
 
-		await this.characs.get(C.ANTIDOS_CHARACTERISTIC).writeValue(C.useTheForce);
-		this.actuators.wake();	
+    await wait(1000);
 
-    this.sensors.configureCollisionDetection();
-		
-    // this.resetYaw();‚
-		this.actuators.resetLocator();	
-    this.actuators.setLedsColor(2, 4, 2);
+		await this.characs.get(C.ANTIDOS_CHARACTERISTIC).writeValue(C.useTheForce);
+    await wait(1000);
+		await this.actuators.wake();	
+    await wait(1000);
+		await this.actuators.setMatrixRandomColor();
+    await wait(1000);
+    await this.sensors.configureCollisionDetection();
+    await wait(1000);
+		await this.actuators.resetLocator();	
+    await wait(1000);
+    await this.actuators.setLedsColor(2, 4, 2);
+    await wait(1000);
+		await this.actuators.calibrateToNorth();
+    await wait(1000);
+		await this.actuators.printChar('K', 10, 40, 10);
+    
 		// this.actuators.setMatrixColor(r, g, b);
-		this.actuators.setMatrixRandomColor();
-		this.actuators.calibrateToNorth();
-		this.actuators.printChar('K', 10, 40, 10);
 
 	};
 
@@ -115,6 +144,23 @@ export class Bolt {
     console.log(this.name, 'onCharacteristicValueChanged', mesg.len, bufferToHex(buf));
   }
 
+  onAdvertisementreceived  (event: any) {
+
+    console.log('  Device Name: ' + event.device.name);
+    console.log('  Device ID: '   + event.device.id);
+    console.log('  RSSI: '        + event.rssi);
+    console.log('  TX Power: '    + event.txPower);
+    console.log('  UUIDs: '       + event.uuids);
+
+    event.manufacturerData.forEach((valueDataView: DataView, key: string) => {
+      logDataView('Manufacturer', key, valueDataView);
+    });
+    event.serviceData.forEach((valueDataView: DataView, key: string) => {
+      logDataView('Service', key, valueDataView);
+    });
+
+  }
+
   onGattServerDisconnected (event: any) {
 
     const tgt = event.currentTarget;
@@ -126,6 +172,7 @@ export class Bolt {
 
   }
 
+  // https://sdk.sphero.com/docs/sdk_documentation/system_info/
   getInfo (what: number) {
     this.queueMessage({
       name:      'getInfo', 

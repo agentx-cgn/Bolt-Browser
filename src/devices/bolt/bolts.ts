@@ -8,77 +8,73 @@ import { Bolt } from './bolt';
 class bolts {
 
   public map;
+  public find;
   private bolts: any = [];
   private callback: any;
   private bluetooth: any;
 
   constructor ( BT: any ) {
     this.bluetooth = BT;
-    this.map = Array.prototype.map.bind(this.bolts);
-    this.initialize();
+    this.map  = Array.prototype.map.bind(this.bolts);
+    this.find = Array.prototype.find.bind(this.bolts);
+    this.findBolts();
 	}
 
-  onUpdate ( callback: any ) {
-    this.callback = callback;
-  }
-
-  async initialize () {
-
+  async findBolts () {
     const devices = await this.bluetooth.find('SB-');
-
     for ( let device of devices ){			  
-
-      const bolt = new Bolt(device);
-      const success = await this.initDevice(bolt, device);
-
-      if (success) {
-        device.addEventListener('gattserverdisconnected', bolt.onGattServerDisconnected.bind(bolt));
-        await bolt.awake();
-        this.bolts.push(bolt);
-        m.redraw();
-        console.log('Bolts.initialized', device.name);
-      }
-
+      await this.initBolt(device);
+      await this.initBolt(device);
     }
-
+    m.redraw();
   }
 
-  async pair () {
-
+  public async pairBolt () {
     const device  = await this.bluetooth.pair('SB-');
+    await this.initBolt(device);
+    m.redraw();
+  }
+
+  private async initBolt(device: BluetoothDevice) {
+
     const bolt    = new Bolt(device);
-    const success = await this.initDevice(bolt, device);
+    const success = await this.initServices(bolt, device);
 
     if (success) {
       device.addEventListener('gattserverdisconnected', bolt.onGattServerDisconnected.bind(bolt));
+      // device.addEventListener('advertisementreceived',  bolt.onAdvertisementreceived.bind(bolt));
+      device.addEventListener('advertisementreceived',  (event) => console.log('advertisementreceived', event));
       await bolt.awake();
       this.bolts.push(bolt);
-      m.redraw();
     }
 
   }
 
-  remove (bolt:Bolt) {
+  public async disconnect (bolt?:Bolt) {
+
+    console.log('Disconnecting...', bolt.name);
+
+    if (bolt.device.gatt.connected) {
+      await bolt.device.gatt.disconnect();
+      this.remove(bolt);
+
+    } else {
+      console.log(bolt.name, 'is already disconnected');
+
+    }
+
+    m.redraw();
+
+  }
+
+  private remove (bolt:Bolt) {
     const index = this.bolts.indexOf(bolt);
     if (index > -1) {
       this.bolts.splice(index, 1);
     }
   }
 
-  async disconnect (bolt?:Bolt) {
-    console.log('Disconnecting...', bolt.name);
-    if (bolt.device.gatt.connected) {
-      await bolt.device.gatt.disconnect();
-      this.remove(bolt);
-    } else {
-      console.log(bolt.name, 'is already disconnected');
-    }
-    m.redraw();
-
-  }
-
-
-	async initDevice(bolt: Bolt, device: BluetoothDevice): Promise<boolean> {
+	async initServices(bolt: Bolt, device: BluetoothDevice): Promise<boolean> {
 
     try {
 
@@ -88,6 +84,7 @@ class bolts {
       for ( let service of services ){
 
         if (service.uuid === C.UUID_SPHERO_SERVICE) {
+          console.log('UUID_SPHERO_SERVICE');
           let characteristics: BluetoothRemoteGATTCharacteristic[] = await service.getCharacteristics();
           for ( let charac of characteristics){
             if ( charac.uuid === C.APIV2_CHARACTERISTIC ){
@@ -96,6 +93,7 @@ class bolts {
           }
 
         } else if (service.uuid === C.UUID_SPHERO_SERVICE_INITIALIZE) {
+          console.log('UUID_SPHERO_SERVICE_INITIALIZE');
           let characteristics = await service.getCharacteristics();
           for (let charac of characteristics) {
             if (charac.uuid === C.ANTIDOS_CHARACTERISTIC     || 
@@ -114,7 +112,7 @@ class bolts {
       return true;
 
     } catch (err) {
-      console.log('Bolts.initDevice', device.name, err);
+      console.log('Bolts.initServices', device.name, err);
       return false;
     
 	  }
@@ -133,9 +131,6 @@ class bolts {
 
   }
 
-  find(name: string) {
-    return this.bolts.find( (bolt: Bolt) => bolt.name === name);
-  }
 
 }
 

@@ -9,7 +9,11 @@ export interface IAction {
   name:    string,
   bolt:    Bolt,
   command: number[],
-  charac:  BluetoothRemoteGATTCharacteristic, 
+  charac:  BluetoothRemoteGATTCharacteristic,
+  acknowledged: boolean,
+  executed: boolean,
+  onSuccess: any,
+  onError:  any,
 }
 export interface ICmdMessage {
   name:    string,

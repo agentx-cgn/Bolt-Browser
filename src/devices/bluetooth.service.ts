@@ -12,7 +12,7 @@ class bluetooth {
 			this.devices.forEach( device => {
 				console.log('Disconnecting...', device.name);
 				if (device.gatt.connected) {
-					device.gatt.disconnect();
+					// device.gatt.disconnect();
 				} else {
 					console.log(device.name, 'is already disconnected');
 				}
@@ -21,18 +21,27 @@ class bluetooth {
 			console.log(' - - - BYE - - - ', '\n');
 
 		});
+
 		document.addEventListener('visibilitychange', function logData() {
 			if (document.visibilityState === 'hidden') {
 				// console.log("visibilityState === 'hidden'");
 			}
 		});
 
+		if ('onavailabilitychanged' in navigator.bluetooth) {
+			navigator.bluetooth.addEventListener('availabilitychanged', function(event: any) {
+				console.log(`> Bluetooth is ${event.value ? 'available' : 'unavailable'}`);
+			});
+		}
+
 		this.find('SB-');
 
 	}
 
-	isAvailable () {
-		return !!navigator.bluetooth;
+	public async isAvailable () {
+		return navigator.bluetooth.getAvailability()
+			.then(availability => availability)
+		;
 	}
 
 	async find (namePrefix:string) {

@@ -44,15 +44,17 @@ export class Sensors {
 
   }
 
-	/* Put a command message on the queue */
-	queueMessage( message: ICmdMessage ){
-		this.queue.append({
-      name:    message.name,
-      bolt:    this.bolt,
-      command: this.bolt.createCommand(message),
-      charac:  this.bolt.characs.get(C.APIV2_CHARACTERISTIC), 
-    });
-	}
+	// /* Put a command message on the queue */
+	// queueMessage( message: ICmdMessage ){
+	// 	this.queue.append({
+  //     name:    message.name,
+  //     bolt:    this.bolt,
+  //     command: this.bolt.createCommand(message),
+  //     charac:  this.bolt.characs.get(C.APIV2_CHARACTERISTIC),
+	// 		acknowledged: false,
+	// 		executed: false,
+  //   });
+	// }
 
   getCharacteristicValueParser () {
 
@@ -161,8 +163,8 @@ export class Sensors {
 	}
 
   /* Enables collision detection */
-  configureCollisionDetection( xThreshold = 100, yThreshold = 100, xSpeed = 100, ySpeed = 100, deadTime = 10, method = 0x01) {
-    this.queueMessage({
+  async configureCollisionDetection( xThreshold = 100, yThreshold = 100, xSpeed = 100, ySpeed = 100, deadTime = 10, method = 0x01) {
+    return this.bolt.queueMessage({
       name:     'configureCollisionDetection',
       device:   C.DeviceId.sensor,
       command:  C.Cmds.sensor.configureCollision, // SensorCommandIds.configureCollision,
@@ -191,8 +193,8 @@ export class Sensors {
 	}
 
 	/* Sends sensors mask to Sphero (acceleremoter, orientation and locator) */
-	sensorMask(rawValue: number, interval: number){
-		this.queueMessage({
+	async sensorMask(rawValue: number, interval: number){
+		return this.bolt.queueMessage({
       name:    'sensorMask',
 			device:  C.DeviceId.sensor,
 			command: C.Cmds.sensor.sensorMask, // SensorCommandIds.sensorMask,
@@ -208,9 +210,10 @@ export class Sensors {
 			],
 		});
 	}
+
 	/* Sends sensors mask to Sphero (gyroscope) */
-	sensorMaskExtended(rawValue: any){
-		this.queueMessage({ 
+	async sensorMaskExtended(rawValue: any){
+		return this.bolt.queueMessage({ 
       name:     'sensorMaskExtended',
 			device:   C.DeviceId.sensor,
 			command:  C.Cmds.sensor.sensorMaskExtented, // SensorCommandIds.sensorMaskExtented,
@@ -223,6 +226,8 @@ export class Sensors {
 			],
 		});
 	}
+
+	
 
 	/* If the packet is a notification , calls the right handler, else print the command status*/
 	readCommand(command: any){
@@ -258,6 +263,7 @@ export class Sensors {
 			}
 
 		} else {
+			this.bolt.queue.notify(command);
 			this.printCommandStatus(command);	
 
 		}
