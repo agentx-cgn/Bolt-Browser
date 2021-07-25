@@ -25,7 +25,7 @@ export class Queue {
   }
   
   findNextAction () {
-    return this.find( (action: IAction) => !action.acknowledged );
+    return this.find( (action: IAction) => !action.acknowledged && !action.executed);
   }
 
   append (action: IAction) {
@@ -56,14 +56,14 @@ export class Queue {
   }
 
   /*  Write a command on a specific characteristic */
-  async write ( action: IAction, callback:any ) {
+  async write ( action: IAction, callback: any ) {
 
     try {
       await action.charac.writeValue(new Uint8Array(action.command));
-      console.log(action.bolt.name, action.name, action.id, action.command.join(' '));
+      // console.log('write.ok', action.bolt.name, action.name, action.id, action.command.join(' '));
 
     } catch(error) { 
-      console.log(error.message);	
+      console.log('write.ok', error.message);	
     
     } finally {
       callback && callback(action);
@@ -78,7 +78,7 @@ export class Queue {
     const action: IAction = this.find( (action: IAction) => action.id === command.seqNumber );
 
 		switch(command.data[0]){
-      
+
 			case C.Errors.success:
         action.onSuccess()
       break;

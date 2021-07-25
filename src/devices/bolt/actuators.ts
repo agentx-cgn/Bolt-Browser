@@ -33,28 +33,39 @@ export class Actuators {
 
   // - - - - - ACTUATORS - - - - //
   
-  /* Waking up Sphero */
-  async wake () {
-    return this.bolt.queueMessage({
-      name:      'wake',
-      device:    C.DeviceId.powerInfo,
-      command:   C.Cmds.power.wake, // PowerCommandIds.wake,
-      data:      [] as any[],
-    });
-  }
+  /* Waking up Bolt */
+  async wake () { return this.bolt.queueMessage({
+    name:      'wake',
+    device:    C.DeviceId.powerInfo,
+    command:   C.Cmds.power.wake, // PowerCommandIds.wake,
+    target:    0x11,
+    data:      [] as any[],
+  });}
+
+  /* Pause Bolt */
+  async sleep () { return this.bolt.queueMessage({
+    name:      'sleep',
+    device:    C.DeviceId.powerInfo,
+    command:   C.Cmds.power.sleep, // .wake, // PowerCommandIds.wake,
+    data:      [] as any[],
+  });}
+
+
+	/* Enables collision detection */
+	async configureCollisionDetection(xThreshold = 100, yThreshold = 100, xSpeed = 100, ySpeed = 100, deadTime = 10, method = 0x01) {
+		return this.bolt.queueMessage({
+			name: 'configureCollisionDetection',
+			device: C.DeviceId.sensor,
+			command: C.Cmds.sensor.configureCollision, // SensorCommandIds.configureCollision,
+			target: 0x12,
+			data: [method, xThreshold, xSpeed, yThreshold, ySpeed, deadTime]
+		});
+
+	}
 
 
   // - - - - - COMPASS
 
-  /* Sets Sphero heading */
-  async rotate (degrees: number){
-    // if (heading < 0 ){
-    //   heading += 360 ;
-    // }
-    this.roll(0, degrees, [] as any);
-    await wait(100);
-    // this.resetYaw();
-  }
 
   /* Resets the locator */
   async resetLocator () {
@@ -94,13 +105,38 @@ export class Actuators {
     return this.setMatrixColor(r, g, b);
   }      
 
+  async setMatrixImage(br: number, bg: number, bb: number, r: number, g: number, b: number, image: number[][]) {
+    await this.setMatrixColor(br, bg, bb);
+    let x: number, y: number;
+    for (x=0; x<8; x++){
+      for (y=0; y<8; y++){
+        if(image[x][y]) {
+          await this.setMatrixPixel (x, y, r, g, b);
+        }
+      }
+    }
+  }
 
-  async setLedsColor(r: number, g: number, b: number){
+  // no error, no effect, just blinks
+  async rotateMatrix(rotation: number) {
+    return this.bolt.queueMessage({
+      name:      'rotateMatrix',
+      device:    C.DeviceId.userIO,
+      command:   C.Cmds.io.matrixRotation,
+      target:    0x12,
+      data:      [rotation],
+    });  
+  }
+
+
+  async setLedsColor(fr: number, fg: number, fb: number, br?: number, bg?: number, bb?: number){
+    const hasBackColor = br !== undefined && bg !== undefined && bg !== undefined; 
+    const data = hasBackColor ? [0x3f, fr, fg, fb, br, bg, bb] : [0x3f, fr, fg, fb, fr, fg, fb];
     return this.bolt.queueMessage({
       name:      'setLedsColor',
       device:    C.DeviceId.userIO,
       command:   C.Cmds.io.allLEDs,
-      data:      [0x3f, r, g, b, r, g, b],
+      data,
     });  
   }  
 
@@ -113,6 +149,16 @@ export class Actuators {
       data:      [r, g, b], 
     });  
   }  
+
+  // async setMatrixFill(intensity: number, b: number){
+  //   return this.bolt.queueMessage({
+  //     name:      'setMatrixColor',
+  //     device:    C.DeviceId.userIO,
+  //     command:   C.Cmds.io.matrixColor, // UserIOCommandIds.matrixColor,
+  //     target:    0x12,
+  //     data:      [r, g, b], 
+  //   });  
+  // }  
 
   /* Prints a char on the LED matrix  */
   async printChar(char: string, r: number, g: number, b: number){
@@ -149,7 +195,7 @@ export class Actuators {
     // this.resetYaw();
   }  
   
-  // Sets the current orientation as orientation 0°
+  // Sets the current orientation as orientation 0°ho
   // Sets current yaw angle to zero. (ie current direction is now considered 'forward'.)
   async resetYaw () {
     this.heading = 0;
@@ -175,6 +221,16 @@ export class Actuators {
     this.heading = heading;
   
   }  
+
+
+  /* Sets Sphero heading */
+  async rotate (degrees: number){
+    // if (heading < 0 ){
+    //   heading += 360 ;
+    // }
+    await this.roll(0, degrees, [] as any);
+    // this.resetYaw();
+  }
 
   /* Rolls the Sphero */
   async stabilize(index: number){

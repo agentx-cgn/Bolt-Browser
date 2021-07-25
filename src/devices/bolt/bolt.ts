@@ -10,11 +10,16 @@ import { IAction, ICmdMessage } from './interfaces'
 export class Bolt { 
 
   public name:       string;
-  public queue:      Queue;
+
   public device:     BluetoothDevice;
+  public queue:      Queue;
   public actuators:  Actuators;
   public sensors:    Sensors;
-  private counter:   number = 0;
+  
+  public keepAwake:   boolean = false;
+
+  private counter:     number = 0;
+
   
   public characs = new Map();
   private connected: boolean;
@@ -104,74 +109,59 @@ export class Bolt {
 
   async awake(){
 
-    await wait(1000);
+    // await wait(1000);
 
 		await this.characs.get(C.ANTIDOS_CHARACTERISTIC).writeValue(C.useTheForce);
-    await wait(1000);
-		await this.actuators.wake();	
-    await wait(1000);
-		await this.actuators.setMatrixRandomColor();
-    await wait(1000);
-    await this.sensors.configureCollisionDetection();
-    await wait(1000);
-		await this.actuators.resetLocator();	
-    await wait(1000);
-    await this.actuators.setLedsColor(2, 4, 2);
-    await wait(1000);
-		await this.actuators.calibrateToNorth();
-    await wait(1000);
-		await this.actuators.printChar('K', 10, 40, 10);
-    
-		// this.actuators.setMatrixColor(r, g, b);
+    // await wait(1000);
 
+		await this.actuators.wake();	
+    await this.actuators.setLedsColor(20, 0, 0, 10, 10, 10);
+		// await this.actuators.setMatrixRandomColor();
+		await this.actuators.setMatrixColor(10, 10, 10);
+    await wait(1000);
+
+    // await this.actuators.configureCollisionDetection();
+    // await wait(1000);
+		// await this.actuators.resetLocator();	
+    // await wait(1000);
+    // await wait(1000);
+
+		await this.actuators.calibrateToNorth();
+    await wait(2000);
+    
+    await this.actuators.rotate(90);
+    await wait(100);
+    await this.actuators.rotate(0);
+    await wait(100);
+
+    await this.actuators.setMatrixColor(100, 100, 100);
+    await wait(100);
+		await this.actuators.printChar('#', 10, 40, 10);
+    
 	};
 
   async shake () {
     this.actuators.roll(1, this.sensors.heading, 0);
   }
-
-  onCharacteristicValueChanged (event: any) {
-
-    const tgt  = event.currentTarget;
-    const val: DataView  = event.target.value;
-    const buf: ArrayBuffer = val.buffer;
-    const mesg = {
-      uuid:  tgt.uuid,
-      len:   event.target.value.byteLength,
-      value: JSON.stringify(tgt.value),
-    }
-    // console.log(this.name, 'onCharacteristicValueChanged', tgt.uuid, mesg.len, JSON.stringify(tgt.value));
-    console.log(this.name, 'onCharacteristicValueChanged', mesg.len, bufferToHex(buf));
-  }
-
-  onAdvertisementreceived  (event: any) {
-
+  
+  onAdvertisementReceived  (event: any) {
+    
     console.log('  Device Name: ' + event.device.name);
     console.log('  Device ID: '   + event.device.id);
     console.log('  RSSI: '        + event.rssi);
     console.log('  TX Power: '    + event.txPower);
     console.log('  UUIDs: '       + event.uuids);
-
+    
     event.manufacturerData.forEach((valueDataView: DataView, key: string) => {
       logDataView('Manufacturer', key, valueDataView);
     });
     event.serviceData.forEach((valueDataView: DataView, key: string) => {
       logDataView('Service', key, valueDataView);
     });
-
+    
   }
 
-  onGattServerDisconnected (event: any) {
-
-    const tgt = event.currentTarget;
-    const mesg = {
-      uuid:  tgt.uuid,
-      value: JSON.stringify(tgt.value),
-    }
-    console.log(this.name, 'onGattServerDisconnected', tgt.name);
-
-  }
-
+  
   // https://sdk.sphero.com/docs/sdk_documentation/system_info/
   getInfo (what: number) {
     this.queueMessage({
@@ -183,23 +173,52 @@ export class Bolt {
       data:      []
     });  
   }
-
+  
   action () {
     (async () => {
 
-      // ## read system info
-      this.getInfo(C.Cmds.systeminfo.mainApplicationVersion);
+      const image = [
+        [1,0,0,0,0,0,0,0],
+        [0,1,0,0,0,0,0,0],
+        [0,0,1,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0],
+      ]
 
-      // ## overwrites single pixels
-      // this.actuators.setMatrixPixel(0, 0, 100, 80, 70);
-      // this.actuators.setMatrixPixel(1, 2, 100, 80, 70);
+      this.actuators.setMatrixImage(0, 0, 40, 200, 0, 0, image);
+      await wait(1000);
 
-      // ## rotates t0 absolute degrees
-      // await this.actuators.rotate(90);
-      // await wait(1000);
-      // await this.actuators.rotate(0);
+      this.actuators.rotateMatrix(C.FrameRotation.deg180);
+      
+    })();
+  }
+    
+  onGattServerDisconnected (event: any) {
+    
+    const tgt = event.currentTarget;
+    const mesg = {
+      uuid:  tgt.uuid,
+      value: JSON.stringify(tgt.value),
+    }
+    console.log(this.name, 'onGattServerDisconnected', tgt.name);
+    
+  }
 
-    })()
+  onCharacteristicValueChanged (event: any) {
+    
+    const tgt  = event.currentTarget;
+    const val: DataView  = event.target.value;
+    const buf: ArrayBuffer = val.buffer;
+    const mesg = {
+      uuid:  tgt.uuid,
+      len:   event.target.value.byteLength,
+      value: JSON.stringify(tgt.value),
+    }
+    // console.log(this.name, 'onCharacteristicValueChanged', tgt.uuid, mesg.len, JSON.stringify(tgt.value));
+    console.log(this.name, 'onCharacteristicValueChanged', mesg.len, bufferToHex(buf));
   }
 
 }

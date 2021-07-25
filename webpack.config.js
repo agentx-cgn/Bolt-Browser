@@ -11,9 +11,8 @@ module.exports = {
   devServer: {
     contentBase: './dist',
     https: {
-      key:  fs.readFileSync('../Certificates/localhost.mac.key.pem'),
-      cert: fs.readFileSync('../Certificates/localhost.mac.cert.pem'),
-      ca:   fs.readFileSync('../Certificates/localhost.mac.cert.p12')
+      key:  fs.readFileSync('../Certificates/macos/private.key'),
+      cert: fs.readFileSync('../Certificates/macos/private.crt'),
   }
   },
   plugins: [

@@ -18,12 +18,25 @@ class bolts {
     this.map  = Array.prototype.map.bind(this.bolts);
     this.find = Array.prototype.find.bind(this.bolts);
     this.findBolts();
+
+    window.addEventListener("unload", (event) => { 
+			this.bolts.forEach( (bolt: Bolt) => {
+				console.log('Disconnecting...', bolt.name);
+				if (bolt.device.gatt.connected) {
+          // bolt.actuators.sleep();
+				} else {
+					console.log(bolt.name, 'is already disconnected');
+				}
+			})
+			// this.devices = [];
+			console.log(' - - - BYE - - - ', '\n');
+
+		});
 	}
 
   async findBolts () {
     const devices = await this.bluetooth.find('SB-');
     for ( let device of devices ){			  
-      await this.initBolt(device);
       await this.initBolt(device);
     }
     m.redraw();
@@ -42,7 +55,7 @@ class bolts {
 
     if (success) {
       device.addEventListener('gattserverdisconnected', bolt.onGattServerDisconnected.bind(bolt));
-      // device.addEventListener('advertisementreceived',  bolt.onAdvertisementreceived.bind(bolt));
+      // device.addEventListener('advertisementreceived',  bolt.onAdvertisementReceived.bind(bolt));
       device.addEventListener('advertisementreceived',  (event) => console.log('advertisementreceived', event));
       await bolt.awake();
       this.bolts.push(bolt);
@@ -80,6 +93,8 @@ class bolts {
 
       const server: BluetoothRemoteGATTServer      = await device.gatt.connect();
       const services: BluetoothRemoteGATTService[] = await server.getPrimaryServices();
+
+      console.log(device.name, 'watchingAdvertisements', device.watchingAdvertisements);
 
       for ( let service of services ){
 

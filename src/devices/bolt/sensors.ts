@@ -3,144 +3,141 @@
 import { CONSTANTS as C } from '../constants';
 import { Queue } from './queue';
 import { Bolt } from './bolt';
-import { ICmdMessage } from './interfaces';
-import { decodeFlags, maskToRaw, parseSensorResponse,flatSensorMask, wait } from './utils';
+import { ICommand } from './interfaces';
+import { decodeFlags, maskToRaw, parseSensorResponse, flatSensorMask, wait } from './utils';
 
 let counter: number = 0;
 
 export class Sensors {
 
-  private queue: Queue;
-  public heading: number;
-  private bolt: Bolt;
-  private listeners: any = [];
-  private rawMask: any;
+	private queue: Queue;
+	public heading: number;
+	private bolt: Bolt;
+	private listeners: any = [];
+	private rawMask: any;
 
-  constructor (bolt: Bolt) {
-    this.bolt  = bolt;
-    this.queue = bolt.queue;
-    this.activate();
-  }
+	constructor(bolt: Bolt) {
+		this.bolt = bolt;
+		this.queue = bolt.queue;
+		this.activate();
+	}
 
-  activate () {
+	activate() {
 
-    this.on('onCompassNotify',   (angle: number) => {
-      console.log(this.bolt.name, 'onCompassNotify',  angle);
-      this.heading = angle;
-    });
-    
-    this.on('onWillSleepAsync',  (...args: any) => {
-      console.log(this.bolt.name, 'onWillSleepAsync', args);
-      this.bolt.actuators.wake();
-      (async () => {
-        await this.bolt.actuators.setHeading(this.heading -180);
-        await wait(1000);
-        await this.bolt.actuators.setHeading(this.heading );
-      })();
-    } );
-    this.on('onSleepAsync',    (...args: any) => console.log(this.bolt.name, 'onSleepAsync',     args) );
-    this.on('onCharging',      (...args: any) => console.log(this.bolt.name, 'onCharging',     args) );
-    this.on('onNotCharging',   (...args: any) => console.log(this.bolt.name, 'onNotCharging',     args) );
+		this.on('onCompassNotify', (angle: number) => {
+			console.log(this.bolt.name, 'onCompassNotify', angle);
+			this.heading = angle;
+		});
 
-  }
+		this.on('onWillSleepAsync', (...args: any) => {
+			console.log(this.bolt.name, 'onWillSleepAsync', args);
+			if (!this.bolt.keepAwake) {
+				this.bolt.actuators.wake();
+				(async () => {
+					await this.bolt.actuators.setHeading(this.heading - 180);
+					await wait(1000);
+					await this.bolt.actuators.setHeading(this.heading);
+				})();
+			}
+		});
 
-	// /* Put a command message on the queue */
-	// queueMessage( message: ICmdMessage ){
-	// 	this.queue.append({
-  //     name:    message.name,
-  //     bolt:    this.bolt,
-  //     command: this.bolt.createCommand(message),
-  //     charac:  this.bolt.characs.get(C.APIV2_CHARACTERISTIC),
-	// 		acknowledged: false,
-	// 		executed: false,
-  //   });
-	// }
+		this.on('onSleepAsync', (...args: any) => console.log(this.bolt.name, 'onSleepAsync', args));
+		this.on('onCharging', (...args: any) => console.log(this.bolt.name, 'onCharging', args));
+		this.on('onNotCharging', (...args: any) => console.log(this.bolt.name, 'onNotCharging', args));
 
-  getCharacteristicValueParser () {
+	}
 
-    let self = this, i, packet: any[], sum: number, escaped: boolean;
+	getCharacteristicValueParser() {
 
-    function init () {
-      packet  = [];
-      sum     = 0;
-      escaped = false;
-    }
+		let self = this, i, packet: any[], sum: number, escaped: boolean;
 
-    return function onCharacteristicValueChanged ( event:any ) {
+		const decodePacket       = this.decodePacket.bind(this);
+		const interpreteCommand  = this.interpreteCommand.bind(this);
 
-      let len = event.target.value.byteLength;
+		function init() {
+			packet = [];
+			sum = 0;
+			escaped = false;
+		}
 
-      for ( i=0; i<len; i++ ) {
+		return function onCharacteristicValueChanged(event: any) {
 
-        let value = event.target.value.getUint8(i);
-  
-        switch (value) {
+			let len = event.target.value.byteLength;
 
-          case C.APIConstants.startOfPacket:
-            if (packet === undefined || packet.length != 0 ) { init(); }
-            packet.push(value);
-          break;
+			for (i = 0; i < len; i++) {
 
-          case C.APIConstants.endOfPacket:
-            sum -= packet[packet.length - 1];
-            if (packet.length < 6 ) {
-              console.log('Packet is too small');
-              init();
-              break; 
-            }
-            if ( packet[packet.length - 1] !== (~(sum) & 0xff )) {
-              console.log('Bad checksum');
-              init();
-              break;
-            }
-            packet.push(value);
-            this.decode(packet);
-            init();
-          break;
-          
-          case C.APIConstants.escape:
-            escaped = true;
-          break;
-          
-          case C.APIConstants.escapedEscape:
-          case C.APIConstants.escapedStartOfPacket:
-          case C.APIConstants.escapedEndOfPacket:
-            if ( escaped ) {
-                value   = value | C.APIConstants.escapeMask;
-                escaped = false;
-            }	
-            packet.push(value);
-            sum += value;
-          break;
-            
-          default: 
-            if ( escaped ){ console.log('No escaped char...'); }
-            else {
-              packet.push(value);
-              sum += value;
-            }
-        }
+				let value = event.target.value.getUint8(i);
 
-      }
+				switch (value) {
 
-    }.bind(self);
+					case C.APIConstants.startOfPacket:
+						if (packet === undefined || packet.length != 0) { init(); }
+						packet.push(value);
+						break;
 
-  }
-  
-  /* Packet decoder */
-	decode(packet: any) {
+					case C.APIConstants.endOfPacket:
+						sum -= packet[packet.length - 1];
+						if (packet.length < 6) {
+							console.log('Packet is too small');
+							init();
+							break;
+						}
+						if (packet[packet.length - 1] !== (~(sum) & 0xff)) {
+							console.log('Bad checksum');
+							init();
+							break;
+						}
+						packet.push(value);
 
-		let command = {} as any;
+						const command = decodePacket(packet);
+						this.interpreteCommand(command);
+						init();
+
+					break;
+
+					case C.APIConstants.escape:
+						escaped = true;
+						break;
+
+					case C.APIConstants.escapedEscape:
+					case C.APIConstants.escapedStartOfPacket:
+					case C.APIConstants.escapedEndOfPacket:
+						if (escaped) {
+							value = value | C.APIConstants.escapeMask;
+							escaped = false;
+						}
+						packet.push(value);
+						sum += value;
+						break;
+
+					default:
+						if (escaped) { console.log('No escaped char...'); }
+						else {
+							packet.push(value);
+							sum += value;
+						}
+				}
+
+			}
+
+		}.bind(self);
+
+	}
+
+	/* Incoming Packet decoder */
+	decodePacket(packet: any) {
+
+		let command = {} as ICommand;
 
 		command.packet = [...packet];
 		command.startOfPacket = packet.shift();
 		command.flags = decodeFlags(packet.shift());
 
-		if (command.flags.hasTargetId){
+		if (command.flags.hasTargetId) {
 			command.targetId = packet.shift();
-		}	
+		}
 
-		if (command.flags.hasSourceId){
+		if (command.flags.hasSourceId) {
 			command.sourceId = packet.shift();
 		}
 
@@ -150,215 +147,228 @@ export class Sensors {
 
 		command.data = [];
 
-		let dataLen = packet.length-2;
-		for ( let i = 0 ; i < dataLen ; i++){
+		let dataLen = packet.length - 2;
+		for (let i = 0; i < dataLen; i++) {
 			command.data.push(packet.shift());
 		}
 
 		command.checksum = packet.shift();
 		command.endOfPacket = packet.shift();
 
-		this.readCommand(command);
+		// this.interpreteCommand(command);
+		return command;
 
 	}
 
-  /* Enables collision detection */
-  async configureCollisionDetection( xThreshold = 100, yThreshold = 100, xSpeed = 100, ySpeed = 100, deadTime = 10, method = 0x01) {
-    return this.bolt.queueMessage({
-      name:     'configureCollisionDetection',
-      device:   C.DeviceId.sensor,
-      command:  C.Cmds.sensor.configureCollision, // SensorCommandIds.configureCollision,
-      target:   0x12,
-      data:     [ method, xThreshold, xSpeed, yThreshold, ySpeed, deadTime ]
-    });
-
-  }
-
 	/* Enables sensor data streaming */
-	configureSensorStream () {
+	configureSensorStream() {
 
 		var mask = [
-      C.SensorMaskValues.accelerometer,
-      C.SensorMaskValues.orientation,
-      C.SensorMaskValues.locator,
-      C.SensorMaskValues.gyro,
+			C.SensorMaskValues.accelerometer,
+			C.SensorMaskValues.orientation,
+			C.SensorMaskValues.locator,
+			C.SensorMaskValues.gyro,
 		];
 
-		let interval = 100; 
+		let interval = 100;
 
-		this.rawMask = maskToRaw(mask); 
-		this.sensorMask(flatSensorMask(this.rawMask.aol), interval); 
+		this.rawMask = maskToRaw(mask);
+		this.sensorMask(flatSensorMask(this.rawMask.aol), interval);
 		this.sensorMaskExtended(flatSensorMask(this.rawMask.gyro));
 
 	}
 
 	/* Sends sensors mask to Sphero (acceleremoter, orientation and locator) */
-	async sensorMask(rawValue: number, interval: number){
+	async sensorMask(rawValue: number, interval: number) {
 		return this.bolt.queueMessage({
-      name:    'sensorMask',
-			device:  C.DeviceId.sensor,
+			name: 'sensorMask',
+			device: C.DeviceId.sensor,
 			command: C.Cmds.sensor.sensorMask, // SensorCommandIds.sensorMask,
-			target:  0x12,
-			data:      [ (
-        interval >> 8) & 0xff, 
-				interval & 0xff,
-				0,	
-				(rawValue >> 24) & 0xff,
-				(rawValue >> 16) & 0xff,
-				(rawValue >> 8)  & 0xff,
-				rawValue & 0xff,
+			target: 0x12,
+			data: [(
+				interval >> 8) & 0xff,
+			interval & 0xff,
+				0,
+			(rawValue >> 24) & 0xff,
+			(rawValue >> 16) & 0xff,
+			(rawValue >> 8) & 0xff,
+			rawValue & 0xff,
 			],
 		});
 	}
 
 	/* Sends sensors mask to Sphero (gyroscope) */
-	async sensorMaskExtended(rawValue: any){
-		return this.bolt.queueMessage({ 
-      name:     'sensorMaskExtended',
-			device:   C.DeviceId.sensor,
-			command:  C.Cmds.sensor.sensorMaskExtented, // SensorCommandIds.sensorMaskExtented,
-			target:   0x12,
-			data: [ 
-        (rawValue >> 24) & 0xff,
+	async sensorMaskExtended(rawValue: any) {
+		return this.bolt.queueMessage({
+			name: 'sensorMaskExtended',
+			device: C.DeviceId.sensor,
+			command: C.Cmds.sensor.sensorMaskExtented, // SensorCommandIds.sensorMaskExtented,
+			target: 0x12,
+			data: [
+				(rawValue >> 24) & 0xff,
 				(rawValue >> 16) & 0xff,
-				(rawValue >>  8) & 0xff,
-				 rawValue & 0xff,
+				(rawValue >> 8) & 0xff,
+				rawValue & 0xff,
 			],
 		});
 	}
 
-	
 
 	/* If the packet is a notification , calls the right handler, else print the command status*/
-	readCommand(command: any){
+	interpreteCommand(command: ICommand) {
 
-		if ( command.seqNumber === 255){
-			if ( command.deviceId === C.DeviceId.powerInfo && command.commandId === C.Cmds.power.batteryStateChange){ // PowerCommandIds.batteryStateChange){
-				switch(command.data[0]){
-					case C.BatteryState.charging:
-						this.handleCharging(command);
-						break;
-					case C.BatteryState.notCharging:
-						this.handleNotCharging(command);
-						break;
-					case C.BatteryState.charged:
-						this.handleCharged(command)
-						break;
-					default:
-						console.log('Unknown battery state');
-				}
-			
-      }	else if (command.deviceId === C.DeviceId.powerInfo && command.commandId === C.Cmds.power.willSleepAsync){ // PowerCommandIds.willSleepAsync){
-        this.handleWillSleepAsync(command);
-      } else if (command.deviceId === C.DeviceId.powerInfo && command.commandId === C.Cmds.power.sleepAsync) { // PowerCommandIds.sleepAsync ){
-        this.handleSleepAsync(command);
-      } else if (command.deviceId === C.DeviceId.sensor && command.commandId === C.Cmds.sensor.collisionDetectedAsync){ // SensorCommandIds.collisionDetectedAsync) {
-       	this.handleCollision(command);
-     	}	else if (command.deviceId === C.DeviceId.sensor && command.commandId === C.Cmds.sensor.sensorResponse) { // SensorCommandIds.sensorResponse){
-        this.handleSensorUpdate(command);
-    	}	else if (command.deviceId === C.DeviceId.sensor && command.commandId === C.Cmds.sensor.compassNotify) { // SensorCommandIds.compassNotify){
-       	this.handleCompassNotify(command);
-      } else {
-				console.log('UNKNOWN EVENT '+ command.packet);
-			}
+		if (command.seqNumber === 255) {
+			this.handleNotification(command)
 
 		} else {
 			this.bolt.queue.notify(command);
-			this.printCommandStatus(command);	
+			this.printCommandStatus(command);
+
+		}
+
+	}
+	
+	
+
+/*-------------------------------------------------------------------------------
+								EVENT HANDLERS 
+-------------------------------------------------------------------------------*/
+
+	handleNotification (command: ICommand) {
+
+		if (command.deviceId === C.DeviceId.powerInfo && command.commandId === C.Cmds.power.batteryStateChange) { // PowerCommandIds.batteryStateChange){
+			switch (command.data[0]) {
+				case C.BatteryState.charging:
+					this.handleCharging(command);
+					break;
+				case C.BatteryState.notCharging:
+					this.handleNotCharging(command);
+					break;
+				case C.BatteryState.charged:
+					this.handleCharged(command)
+					break;
+				default:
+					console.log('Unknown battery state');
+			}
+
+		} else if (command.deviceId === C.DeviceId.powerInfo && command.commandId === C.Cmds.power.willSleepAsync) { // PowerCommandIds.willSleepAsync){
+			this.handleWillSleepAsync(command);
+		} else if (command.deviceId === C.DeviceId.powerInfo && command.commandId === C.Cmds.power.sleepAsync) { // PowerCommandIds.sleepAsync ){
+			this.handleSleepAsync(command);
+
+		} else if (command.deviceId === C.DeviceId.powerInfo && command.commandId === C.Cmds.sensor.configureCollision) { 
+			console.log('EVENT', 'powerInfo', 'configureCollision', command.data);
+
+		} else if (command.deviceId === C.DeviceId.sensor && command.commandId === C.Cmds.sensor.collisionDetectedAsync) { // SensorCommandIds.collisionDetectedAsync) {
+			this.handleCollision(command);
+		} else if (command.deviceId === C.DeviceId.sensor && command.commandId === C.Cmds.sensor.sensorResponse) { // SensorCommandIds.sensorResponse){
+			this.handleSensorUpdate(command);
+		} else if (command.deviceId === C.DeviceId.sensor && command.commandId === C.Cmds.sensor.compassNotify) { // SensorCommandIds.compassNotify){
+			this.handleCompassNotify(command);
+
+		} else {
+			console.log('UNKNOWN EVENT ', command);
+			console.log('UNKNOWN EVENT ', command.packet);
+			this.printCommandStatus(command)
+
+			// after wake : UNKNOWN EVENT 141,40,1,19,17,255,179,216
+
 
 		}
 
 	}
 
-	on(eventName: any, handler: any){
+	on(eventName: any, handler: any) {
 		this.listeners[eventName] = handler;
 	}
 
-	/*-------------------------------------------------------------------------------
-									EVENT HANDLERS 
-	-------------------------------------------------------------------------------*/
-	handleCollision(command: any){
+	handleCollision(command: any) {
 		let handler = this.listeners['onCollision'];
-		if (handler){
+		if (handler) {
 			handler(command);
-		}	else {
+		} else {
 			console.log('Event detected: onCollision, no handler for this event');
 		}
 	}
 
-	handleCompassNotify(command: any){
+	handleCompassNotify(command: any) {
 		let handler = this.listeners['onCompassNotify'];
-		if (handler){
-      let angle = command.data[0] << 8;
-      angle += command.data[1];
+		if (handler) {
+			let angle = command.data[0] << 8;
+			angle += command.data[1];
 			handler(angle);
-		
-    }	else {
+
+		} else {
 			console.log('Event detected: onCompassNotify, no handler for this event');
 		}
 	}
-	handleWillSleepAsync(command: any){
+
+	handleWillSleepAsync(command: any) {
 		let handler = this.listeners['onWillSleepAsync'];
-		if (handler){
+		if (handler) {
 			handler(command);
-		}	else {
+		} else {
 			console.log('Event detected: onWillSleepAsync, no handler for this event');
 		}
 	}
 
-	handleSleepAsync(command: any){
+	handleSleepAsync(command: any) {
 		let handler = this.listeners['onSleepAsync'];
-		if (handler){
+		if (handler) {
 			handler(command);
-		}	else {
+		} else {
 			console.log('Event detected: onSleepAsync, no handler for this event');
 		}
 	}
 
-	handleCharging(command: any){
+	handleCharging(command: any) {
 		let handler = this.listeners['onCharging'];
-		if (handler){
+		if (handler) {
 			handler(command);
 		} else {
 			console.log('Event detected: onCharging, no handler for this event');
 		}
 	}
 
-	handleNotCharging(command: any){
+	handleNotCharging(command: any) {
 		let handler = this.listeners['onNotCharging'];
-		if (handler){
+		if (handler) {
 			handler(command);
-		}	else {
+		} else {
 			console.log('Event detected: onNotCharging, no handler for this event');
 		}
 	}
 
-	handleCharged(command: any){
+	handleCharged(command: any) {
 		let handler = this.listeners['onCharged'];
-		if (handler){
+		if (handler) {
 			handler(command);
-		}	else {
+		} else {
 			console.log('Event detected: onCharged, no handler for this event');
 		}
 	}
 
-	handleSensorUpdate(command: any){
+	handleSensorUpdate(command: any) {
 		let handler = this.listeners['onSensorUpdate'];
-		if(handler){
+		if (handler) {
 			const parsedResponse = parseSensorResponse(command.data, this.rawMask);
 			handler(parsedResponse);
-		}	else {
+		} else {
 			console.log('Event detected: onSensorUpdate, no handler for this event');
 		}
 	}
 
-	//-------------------------------------------------------------------------------
+
+
+/*-------------------------------------------------------------------------------
+								DEBUG 
+-------------------------------------------------------------------------------*/
 
 	/* Prints the status of a command */
-	printCommandStatus(command: any){
-		switch(command.data[0]){
+	printCommandStatus(command: any) {
+		switch (command.data[0]) {
 			case C.Errors.success:
-				console.log(this.bolt.name, 'Success', command.seqNumber, command.data, command.flags);
+				// console.log(this.bolt.name, 'Success', command.seqNumber, command.data, command.flags);
 				break;
 			case C.Errors.badDeviceId:
 				console.log('Error: Bad device id');
@@ -368,7 +378,7 @@ export class Sensors {
 				break;
 			case C.Errors.notYetImplemented:
 				console.log('Error: Bad device id');
-				break; 
+				break;
 			case C.Errors.commandIsRestricted:
 				console.log('Error: Command is restricted');
 				break;
@@ -395,4 +405,4 @@ export class Sensors {
 		}
 	}
 
-}; 
+};

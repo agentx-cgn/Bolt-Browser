@@ -11,14 +11,7 @@ const HomeComponent = class {
   constructor (
   ) {
     this.bolts = Bolts;
-    this.bolts = Bolts;
-    // this.bolts.onUpdate(this.onUpdate.bind(this));
   }
-
-  // onUpdate () {
-  //   m.redraw();
-  //   console.log('REDRAW');
-  // }
 
   disconnect () {}
 
@@ -41,12 +34,17 @@ const HomeComponent = class {
         m('button.mh1', { onclick: location.reload.bind(location) }, 'Reload'),
       ]),
 
-      m('div.w-100.bg-gold.pa2',     this.bolts.map( (bolt:any) => {
+      m('div.w-100.bg-gold.pa2',     this.bolts.map( (bolt: Bolt) => {
         return m('div.w-100', [
           m('span.pa1.f3', bolt.name),
           m('button.mh1', { onclick: () => this.action(bolt.name) }, 'Action'),
           m('button.mh1', { onclick: () => this.setMatrixRandomColor(bolt.name) }, 'Colorize'),
-          m('button.mh1', { onclick: this.bolts.disconnect.bind(this.bolts, bolt) }, 'DisConnect')
+          m('button.mh1', { onclick: this.bolts.disconnect.bind(this.bolts, bolt) }, 'DisConnect'),
+          m('button.mh1', { onclick: bolt.actuators.sleep.bind(bolt.actuators) }, 'Sleep'),
+          m('button.mh1', { onclick: bolt.actuators.wake.bind(bolt.actuators) }, 'Wake'),
+          m('button.mh1', { onclick: bolt.actuators.setHeading.bind(bolt.actuators, 0) }, 'Head 0'),
+          m('button.mh1', { onclick: bolt.actuators.setHeading.bind(bolt.actuators, 180) }, 'Head 180'),
+          m('button.mh1', { onclick: bolt.actuators.resetYaw.bind(bolt.actuators, 180) }, 'resetYaw'),
         ]);
       })),
 
