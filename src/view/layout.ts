@@ -22,6 +22,10 @@ function action(name: string) {
   Bolts.find((bolt:Bolt) => bolt.name === name).action();
 }
 
+function sortQueue (a: IAction, b: IAction) {
+  return b.id - a.id;
+}
+
 const LayoutComponent = Factory.create('Layout', {
 
     view( vnode: any ) {
@@ -43,12 +47,12 @@ const LayoutComponent = Factory.create('Layout', {
                   m('button.mh1', { onclick: bolt.actuators.wake.bind(bolt.actuators) }, 'Wake'),
                   m('button.mh1', { onclick: bolt.actuators.setHeading.bind(bolt.actuators, 0) }, 'Head 0'),
                   m('button.mh1', { onclick: bolt.actuators.setHeading.bind(bolt.actuators, 180) }, 'Head 180'),
-                  m('button.mh1', { onclick: bolt.actuators.resetYaw.bind(bolt.actuators, 180) }, 'resetYaw'),
+                  m('button.mh1', { onclick: bolt.actuators.resetYaw.bind(bolt.actuators, 180) }, bolt.heading),
                 ]);
               })),
 
               m('div.w-100.bg-light-green.pa2.f6', Bolts.map( (bolt: Bolt) => {
-                return m('div.w-100.code', bolt.queue.map( (cmd: IAction) => {
+                return m('div.w-100.code', bolt.queue.sort(sortQueue).map( (cmd: IAction) => {
                   return m('div', [
                     m('span.ph1', cmd.bolt.name),
                     m('span.ph1', cmd.id),

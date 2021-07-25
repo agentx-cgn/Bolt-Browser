@@ -232,6 +232,10 @@ export const CONSTANTS = {
   BatteryState,
   APIConstants,
   useTheForce,
+  
+  StabilizationIndex,
+  FrameRotation,
+  
   UUID_SPHERO_SERVICE,
   UUID_SPHERO_SERVICE_INITIALIZE,
   APIV2_CHARACTERISTIC,
@@ -239,8 +243,6 @@ export const CONSTANTS = {
   DFU_CONTROL_CHARACTERISTIC,
   DFU_INFO_CHARACTERISTIC,
   SUBS_CHARACTERISTIC,
-  StabilizationIndex,
 
-  FrameRotation,
 
 }

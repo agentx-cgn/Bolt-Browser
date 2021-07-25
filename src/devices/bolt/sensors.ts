@@ -1,24 +1,18 @@
 
 
 import { CONSTANTS as C } from '../constants';
-import { Queue } from './queue';
 import { Bolt } from './bolt';
 import { ICommand } from './interfaces';
 import { decodeFlags, maskToRaw, parseSensorResponse, flatSensorMask, wait } from './utils';
 
-let counter: number = 0;
-
 export class Sensors {
 
-	private queue: Queue;
-	public heading: number;
 	private bolt: Bolt;
 	private listeners: any = [];
 	private rawMask: any;
 
 	constructor(bolt: Bolt) {
 		this.bolt = bolt;
-		this.queue = bolt.queue;
 		this.activate();
 	}
 
@@ -26,23 +20,23 @@ export class Sensors {
 
 		this.on('onCompassNotify', (angle: number) => {
 			console.log(this.bolt.name, 'onCompassNotify', angle);
-			this.heading = angle;
+			this.bolt.heading = angle;
 		});
 
 		this.on('onWillSleepAsync', (...args: any) => {
-			console.log(this.bolt.name, 'onWillSleepAsync', args);
-			if (!this.bolt.keepAwake) {
+			console.log(this.bolt.name, 'onWillSleepAsync', 'keepAwake', this.bolt.status.keepAwake, args);
+			if (!this.bolt.status.keepAwake) {
 				this.bolt.actuators.wake();
 				(async () => {
-					await this.bolt.actuators.setHeading(this.heading - 180);
+					await this.bolt.actuators.setHeading(this.bolt.heading - 180);
 					await wait(1000);
-					await this.bolt.actuators.setHeading(this.heading);
+					await this.bolt.actuators.setHeading(this.bolt.heading);
 				})();
 			}
 		});
 
-		this.on('onSleepAsync', (...args: any) => console.log(this.bolt.name, 'onSleepAsync', args));
-		this.on('onCharging', (...args: any) => console.log(this.bolt.name, 'onCharging', args));
+		this.on('onSleepAsync',  (...args: any) => console.log(this.bolt.name, 'onSleepAsync',  args));
+		this.on('onCharging',    (...args: any) => console.log(this.bolt.name, 'onCharging',    args));
 		this.on('onNotCharging', (...args: any) => console.log(this.bolt.name, 'onNotCharging', args));
 
 	}

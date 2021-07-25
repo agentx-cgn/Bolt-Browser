@@ -12,18 +12,19 @@ export class Bolt {
 
   public name:       string;
 
+  public characs = new Map();
   public device:     BluetoothDevice;
   public queue:      Queue;
   public actuators:  Actuators;
   public sensors:    Sensors;
   
-  public keepAwake:   boolean = false;
-
   private counter:     number = 0;
 
-  
-  public characs = new Map();
-  private connected: boolean;
+  public status = {
+    connected: false,
+    heading:   0,
+    keepAwake: true,
+  } as any;
 
   constructor (device: BluetoothDevice) {
     this.name      = device.name;
@@ -32,6 +33,9 @@ export class Bolt {
     this.actuators = new Actuators(this);
     this.sensors   = new Sensors(this);
 	}
+
+  get heading () { return this.status.heading; }
+  set heading ( value: number ) { this.status.heading = value; m.redraw() }
 
   /* Packet encoder */
 	createCommand( message: ICmdMessage ) {
@@ -135,14 +139,16 @@ export class Bolt {
     await this.actuators.rotate(0);
     await wait(100);
 
-    await this.actuators.setMatrixColor(100, 100, 100);
-    await wait(100);
-		await this.actuators.printChar('#', 10, 40, 10);
+    await this.actuators.setMatrixImage(0, 0, 0, 200, 200, 200, Aruco.createImage(0));
+
+    // await this.actuators.setMatrixColor(100, 100, 100);
+    // await wait(100);
+		// await this.actuators.printChar('#', 10, 40, 10);
     
 	};
 
   async shake () {
-    this.actuators.roll(1, this.sensors.heading, 0);
+    this.actuators.roll(1, this.status.heading, 0);
   }
   
   onAdvertisementReceived  (event: any) {
@@ -178,20 +184,9 @@ export class Bolt {
   action () {
     (async () => {
 
-      // const image = [
-      //   [1,0,0,0,0,0,0,0],
-      //   [0,1,0,0,0,0,0,0],
-      //   [0,0,1,0,0,0,0,0],
-      //   [0,0,0,0,0,0,0,0],
-      //   [0,0,0,0,0,0,0,0],
-      //   [0,0,0,0,0,0,0,0],
-      //   [0,0,0,0,0,0,0,0],
-      //   [0,0,0,0,0,0,0,0],
-      // ]
+      const image = Aruco.createImage(0); // 73
 
-      const image = Aruco.createImage(73);
-
-      this.actuators.setMatrixImage(0, 0, 0, 255, 255, 255, image);
+      this.actuators.setMatrixImage(0, 0, 0, 255, 255, 0, image);
       await wait(1000);
 
       this.actuators.rotateMatrix(C.FrameRotation.deg180);

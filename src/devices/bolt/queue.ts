@@ -15,6 +15,7 @@ export class Queue {
 
   public map;
   public find;
+  public sort;
 
   constructor (bolt: Bolt) {
     this.bolt = bolt;
@@ -22,6 +23,7 @@ export class Queue {
     this.queue = [];
     this.map  = Array.prototype.map.bind(this.queue);
     this.find = Array.prototype.find.bind(this.queue);
+    this.sort = Array.prototype.sort.bind(this.queue);
   }
   
   findNextAction () {

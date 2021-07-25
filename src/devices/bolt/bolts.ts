@@ -1,3 +1,4 @@
+/// <reference types="web-bluetooth" />
 
 import m from "mithril";
 
@@ -40,20 +41,25 @@ class bolts {
   async findBolts () {
 
     return navigator.bluetooth.getDevices()
-      .then( (devices: BluetoothDevice[]) => {
-        return devices.filter( device => device.name.startsWith('SB-') );
-      })
-      .then( (devices: BluetoothDevice[]) => {
+      .then( (devices: BluetoothDevice[] ) => devices.filter( device => device.name.startsWith('SB-') ) )
+      .then( (devices: BluetoothDevice[] ) => {
 
         const promises = [];
 
         for (const device of devices) {
 
-          const listener = (event: any) => {
-            console.log('advertisementreceived', event)
-            device.removeEventListener('advertisementreceived', listener);
-            this.initBolt(device);
-            m.redraw();
+          let connecting = false;
+          const listener = async (event: any) => { // BluetoothAdvertisingEvent
+            if (!connecting){
+              connecting = true;
+              console.log('advertisementreceived', 'connecting...', event)
+              await this.connectBolt(device);
+              m.redraw();
+
+            } else {
+              console.log(device.name, 'advertisementreceived', {rssi: event.rssi, txPower: event.txPower})
+
+            }
           }
 
           device.addEventListener('advertisementreceived',  listener);
@@ -61,8 +67,8 @@ class bolts {
           promises.push(
             device.watchAdvertisements()
               .then( what => {
-                console.log('watchAdvertisements 0', what)
-                // return this.initBolt(device);
+                // console.log('watchAdvertisements 0', what)
+                // return this.connectBolt(device);
               })
               .catch( err => console.log('watchAdvertisements.error', err))
           );
@@ -72,7 +78,7 @@ class bolts {
 
       })
       .then( what => {
-        console.log('watchAdvertisements 1', what)
+        // console.log('watchAdvertisements 1', what)
       })
       .catch(error => {
         console.log('Argh! ' + error);
@@ -86,7 +92,7 @@ class bolts {
     //   const listener = (event: any) => {
     //     console.log('advertisementreceived', event)
     //     device.removeEventListener('advertisementreceived', listener);
-    //     this.initBolt(device);
+    //     this.connectBolt(device);
     //     m.redraw();
     //   }
     //   device.addEventListener('advertisementreceived',  listener);
@@ -103,7 +109,7 @@ class bolts {
     return this.bluetooth
       .pair('SB-')
       .then( (device: BluetoothDevice) => {
-        return this.initBolt(device);
+        return this.connectBolt(device);
       })
       .catch((err:any) => {
         console.log('Bolts.pairBolt', err);
@@ -112,20 +118,20 @@ class bolts {
     ;
 
     // const device  = await this.bluetooth.pair('SB-');
-    // await this.initBolt(device);
+    // await this.connectBolt(device);
     // m.redraw();
 
   }
 
-  private async initBolt(device: BluetoothDevice) {
+  private async connectBolt(device: BluetoothDevice) {
 
     const bolt    = new Bolt(device);
-    const success = await this.initServices(bolt, device);
+    const success = await this.connectGATT(bolt, device);
 
     if (success) {
       device.addEventListener('gattserverdisconnected', bolt.onGattServerDisconnected.bind(bolt));
       // device.addEventListener('advertisementreceived',  bolt.onAdvertisementReceived.bind(bolt));
-      device.addEventListener('advertisementreceived',  (event) => console.log('initBolt.advertisementreceived', event));
+      device.addEventListener('advertisementreceived',  (event) => console.log('connectBolt.advertisementreceived', event));
       await bolt.awake();
       this.bolts.push(bolt);
     }
@@ -156,7 +162,7 @@ class bolts {
     }
   }
 
-	async initServices(bolt: Bolt, device: BluetoothDevice): Promise<boolean> {
+	async connectGATT(bolt: Bolt, device: BluetoothDevice): Promise<boolean> {
 
     try {
 
@@ -196,7 +202,7 @@ class bolts {
       return true;
 
     } catch (err) {
-      console.log('Bolts.initServices', device.name, err);
+      console.log('Bolts.connectGATT', device.name, err);
       return false;
     
 	  }

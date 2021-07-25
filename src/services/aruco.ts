@@ -3,7 +3,8 @@
 
 export const Aruco = {
 
-  createImage(code: number): number[][] {
+  createImage(code: number=0): number[][] {
+
 
     // https://damianofalcioni.github.io/js-aruco2/samples/marker-creator/marker-creator.html?dictionary=ARUCO
 
@@ -25,6 +26,18 @@ export const Aruco = {
           [0,   0,0,0,0,0,  0,0],
         ];
       break;
+      default: 
+
+        return [
+          [0,0,0,1,1,0,0,0],
+          [0,0,0,1,1,0,0,0],
+          [0,0,1,0,0,1,0,0],
+          [0,1,0,0,0,0,1,0],
+          [1,0,0,0,0,0,0,1],
+          [0,0,0,0,0,0,0,0],
+          [0,0,0,0,0,0,0,0],
+          [0,0,0,0,0,0,0,0],
+        ];
 
     }
 

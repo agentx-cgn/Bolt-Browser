@@ -29,7 +29,7 @@ References:
 */
 
 var CV = CV || {};
-this.CV = CV;
+// this.CV = CV;
 
 CV.Image = function(width, height, data){
   this.width = width || 0;
@@ -735,3 +735,5 @@ CV.binaryBorder = function(imageSrc, dst){
 
   return dst;
 };
+
+export { CV }

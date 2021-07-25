@@ -2,33 +2,19 @@
 
 import { CONSTANTS as C } from '../constants';
 import { wait, commandPushByte } from './utils';
-import { Queue } from './queue';
+// import { Queue } from './queue';
 import { Bolt } from './bolt';
 import { ICmdMessage } from './interfaces';
 
 export class Actuators {
 
   // private queue: Queue;
-  private heading: number;
+  // private heading: number;
   private bolt: Bolt;
 
   constructor (bolt: Bolt) {
     this.bolt  = bolt;
-    // this.queue = bolt.queue;
   }
-
-
-  // /* Put a command message on the queue */
-  // queueMessage( message: ICmdMessage ){
-  //   this.queue.append({
-  //     name:    message.name,
-  //     bolt:    this.bolt,
-  //     command: this.bolt.createCommand(message),
-  //     charac:  this.bolt.characs.get(C.APIV2_CHARACTERISTIC), 
-  //     acknowledged: false,
-	// 		executed: false,
-  //   });
-  // }
 
 
   // - - - - - ACTUATORS - - - - //
@@ -47,25 +33,24 @@ export class Actuators {
     name:      'sleep',
     device:    C.DeviceId.powerInfo,
     command:   C.Cmds.power.sleep, // .wake, // PowerCommandIds.wake,
+    target:    0x11,
     data:      [] as any[],
   });}
-
 
 	/* Enables collision detection */
 	async configureCollisionDetection(xThreshold = 100, yThreshold = 100, xSpeed = 100, ySpeed = 100, deadTime = 10, method = 0x01) {
 		return this.bolt.queueMessage({
-			name: 'configureCollisionDetection',
-			device: C.DeviceId.sensor,
+			name:    'configureCollisionDetection',
+			device:  C.DeviceId.sensor,
 			command: C.Cmds.sensor.configureCollision, // SensorCommandIds.configureCollision,
-			target: 0x12,
-			data: [method, xThreshold, xSpeed, yThreshold, ySpeed, deadTime]
+			target:  0x12,
+			data:    [method, xThreshold, xSpeed, yThreshold, ySpeed, deadTime]
 		});
 
 	}
 
 
   // - - - - - COMPASS
-
 
   /* Resets the locator */
   async resetLocator () {
@@ -90,7 +75,7 @@ export class Actuators {
   }  
 
 
-  // - - - - - LIGHT
+// - - - - - LIGHT
   
   /* Set the color of the LEd matrix and front and back LED */
   async setAllLeds(r: number, g: number, b: number){
@@ -111,7 +96,7 @@ export class Actuators {
     for (x=0; x<8; x++){
       for (y=0; y<8; y++){
         if(image[x][y]) {
-          await this.setMatrixPixel (x, y, r, g, b);
+          await this.setMatrixPixel (y, x, r, g, b);
         }
       }
     }
@@ -127,7 +112,6 @@ export class Actuators {
       data:      [rotation],
     });  
   }
-
 
   async setLedsColor(fr: number, fg: number, fb: number, br?: number, bg?: number, bb?: number){
     const hasBackColor = br !== undefined && bg !== undefined && bg !== undefined; 
@@ -149,16 +133,6 @@ export class Actuators {
       data:      [r, g, b], 
     });  
   }  
-
-  // async setMatrixFill(intensity: number, b: number){
-  //   return this.bolt.queueMessage({
-  //     name:      'setMatrixColor',
-  //     device:    C.DeviceId.userIO,
-  //     command:   C.Cmds.io.matrixColor, // UserIOCommandIds.matrixColor,
-  //     target:    0x12,
-  //     data:      [r, g, b], 
-  //   });  
-  // }  
 
   /* Prints a char on the LED matrix  */
   async printChar(char: string, r: number, g: number, b: number){
@@ -182,23 +156,19 @@ export class Actuators {
   }
 
   
-  // - - - - - MOVEMENT  
+  // - - - - - MOVEMENT // target 12
   // https://sdk.sphero.com/docs/sdk_documentation/drive/
   
   /* Sets Sphero heading */
   async setHeading(heading: number){
-    if (heading < 0 ){
-      heading += 360 ;
-    }  
+    heading = heading < 0 ? heading + 360 : heading;
     return this.roll(0, heading, [] as any);
-    // await wait(1000);
-    // this.resetYaw();
   }  
   
   // Sets the current orientation as orientation 0°ho
   // Sets current yaw angle to zero. (ie current direction is now considered 'forward'.)
   async resetYaw () {
-    this.heading = 0;
+    this.bolt.heading = 0;
     return this.bolt.queueMessage({
       name:       'resetYaw',
       device:     C.DeviceId.driving,
@@ -217,34 +187,33 @@ export class Actuators {
       target:  0x12,
       data:    [speed, (heading >> 8) & 0xff, heading & 0xff, flags],
     });  
-  
-    this.heading = heading;
-  
   }  
 
 
   /* Sets Sphero heading */
   async rotate (degrees: number){
-    // if (heading < 0 ){
-    //   heading += 360 ;
-    // }
-    await this.roll(0, degrees, [] as any);
+    degrees = degrees < 0 ? degrees + 360 : degrees;
+    return this.roll(0, degrees, [] as any);
     // this.resetYaw();
   }
 
-  /* Rolls the Sphero */
+  /* Stabilize the Sphero */
   async stabilize(index: number){
     return this.bolt.queueMessage({
       name:    'stabilize',
       device:  C.DeviceId.driving,
       command: C.Cmds.driving.stabilization, // .driveWithHeading, // DrivingCommandIds.driveWithHeading,
       target:  0x12,
-      data:    [C.StabilizationIndex.full_control_system ],
+      data:    [ index ],
     });  
-  
-    // this.heading = heading;
-  
   }  
+
+  async stabilizeFull() {
+    return this.stabilize(C.StabilizationIndex.full_control_system);
+  }
+  async stabilizeNone() {
+    return this.stabilize(C.StabilizationIndex.no_control_system);
+  }
 
   
 }  

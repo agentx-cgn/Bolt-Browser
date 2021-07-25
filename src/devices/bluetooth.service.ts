@@ -40,13 +40,13 @@ class bluetooth {
 
 	}
 
-	public async isAvailable () {
+	public async isAvailable (): Promise<boolean> {
 		return navigator.bluetooth.getAvailability()
 			.then(availability => availability)
 		;
 	}
 
-	private async find (namePrefix:string) {
+	private async find (namePrefix:string): Promise<void | BluetoothDevice[]> {
 
 		return navigator.bluetooth.getDevices()
 			.then( (devices:BluetoothDevice[]) => {
@@ -58,6 +58,8 @@ class bluetooth {
 		;
 
 	}
+
+	// navigator.bluetooth.requestDevice({ filter: [ {namePrefix: 'SB-'} ]}).then(console.log)
 
 	public async pair (namePrefix:string) {
 
