@@ -25,7 +25,7 @@ export class Bolt {
     heading:    0,
     rawMask:    NaN,
     position:   {} as any,
-    velelocity: {} as any,
+    velocity:   {} as any,
   } as any;
 
   constructor (device: BluetoothDevice) {

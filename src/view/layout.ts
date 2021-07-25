@@ -4,6 +4,7 @@ import m from "mithril";
 // // import { H }        from '../view/services/helper';
 import { Header }       from '../components/header/header';
 import { Backdrop }     from '../components/backdrop';
+import { Canvas }     from '../components/canvas';
 // import { Nothing }  from './components/misc';
 import { Last }         from '../components/last';
 import Factory      from '../components/factory';
@@ -66,11 +67,15 @@ const LayoutComponent = Factory.create('Layout', {
               }));
             })),
 
-            m('div.w-100.bg-lightest-blue.pa2.f6', Bolts.map( (bolt: Bolt) => {
-              return m('div.w-100.code', {style: 'max-height: 128px'}, [
-                m('canvas', {width: 128, height: 128, style: 'background-color: #888'}),
-              ])
-            })),
+            m('div.w-100.bg-lightest-blue.pa2.f6', {}, [
+              m(Canvas)
+            ]),
+
+            // m('div.w-100.bg-lightest-blue.pa2.f6', Bolts.map( (bolt: Bolt) => {
+            //   return m('div.w-100.code', {style: 'max-height: 128px'}, [
+            //     m('canvas', {width: 128, height: 128, style: 'background-color: #888'}),
+            //   ])
+            // })),
 
             m(Last, { msecs: Date.now() }),
         ]);

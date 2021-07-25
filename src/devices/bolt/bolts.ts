@@ -10,6 +10,8 @@ class bolts {
 
   public map;
   public find;
+  public forEach;
+
   private bolts: any = [];
   private callback: any;
   private bluetooth: any;
@@ -17,21 +19,24 @@ class bolts {
   constructor ( BT: any ) {
 
     this.bluetooth = BT;
-    this.map  = Array.prototype.map.bind(this.bolts);
-    this.find = Array.prototype.find.bind(this.bolts);
+    this.map     = Array.prototype.map.bind(this.bolts);
+    this.find    = Array.prototype.find.bind(this.bolts);
+    this.forEach = Array.prototype.forEach.bind(this.bolts);
+
     this.findBolts();
 
-    window.addEventListener("unload", (event) => { 
+    window.addEventListener("unload",  async () => { 
 
-			this.bolts.forEach( (bolt: Bolt) => {
+			for (const bolt of this.bolts) {
 
 				console.log(bolt.name, bolt.device.gatt.connected ? 'Disconnecting...' : 'not connected');
 
 				if (bolt.device.gatt.connected) {
+          await bolt.actuators.sleep();
           bolt.device.gatt.disconnect();
-          // bolt.actuators.sleep();
 				}
-			})
+
+			}
 
 			console.log(' - - - BYE - - - ', '\n');
 

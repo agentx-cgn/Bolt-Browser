@@ -73,7 +73,7 @@ export class Actuators {
 // - - - -  CONFIGURE
 
   	/* Enables sensor data streaming */
-	async configureSensorStream() {
+	async configureSensorStream(interval=2000) {
 
 		var mask = [
 			C.SensorMaskValues.accelerometer,
@@ -81,8 +81,6 @@ export class Actuators {
 			C.SensorMaskValues.locator,
 			C.SensorMaskValues.gyro,
 		];
-
-		let interval = 100;
 
 		this.bolt.status.rawMask = maskToRaw(mask);
 		await this.sensorMask(flatSensorMask(this.bolt.status.rawMask.aol), interval);

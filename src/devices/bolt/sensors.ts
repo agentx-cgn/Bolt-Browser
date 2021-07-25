@@ -5,10 +5,14 @@ import { Bolt } from './bolt';
 import { ICommand, ISensorData } from './interfaces';
 import { decodeFlags, maskToRaw, parseSensorResponse, flatSensorMask, wait } from './utils';
 
+import { Canvas } from '../../components/canvas';
+
 export class Sensors {
 
 	private bolt: Bolt;
 	private listeners: any = [];
+
+	public log: ISensorData[] = [];
 
 	constructor(bolt: Bolt) {
 		this.bolt = bolt;
@@ -38,11 +42,25 @@ export class Sensors {
 		this.on('onCharging',    (...args: any) => console.log(this.bolt.name, 'onCharging',    args));
 		this.on('onNotCharging', (...args: any) => console.log(this.bolt.name, 'onNotCharging', args));
 
+		this.on('onCollision',   (cmd: ICommand) => {
+			console.log(this.bolt.name, 'onCollision.data', cmd.data.join(' '));
+		});
+		
+
 		this.on('onSensorUpdate', (data: ISensorData) => {
 
 			function precise(x: number) {
 				return Number.parseFloat(String(x)).toPrecision(3);
 			}
+
+			this.log.push(data);
+
+			this.bolt.status.position.x = data.locator.positionX;
+			this.bolt.status.position.y = data.locator.positionY;
+			this.bolt.status.velocity.x = data.locator.velocityX;
+			this.bolt.status.velocity.y = data.locator.velocityY;
+
+			Canvas.render();
 
 			const loc = data.locator;
 			const  plog = {
@@ -52,6 +70,7 @@ export class Sensors {
 				vy: precise(loc.velocityY),
 			}
 			console.log(this.bolt.name, 'onSensorUpdate', loc.positionX, loc.positionY);
+
 		});
 
 	}
@@ -229,7 +248,8 @@ export class Sensors {
 			console.log('handleNotification', 'UNKNOWN EVENT ', command.packet);
 			this.printCommandStatus(command)
 
-			// after wake : UNKNOWN EVENT 141,40,1,19,17,255,179,216
+			// after wake :   UNKNOWN EVENT 141, 40,  1, 19, 17, 255, 179, 216
+			// put in cradle  UNKNOWN EVENT 141, 56, 17,  1, 19,  28, 255,   1, 134, 216]
 
 
 		}
