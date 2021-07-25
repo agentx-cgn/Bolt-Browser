@@ -80,7 +80,11 @@ export class Queue {
 		switch(command.data[0]){
 
 			case C.Errors.success:
-        action.onSuccess()
+        if (action.onSuccess) {
+          action.onSuccess();
+        } else {
+          console.log('Queue.notify.no.onSuccess', command);
+        }
       break;
 
 			case C.Errors.badDeviceId:

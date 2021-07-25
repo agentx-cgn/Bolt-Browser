@@ -8,19 +8,19 @@ class bluetooth {
 
 	constructor () {
 
-		window.addEventListener("unload", (event) => { 
-			this.devices.forEach( device => {
-				console.log('Disconnecting...', device.name);
-				if (device.gatt.connected) {
-					device.gatt.disconnect();
-				} else {
-					console.log(device.name, 'is already disconnected');
-				}
-			})
-			this.devices = [];
-			console.log(' - - - BYE - - - ', '\n');
+		// window.addEventListener("unload", (event) => { 
+		// 	this.devices.forEach( device => {
+		// 		console.log('Disconnecting...', device.name);
+		// 		if (device.gatt.connected) {
+		// 			device.gatt.disconnect();
+		// 		} else {
+		// 			console.log(device.name, 'is already disconnected');
+		// 		}
+		// 	})
+		// 	this.devices = [];
+		// 	console.log(' - - - BYE - - - ', '\n');
 
-		});
+		// });
 
 		document.addEventListener('visibilitychange', function logData() {
 			if (document.visibilityState === 'hidden') {

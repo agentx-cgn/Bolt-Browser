@@ -14,38 +14,107 @@ class bolts {
   private bluetooth: any;
 
   constructor ( BT: any ) {
+
     this.bluetooth = BT;
     this.map  = Array.prototype.map.bind(this.bolts);
     this.find = Array.prototype.find.bind(this.bolts);
     this.findBolts();
 
     window.addEventListener("unload", (event) => { 
+
 			this.bolts.forEach( (bolt: Bolt) => {
-				console.log('Disconnecting...', bolt.name);
+
+				console.log(bolt.name, bolt.device.gatt.connected ? 'Disconnecting...' : 'not connected');
+
 				if (bolt.device.gatt.connected) {
+          bolt.device.gatt.disconnect();
           // bolt.actuators.sleep();
-				} else {
-					console.log(bolt.name, 'is already disconnected');
 				}
 			})
-			// this.devices = [];
+
 			console.log(' - - - BYE - - - ', '\n');
 
 		});
 	}
 
   async findBolts () {
-    const devices = await this.bluetooth.find('SB-');
-    for ( let device of devices ){			  
-      await this.initBolt(device);
-    }
-    m.redraw();
+
+    return navigator.bluetooth.getDevices()
+      .then( (devices: BluetoothDevice[]) => {
+        return devices.filter( device => device.name.startsWith('SB-') );
+      })
+      .then( (devices: BluetoothDevice[]) => {
+
+        const promises = [];
+
+        for (const device of devices) {
+
+          const listener = (event: any) => {
+            console.log('advertisementreceived', event)
+            device.removeEventListener('advertisementreceived', listener);
+            this.initBolt(device);
+            m.redraw();
+          }
+
+          device.addEventListener('advertisementreceived',  listener);
+
+          promises.push(
+            device.watchAdvertisements()
+              .then( what => {
+                console.log('watchAdvertisements 0', what)
+                // return this.initBolt(device);
+              })
+              .catch( err => console.log('watchAdvertisements.error', err))
+          );
+        }
+
+        return Promise.all(promises);
+
+      })
+      .then( what => {
+        console.log('watchAdvertisements 1', what)
+      })
+      .catch(error => {
+        console.log('Argh! ' + error);
+      })
+    ;
   }
 
+    // const devices: BluetoothDevice[] = await this.bluetooth.find('SB-');
+
+    // for (const device of devices) {
+    //   const listener = (event: any) => {
+    //     console.log('advertisementreceived', event)
+    //     device.removeEventListener('advertisementreceived', listener);
+    //     this.initBolt(device);
+    //     m.redraw();
+    //   }
+    //   device.addEventListener('advertisementreceived',  listener);
+    //   await device.watchAdvertisements()
+    //     .then( what => console.log('watchAdvertisements', what))
+    //     .catch( err => console.log('watchAdvertisements.error', err))
+    //   ;
+    // }
+
+
+
   public async pairBolt () {
-    const device  = await this.bluetooth.pair('SB-');
-    await this.initBolt(device);
-    m.redraw();
+
+    return this.bluetooth
+      .pair('SB-')
+      .then( (device: BluetoothDevice) => {
+        return this.initBolt(device);
+      })
+      .catch((err:any) => {
+        console.log('Bolts.pairBolt', err);
+      })
+      .finally(m.redraw)
+    ;
+
+    // const device  = await this.bluetooth.pair('SB-');
+    // await this.initBolt(device);
+    // m.redraw();
+
   }
 
   private async initBolt(device: BluetoothDevice) {
@@ -56,7 +125,7 @@ class bolts {
     if (success) {
       device.addEventListener('gattserverdisconnected', bolt.onGattServerDisconnected.bind(bolt));
       // device.addEventListener('advertisementreceived',  bolt.onAdvertisementReceived.bind(bolt));
-      device.addEventListener('advertisementreceived',  (event) => console.log('advertisementreceived', event));
+      device.addEventListener('advertisementreceived',  (event) => console.log('initBolt.advertisementreceived', event));
       await bolt.awake();
       this.bolts.push(bolt);
     }
@@ -94,12 +163,12 @@ class bolts {
       const server: BluetoothRemoteGATTServer      = await device.gatt.connect();
       const services: BluetoothRemoteGATTService[] = await server.getPrimaryServices();
 
-      console.log(device.name, 'watchingAdvertisements', device.watchingAdvertisements);
+      console.log(device.name, 'watchingAdvertisements?', device.watchingAdvertisements);
 
       for ( let service of services ){
 
         if (service.uuid === C.UUID_SPHERO_SERVICE) {
-          console.log('UUID_SPHERO_SERVICE');
+          // console.log('UUID_SPHERO_SERVICE');
           let characteristics: BluetoothRemoteGATTCharacteristic[] = await service.getCharacteristics();
           for ( let charac of characteristics){
             if ( charac.uuid === C.APIV2_CHARACTERISTIC ){
@@ -108,7 +177,7 @@ class bolts {
           }
 
         } else if (service.uuid === C.UUID_SPHERO_SERVICE_INITIALIZE) {
-          console.log('UUID_SPHERO_SERVICE_INITIALIZE');
+          // console.log('UUID_SPHERO_SERVICE_INITIALIZE');
           let characteristics = await service.getCharacteristics();
           for (let charac of characteristics) {
             if (charac.uuid === C.ANTIDOS_CHARACTERISTIC     || 

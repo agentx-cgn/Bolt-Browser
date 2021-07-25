@@ -6,6 +6,7 @@ import { Sensors } from './sensors';
 import { Queue  } from './queue';
 import { commandPushByte, bufferToHex, wait, logDataView } from './utils'
 import { IAction, ICmdMessage } from './interfaces'
+import { Aruco } from '../../services/aruco';
 
 export class Bolt { 
 
@@ -177,18 +178,20 @@ export class Bolt {
   action () {
     (async () => {
 
-      const image = [
-        [1,0,0,0,0,0,0,0],
-        [0,1,0,0,0,0,0,0],
-        [0,0,1,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0],
-      ]
+      // const image = [
+      //   [1,0,0,0,0,0,0,0],
+      //   [0,1,0,0,0,0,0,0],
+      //   [0,0,1,0,0,0,0,0],
+      //   [0,0,0,0,0,0,0,0],
+      //   [0,0,0,0,0,0,0,0],
+      //   [0,0,0,0,0,0,0,0],
+      //   [0,0,0,0,0,0,0,0],
+      //   [0,0,0,0,0,0,0,0],
+      // ]
 
-      this.actuators.setMatrixImage(0, 0, 40, 200, 0, 0, image);
+      const image = Aruco.createImage(73);
+
+      this.actuators.setMatrixImage(0, 0, 0, 255, 255, 255, image);
       await wait(1000);
 
       this.actuators.rotateMatrix(C.FrameRotation.deg180);
@@ -197,14 +200,7 @@ export class Bolt {
   }
     
   onGattServerDisconnected (event: any) {
-    
-    const tgt = event.currentTarget;
-    const mesg = {
-      uuid:  tgt.uuid,
-      value: JSON.stringify(tgt.value),
-    }
-    console.log(this.name, 'onGattServerDisconnected', tgt.name);
-    
+    console.log(this.name, 'onGattServerDisconnected', event);
   }
 
   onCharacteristicValueChanged (event: any) {

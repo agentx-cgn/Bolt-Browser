@@ -11,14 +11,7 @@ import { IAction } from "../../devices/bolt/interfaces";
 import Factory     from '../factory';
 // import Navigation  from './navigation';
 
-function setMatrixRandomColor(name: string) {
-  const bolt: Bolt = Bolts.find((bolt:Bolt) => bolt.name === name)
-  bolt.actuators.setMatrixRandomColor();
-}
 
-function action(name: string) {
-  Bolts.find((bolt:Bolt) => bolt.name === name).action();
-}
 
 
 
@@ -36,6 +29,7 @@ const Header = Factory.create('Header', {
         m('button.mh1', { onclick: Bolts.pairBolt.bind(Bolts) }, 'Pair'),
         m('button.mh1', { onclick: Bolts.disconnect.bind(Bolts) }, 'DisConnect All'),
         m('button.mh1', { onclick: location.reload.bind(location) }, 'Reload'),
+        m('button.mh1', { onclick: m.redraw }, 'Redraw'),
       ]),
 
       m('div.controls.flex', { style: 'width:' + width }, [

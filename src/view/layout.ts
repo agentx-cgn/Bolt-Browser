@@ -47,7 +47,7 @@ const LayoutComponent = Factory.create('Layout', {
                 ]);
               })),
 
-              m('div.w-100.bg-light-green.pa2.f6', Bolts.map( (bolt:any) => {
+              m('div.w-100.bg-light-green.pa2.f6', Bolts.map( (bolt: Bolt) => {
                 return m('div.w-100.code', bolt.queue.map( (cmd: IAction) => {
                   return m('div', [
                     m('span.ph1', cmd.bolt.name),
