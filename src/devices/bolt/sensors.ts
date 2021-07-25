@@ -2,14 +2,13 @@
 
 import { CONSTANTS as C } from '../constants';
 import { Bolt } from './bolt';
-import { ICommand } from './interfaces';
+import { ICommand, ISensorData } from './interfaces';
 import { decodeFlags, maskToRaw, parseSensorResponse, flatSensorMask, wait } from './utils';
 
 export class Sensors {
 
 	private bolt: Bolt;
 	private listeners: any = [];
-	private rawMask: any;
 
 	constructor(bolt: Bolt) {
 		this.bolt = bolt;
@@ -18,14 +17,14 @@ export class Sensors {
 
 	activate() {
 
-		this.on('onCompassNotify', (angle: number) => {
-			console.log(this.bolt.name, 'onCompassNotify', angle);
-			this.bolt.heading = angle;
+		this.on('onCompassNotify', (heading: number) => {
+			console.log(this.bolt.name, 'onCompassNotify.set heading', heading);
+			this.bolt.heading = heading;
 		});
 
 		this.on('onWillSleepAsync', (...args: any) => {
 			console.log(this.bolt.name, 'onWillSleepAsync', 'keepAwake', this.bolt.status.keepAwake, args);
-			if (!this.bolt.status.keepAwake) {
+			if (this.bolt.status.keepAwake) {
 				this.bolt.actuators.wake();
 				(async () => {
 					await this.bolt.actuators.setHeading(this.bolt.heading - 180);
@@ -38,6 +37,22 @@ export class Sensors {
 		this.on('onSleepAsync',  (...args: any) => console.log(this.bolt.name, 'onSleepAsync',  args));
 		this.on('onCharging',    (...args: any) => console.log(this.bolt.name, 'onCharging',    args));
 		this.on('onNotCharging', (...args: any) => console.log(this.bolt.name, 'onNotCharging', args));
+
+		this.on('onSensorUpdate', (data: ISensorData) => {
+
+			function precise(x: number) {
+				return Number.parseFloat(String(x)).toPrecision(3);
+			}
+
+			const loc = data.locator;
+			const  plog = {
+				px: precise(loc.positionX),
+				py: precise(loc.positionY),
+				vx: precise(loc.velocityX),
+				vy: precise(loc.velocityY),
+			}
+			console.log(this.bolt.name, 'onSensorUpdate', loc.positionX, loc.positionY);
+		});
 
 	}
 
@@ -84,7 +99,7 @@ export class Sensors {
 						packet.push(value);
 
 						const command = decodePacket(packet);
-						this.interpreteCommand(command);
+						interpreteCommand(command);
 						init();
 
 					break;
@@ -154,58 +169,7 @@ export class Sensors {
 
 	}
 
-	/* Enables sensor data streaming */
-	configureSensorStream() {
 
-		var mask = [
-			C.SensorMaskValues.accelerometer,
-			C.SensorMaskValues.orientation,
-			C.SensorMaskValues.locator,
-			C.SensorMaskValues.gyro,
-		];
-
-		let interval = 100;
-
-		this.rawMask = maskToRaw(mask);
-		this.sensorMask(flatSensorMask(this.rawMask.aol), interval);
-		this.sensorMaskExtended(flatSensorMask(this.rawMask.gyro));
-
-	}
-
-	/* Sends sensors mask to Sphero (acceleremoter, orientation and locator) */
-	async sensorMask(rawValue: number, interval: number) {
-		return this.bolt.queueMessage({
-			name: 'sensorMask',
-			device: C.DeviceId.sensor,
-			command: C.Cmds.sensor.sensorMask, // SensorCommandIds.sensorMask,
-			target: 0x12,
-			data: [(
-				interval >> 8) & 0xff,
-			interval & 0xff,
-				0,
-			(rawValue >> 24) & 0xff,
-			(rawValue >> 16) & 0xff,
-			(rawValue >> 8) & 0xff,
-			rawValue & 0xff,
-			],
-		});
-	}
-
-	/* Sends sensors mask to Sphero (gyroscope) */
-	async sensorMaskExtended(rawValue: any) {
-		return this.bolt.queueMessage({
-			name: 'sensorMaskExtended',
-			device: C.DeviceId.sensor,
-			command: C.Cmds.sensor.sensorMaskExtented, // SensorCommandIds.sensorMaskExtented,
-			target: 0x12,
-			data: [
-				(rawValue >> 24) & 0xff,
-				(rawValue >> 16) & 0xff,
-				(rawValue >> 8) & 0xff,
-				rawValue & 0xff,
-			],
-		});
-	}
 
 
 	/* If the packet is a notification , calls the right handler, else print the command status*/
@@ -261,8 +225,8 @@ export class Sensors {
 			this.handleCompassNotify(command);
 
 		} else {
-			console.log('UNKNOWN EVENT ', command);
-			console.log('UNKNOWN EVENT ', command.packet);
+			console.log('handleNotification', 'UNKNOWN EVENT ', command);
+			console.log('handleNotification', 'UNKNOWN EVENT ', command.packet);
 			this.printCommandStatus(command)
 
 			// after wake : UNKNOWN EVENT 141,40,1,19,17,255,179,216
@@ -345,7 +309,7 @@ export class Sensors {
 	handleSensorUpdate(command: any) {
 		let handler = this.listeners['onSensorUpdate'];
 		if (handler) {
-			const parsedResponse = parseSensorResponse(command.data, this.rawMask);
+			const parsedResponse = parseSensorResponse(command.data, this.bolt.status.rawMask);
 			handler(parsedResponse);
 		} else {
 			console.log('Event detected: onSensorUpdate, no handler for this event');

@@ -1,15 +1,13 @@
 
 
 import { CONSTANTS as C } from '../constants';
-import { wait, commandPushByte } from './utils';
 // import { Queue } from './queue';
 import { Bolt } from './bolt';
 import { ICmdMessage } from './interfaces';
+import { decodeFlags, maskToRaw, parseSensorResponse, flatSensorMask, wait } from './utils';
 
 export class Actuators {
 
-  // private queue: Queue;
-  // private heading: number;
   private bolt: Bolt;
 
   constructor (bolt: Bolt) {
@@ -24,7 +22,7 @@ export class Actuators {
     name:      'wake',
     device:    C.DeviceId.powerInfo,
     command:   C.Cmds.power.wake, // PowerCommandIds.wake,
-    target:    0x11,
+    // target:    0x11,
     data:      [] as any[],
   });}
 
@@ -32,7 +30,30 @@ export class Actuators {
   async sleep () { return this.bolt.queueMessage({
     name:      'sleep',
     device:    C.DeviceId.powerInfo,
-    command:   C.Cmds.power.sleep, // .wake, // PowerCommandIds.wake,
+    command:   C.Cmds.power.sleep,
+    // target:    0x11,
+    data:      [] as any[],
+  });}
+
+
+
+// - - - -  INFO
+
+  // https://sdk.sphero.com/docs/sdk_documentation/system_info/
+  async getInfo (what: number) { this.bolt.queueMessage({
+      name:      'getInfo-' + String(what), 
+      device:    C.DeviceId.systemInfo,
+      // command:   C.Cmds.systeminfo.mainApplicationVersion,
+      command:   what,
+      target:    0x12,
+      data:      []
+    });  
+  }
+
+  async batteryStatus () { return this.bolt.queueMessage({
+    name:      'batteryStatus',
+    device:    C.DeviceId.powerInfo,
+    command:   C.Cmds.power.batteryVoltage,
     target:    0x11,
     data:      [] as any[],
   });}
@@ -49,6 +70,61 @@ export class Actuators {
 
 	}
 
+// - - - -  CONFIGURE
+
+  	/* Enables sensor data streaming */
+	async configureSensorStream() {
+
+		var mask = [
+			C.SensorMaskValues.accelerometer,
+			C.SensorMaskValues.orientation,
+			C.SensorMaskValues.locator,
+			C.SensorMaskValues.gyro,
+		];
+
+		let interval = 100;
+
+		this.bolt.status.rawMask = maskToRaw(mask);
+		await this.sensorMask(flatSensorMask(this.bolt.status.rawMask.aol), interval);
+		await this.sensorMaskExtended(flatSensorMask(this.bolt.status.rawMask.gyro));
+
+	}
+
+	/* Sends sensors mask to Sphero (acceleremoter, orientation and locator) */
+	// https://github.com/Tineyo/BoltAPP/blob/2662d790cbd66eea008af0484aa5a1bd5b720172/scripts/sphero/spheroBolt.js#L170
+	async sensorMask(rawValue: number, interval: number) {
+		return this.bolt.queueMessage({
+			name:    'sensorMask',
+			device:  C.DeviceId.sensor,
+			command: C.Cmds.sensor.sensorMask, // SensorCommandIds.sensorMask,
+			target:  0x12,
+			data: [(
+				interval >> 8)   & 0xff,
+				interval         & 0xff,
+					0,
+				(rawValue >> 24) & 0xff,
+				(rawValue >> 16) & 0xff,
+				(rawValue >> 8)  & 0xff,
+				 rawValue        & 0xff,
+			],
+		});
+	}
+
+	/* Sends sensors mask to Sphero (gyroscope) */
+	async sensorMaskExtended(rawValue: any) {
+		return this.bolt.queueMessage({
+			name: 'sensorMaskExtended',
+			device: C.DeviceId.sensor,
+			command: C.Cmds.sensor.sensorMaskExtented, // SensorCommandIds.sensorMaskExtented,
+			target: 0x12,
+			data: [
+				(rawValue >> 24) & 0xff,
+				(rawValue >> 16) & 0xff,
+				(rawValue >> 8) & 0xff,
+				rawValue & 0xff,
+			],
+		});
+	}
 
   // - - - - - COMPASS
 

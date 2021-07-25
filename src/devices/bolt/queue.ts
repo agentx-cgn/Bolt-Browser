@@ -84,6 +84,11 @@ export class Queue {
 			case C.Errors.success:
         if (action.onSuccess) {
           action.onSuccess();
+          if (command.data.length ) {
+            if (!(command.data.length === 1) && command.data[0] !== 0) {
+              console.log('Queue.notify.data', action.name, command.data)
+            }
+          }
         } else {
           console.log('Queue.notify.no.onSuccess', command);
         }

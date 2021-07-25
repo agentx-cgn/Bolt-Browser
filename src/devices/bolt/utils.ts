@@ -100,7 +100,6 @@ export function flatSensorMask (sensorMask: number[]) {
   return sensorMask.reduce((bits, m) => { return (bits |= m); }, 0);
 } 
 
-// const parseSensorResponse = (data, mask) => {
 export function parseSensorResponse (data: any, mask: any) {
 
 	let state = {

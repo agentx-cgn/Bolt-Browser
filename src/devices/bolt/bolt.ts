@@ -1,12 +1,12 @@
 import m from "mithril";
 
 import { CONSTANTS as C }  from '../constants';
+import { IAction, ICmdMessage } from './interfaces'
+import { commandPushByte, wait, logDataView } from './utils'
+import { Aruco } from '../../services/aruco';
 import { Actuators } from './actuators';
 import { Sensors } from './sensors';
-import { Queue  } from './queue';
-import { commandPushByte, bufferToHex, wait, logDataView } from './utils'
-import { IAction, ICmdMessage } from './interfaces'
-import { Aruco } from '../../services/aruco';
+import { Queue } from './queue';
 
 export class Bolt { 
 
@@ -21,9 +21,11 @@ export class Bolt {
   private counter:     number = 0;
 
   public status = {
-    connected: false,
-    heading:   0,
-    keepAwake: true,
+    keepAwake:  true,
+    heading:    0,
+    rawMask:    NaN,
+    position:   {} as any,
+    velelocity: {} as any,
   } as any;
 
   constructor (device: BluetoothDevice) {
@@ -36,6 +38,7 @@ export class Bolt {
 
   get heading () { return this.status.heading; }
   set heading ( value: number ) { this.status.heading = value; m.redraw() }
+  get connected () { return this.device.gatt.connected }
 
   /* Packet encoder */
 	createCommand( message: ICmdMessage ) {
@@ -138,6 +141,11 @@ export class Bolt {
     await wait(100);
     await this.actuators.rotate(0);
     await wait(100);
+    await this.actuators.resetLocator();
+    await wait(100);
+
+    await this.actuators.batteryStatus();
+    await wait(100);
 
     await this.actuators.setMatrixImage(0, 0, 0, 200, 200, 200, Aruco.createImage(0));
 
@@ -169,17 +177,19 @@ export class Bolt {
   }
 
   
-  // https://sdk.sphero.com/docs/sdk_documentation/system_info/
-  getInfo (what: number) {
-    this.queueMessage({
-      name:      'getInfo', 
-      device:    C.DeviceId.systemInfo,
-      // command:   C.Cmds.systeminfo.mainApplicationVersion,
-      command:   what,
-      target:    0x12,
-      data:      []
-    });  
+
+
+  async info () {
+    await this.actuators.getInfo(C.Cmds.systeminfo.mainApplicationVersion);
+    await this.actuators.getInfo(C.Cmds.systeminfo.bootloaderVersion);
+    await this.actuators.batteryStatus();
   }
+
+  async config () {
+    await this.actuators.configureCollisionDetection();
+    await this.actuators.configureSensorStream();
+  }
+
   
   action () {
     (async () => {
@@ -198,18 +208,18 @@ export class Bolt {
     console.log(this.name, 'onGattServerDisconnected', event);
   }
 
-  onCharacteristicValueChanged (event: any) {
+  // onCharacteristicValueChanged (event: any) {
     
-    const tgt  = event.currentTarget;
-    const val: DataView  = event.target.value;
-    const buf: ArrayBuffer = val.buffer;
-    const mesg = {
-      uuid:  tgt.uuid,
-      len:   event.target.value.byteLength,
-      value: JSON.stringify(tgt.value),
-    }
-    // console.log(this.name, 'onCharacteristicValueChanged', tgt.uuid, mesg.len, JSON.stringify(tgt.value));
-    console.log(this.name, 'onCharacteristicValueChanged', mesg.len, bufferToHex(buf));
-  }
+  //   const tgt  = event.currentTarget;
+  //   const val: DataView  = event.target.value;
+  //   const buf: ArrayBuffer = val.buffer;
+  //   const mesg = {
+  //     uuid:  tgt.uuid,
+  //     len:   event.target.value.byteLength,
+  //     value: JSON.stringify(tgt.value),
+  //   }
+  //   // console.log(this.name, 'onCharacteristicValueChanged', tgt.uuid, mesg.len, JSON.stringify(tgt.value));
+  //   console.log(this.name, 'onCharacteristicValueChanged', mesg.len, bufferToHex(buf));
+  // }
 
 }
