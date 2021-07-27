@@ -71,9 +71,9 @@ class bluetooth {
 				}],
 				optionalServices : [C.UUID_SPHERO_SERVICE_INITIALIZE],
 			})
-			.then( devices => {
-				this.devices.push(devices);
-				return devices;
+			.then( (device: BluetoothDevice) => {
+				this.devices.push(device);
+				return device;
 			})
 		}
 

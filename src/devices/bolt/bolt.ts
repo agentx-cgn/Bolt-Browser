@@ -2,8 +2,9 @@ import m from "mithril";
 
 import { CONSTANTS as C }  from '../constants';
 import { IAction, ICmdMessage } from './interfaces'
-import { commandPushByte, wait, logDataView } from './utils'
+import { commandPushByte, wait } from './utils'
 import { Aruco } from '../../services/aruco';
+import { Receiver } from './receiver';
 import { Actuators } from './actuators';
 import { Sensors } from './sensors';
 import { Queue } from './queue';
@@ -17,6 +18,7 @@ export class Bolt {
   public queue:      Queue;
   public actuators:  Actuators;
   public sensors:    Sensors;
+  public receiver:   Receiver;
   
   private counter:     number = 0;
 
@@ -26,24 +28,29 @@ export class Bolt {
     rawMask:    NaN,
     position:   {} as any,
     velocity:   {} as any,
+    matrix:     {
+      rotation: 0,
+      image:    [] as number[][],
+    }
   } as any;
 
   constructor (device: BluetoothDevice) {
     this.name      = device.name;
     this.device    = device;
     this.queue     = new Queue(this);
-    this.actuators = new Actuators(this);
+    this.receiver  = new Receiver(this);
     this.sensors   = new Sensors(this);
-	}
+    this.actuators = new Actuators(this);
+  }
 
   get heading () { return this.status.heading; }
   set heading ( value: number ) { this.status.heading = value; m.redraw() }
   get connected () { return this.device.gatt.connected }
 
   /* Packet encoder */
-	createCommand( message: ICmdMessage ) {
+  createCommand( message: ICmdMessage ) {
 
-		const { device, command, target, data } = message;
+    const { device, command, target, data } = message;
     const cmdflg = C.Flags.requestsResponse | C.Flags.resetsInactivityTimeout | (target ? C.Flags.commandHasTargetId : 0) ;
     const bytes  = [];	  
     let checkSum: number = 0;
@@ -81,7 +88,7 @@ export class Bolt {
 
     return bytes;
 
-	}
+  }
 
   /* Put a command message on the queue */
   async queueMessage( message: ICmdMessage ): Promise<any> {
@@ -117,67 +124,48 @@ export class Bolt {
 
   async awake(){
 
-    // await wait(1000);
+    await this.characs.get(C.ANTIDOS_CHARACTERISTIC).writeValue(C.useTheForce);
 
-		await this.characs.get(C.ANTIDOS_CHARACTERISTIC).writeValue(C.useTheForce);
-    // await wait(1000);
-
-		await this.actuators.wake();	
+    await this.actuators.wake();	
     await this.actuators.setLedsColor(20, 0, 0, 10, 10, 10);
-		// await this.actuators.setMatrixRandomColor();
-		await this.actuators.setMatrixColor(10, 10, 10);
+    await this.actuators.setMatrixColor(10, 10, 10);
     await wait(1000);
 
-    // await this.actuators.configureCollisionDetection();
-    // await wait(1000);
-		// await this.actuators.resetLocator();	
-    // await wait(1000);
-    // await wait(1000);
-
-		await this.actuators.calibrateToNorth();
+    await this.actuators.calibrateCompass();
     await wait(2000);
     
-    await this.actuators.rotate(90);
-    await wait(100);
-    await this.actuators.rotate(0);
-    await wait(100);
     await this.actuators.resetLocator();
     await wait(100);
-
+    
     await this.actuators.batteryStatus();
     await wait(100);
-
-    await this.actuators.setMatrixImage(0, 0, 0, 200, 200, 200, Aruco.createImage(0));
-
-    // await this.actuators.setMatrixColor(100, 100, 100);
-    // await wait(100);
-		// await this.actuators.printChar('#', 10, 40, 10);
     
-	};
+    await this.actuators.setMatrixImage(0, 0, 0, 200, 200, 200, Aruco.createImage(0));
+    
+    // await this.actuators.rotate(90);
+    // await this.actuators.setMatrixColor(100, 100, 100);
+    // await this.actuators.printChar('#', 10, 40, 10);
+    
+  };
 
   async shake () {
     this.actuators.roll(1, this.status.heading, 0);
   }
+
+
   
-  onAdvertisementReceived  (event: any) {
-    
-    console.log('  Device Name: ' + event.device.name);
-    console.log('  Device ID: '   + event.device.id);
-    console.log('  RSSI: '        + event.rssi);
-    console.log('  TX Power: '    + event.txPower);
-    console.log('  UUIDs: '       + event.uuids);
-    
-    event.manufacturerData.forEach((valueDataView: DataView, key: string) => {
-      logDataView('Manufacturer', key, valueDataView);
-    });
-    event.serviceData.forEach((valueDataView: DataView, key: string) => {
-      logDataView('Service', key, valueDataView);
-    });
-    
+  async reset () {
+    await this.actuators.resetLocator();
+    await this.actuators.resetYaw();
+    await this.actuators.rotate(90);
+    await wait(300);
+    await this.actuators.rotate(180);
+    await wait(300);
+    await this.actuators.rotate(270);
+    await wait(300);
+    await this.actuators.rotate(0);
+    await wait(300);
   }
-
-  
-
 
   async info () {
     await this.actuators.getInfo(C.Cmds.systeminfo.mainApplicationVersion);
@@ -203,10 +191,7 @@ export class Bolt {
       
     })();
   }
-    
-  onGattServerDisconnected (event: any) {
-    console.log(this.name, 'onGattServerDisconnected', event);
-  }
+
 
   // onCharacteristicValueChanged (event: any) {
     

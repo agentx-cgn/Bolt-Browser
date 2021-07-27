@@ -3,6 +3,7 @@ import m from "mithril";
 import { IAction } from './interfaces';
 import { CONSTANTS as C } from '../constants';
 import { Bolt } from './bolt';
+import { Receiver } from './receiver';
 
 let counter: number = 0;
 
@@ -12,20 +13,25 @@ export class Queue {
   private running: boolean;
   private queue:   IAction[];
   private bolt:    Bolt;
+  private receiver:    Bolt;
 
   public map;
   public find;
   public sort;
 
   constructor (bolt: Bolt) {
+
     this.bolt = bolt;
     this.running = false;
     this.queue = [];
     this.map  = Array.prototype.map.bind(this.queue);
     this.find = Array.prototype.find.bind(this.queue);
     this.sort = Array.prototype.sort.bind(this.queue);
+
+    this.bolt.receiver.on('notification', this.onnotification.bind(this));
+
   }
-  
+
   findNextAction () {
     return this.find( (action: IAction) => !action.acknowledged && !action.executed);
   }
@@ -75,7 +81,7 @@ export class Queue {
   }
 
   /* Prints the status of a command */
-	notify (command: any) {
+	onnotification (command: any) {
 
     const action: IAction = this.find( (action: IAction) => action.id === command.seqNumber );
 

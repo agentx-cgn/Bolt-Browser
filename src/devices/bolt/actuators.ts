@@ -3,7 +3,8 @@
 import { CONSTANTS as C } from '../constants';
 // import { Queue } from './queue';
 import { Bolt } from './bolt';
-import { ICmdMessage } from './interfaces';
+import { IEvent } from './receiver';
+// import { ICmdMessage } from './interfaces';
 import { decodeFlags, maskToRaw, parseSensorResponse, flatSensorMask, wait } from './utils';
 
 export class Actuators {
@@ -14,26 +15,67 @@ export class Actuators {
     this.bolt  = bolt;
   }
 
+  private commands = {
+    wake:              { device: C.DeviceId.powerInfo, command: C.Cmds.power.wake,                            data: [] as any },
+    sleep:             { device: C.DeviceId.powerInfo, command: C.Cmds.power.sleep,                           data: [] as any },
+    calibrateCompass:  { device: C.DeviceId.sensor,    command: C.Cmds.sensor.calibrateToNorth, target: 0x12, data: [] as any },
+    resetLocator:      { device: C.DeviceId.sensor,    command: C.Cmds.sensor.resetLocator,     target: 0x12, data: [] as any },
+    batteryStatus:     { device: C.DeviceId.powerInfo, command: C.Cmds.power.batteryVoltage,    target: 0x11, data: [] as any },
+    rotateMatrix:      { device: C.DeviceId.userIO,    command: C.Cmds.io.matrixRotation,       target: 0x12, data: [] as any },
+    setMatrixColor:    {device:  C.DeviceId.userIO,    command: C.Cmds.io.matrixColor,          target: 0x12, data: [] as any },
+  } as any;
+
+  queue (name: string, overwrites: any={} ) {
+    const command = Object.assign( { name }, this.commands[name], overwrites);
+    return this.bolt.queueMessage(command);
+  }
+
 
   // - - - - - ACTUATORS - - - - //
   
-  /* Waking up Bolt */
-  async wake () { return this.bolt.queueMessage({
-    name:      'wake',
-    device:    C.DeviceId.powerInfo,
-    command:   C.Cmds.power.wake, // PowerCommandIds.wake,
-    // target:    0x11,
-    data:      [] as any[],
-  });}
+  async wake             () { return this.queue('wake') }
+  async sleep            () { return this.queue('sleep') }
+  async resetLocator     () { return this.queue('resetLocator') }
+  async calibrateCompass () { return this.queue('calibrateCompass') }
+  async batteryStatus    () { return this.queue('batteryStatus') }
+
+  async rotateMatrix (rotation: number) { 
+    await this.queue('calibrateCompass', {data: [rotation]});
+    this.bolt.status.matrix.rotation = rotation;
+  }
+
+  async setMatrixColor (r: number, g: number, b: number) { 
+    await this.queue('setMatrixColor', {data: [r, g, b]});
+  }
+
+  async orientNorth () {
+
+    const listener = (e: IEvent) => {
+      this.bolt.receiver.off('compass', listener);
+      console.log('orientNorth.event', e);
+    };
+
+    this.bolt.receiver.on('compass', listener);
+    await this.calibrateCompass();
+
+  }
+
+  // async wake () { return this.bolt.queueMessage({
+  //   name:      'wake',
+  //   device:    C.DeviceId.powerInfo,
+  //   command:   C.Cmds.power.wake, // PowerCommandIds.wake,
+  //   // target:    0x11,
+  //   data:      [] as any[],
+  // });}
 
   /* Pause Bolt */
-  async sleep () { return this.bolt.queueMessage({
-    name:      'sleep',
-    device:    C.DeviceId.powerInfo,
-    command:   C.Cmds.power.sleep,
-    // target:    0x11,
-    data:      [] as any[],
-  });}
+  // async sleep () { return this.bolt.queueMessage({
+  //   name:      'sleep',
+  //   device:    C.DeviceId.powerInfo,
+  //   command:   C.Cmds.power.sleep,
+  //   // target:    0x11,
+  //   data:      [] as any[],
+  // });}
 
 
 
@@ -50,13 +92,16 @@ export class Actuators {
     });  
   }
 
-  async batteryStatus () { return this.bolt.queueMessage({
-    name:      'batteryStatus',
-    device:    C.DeviceId.powerInfo,
-    command:   C.Cmds.power.batteryVoltage,
-    target:    0x11,
-    data:      [] as any[],
-  });}
+  // async batteryStatus () { return this.bolt.queueMessage({
+  //   name:      'batteryStatus',
+  //   device:    C.DeviceId.powerInfo,
+  //   command:   C.Cmds.power.batteryVoltage,
+  //   target:    0x11,
+  //   data:      [] as any[],
+  // });}
+
+
+// - - - -  CONFIGURE
 
 	/* Enables collision detection */
 	async configureCollisionDetection(xThreshold = 100, yThreshold = 100, xSpeed = 100, ySpeed = 100, deadTime = 10, method = 0x01) {
@@ -70,9 +115,7 @@ export class Actuators {
 
 	}
 
-// - - - -  CONFIGURE
-
-  	/* Enables sensor data streaming */
+  /* Enables sensor data streaming */
 	async configureSensorStream(interval=2000) {
 
 		var mask = [
@@ -127,26 +170,26 @@ export class Actuators {
   // - - - - - COMPASS
 
   /* Resets the locator */
-  async resetLocator () {
-    return this.bolt.queueMessage({
-      name:      'resetLocator',
-      device:    C.DeviceId.sensor,
-      command:   C.Cmds.sensor.resetLocator, // SensorCommandIds.resetLocator,
-      target:    0x12,
-      data:      [] as any,
-    });  
-  }  
+  // async resetLocator () {
+  //   return this.bolt.queueMessage({
+  //     name:      'resetLocator',
+  //     device:    C.DeviceId.sensor,
+  //     command:   C.Cmds.sensor.resetLocator, // SensorCommandIds.resetLocator,
+  //     target:    0x12,
+  //     data:      [] as any,
+  //   });  
+  // }  
   
   /* Finds the north */
-  async calibrateToNorth () {
-    return this.bolt.queueMessage({
-      name:      'calibrateToNorth', 
-      device:    C.DeviceId.sensor,
-      command:   C.Cmds.sensor.calibrateToNorth, // SensorCommandIds.calibrateToNorth,
-      target:    0x12,
-      data:      [] as any,
-    });  
-  }  
+  // async calibrateCompass () {
+  //   return this.bolt.queueMessage({
+  //     name:      'calibrateCompass', 
+  //     device:    C.DeviceId.sensor,
+  //     command:   C.Cmds.sensor.calibrateToNorth, // SensorCommandIds.calibrateToNorth,
+  //     target:    0x12,
+  //     data:      [] as any,
+  //   });  
+  // }  
 
 
 // - - - - - LIGHT
@@ -177,15 +220,15 @@ export class Actuators {
   }
 
   // no error, no effect, just blinks
-  async rotateMatrix(rotation: number) {
-    return this.bolt.queueMessage({
-      name:      'rotateMatrix',
-      device:    C.DeviceId.userIO,
-      command:   C.Cmds.io.matrixRotation,
-      target:    0x12,
-      data:      [rotation],
-    });  
-  }
+  // async rotateMatrix(rotation: number) {
+  //   return this.bolt.queueMessage({
+  //     name:      'rotateMatrix',
+  //     device:    C.DeviceId.userIO,
+  //     command:   C.Cmds.io.matrixRotation,
+  //     target:    0x12,
+  //     data:      [rotation],
+  //   });  
+  // }
 
   async setLedsColor(fr: number, fg: number, fb: number, br?: number, bg?: number, bb?: number){
     const hasBackColor = br !== undefined && bg !== undefined && bg !== undefined; 
@@ -198,15 +241,15 @@ export class Actuators {
     });  
   }  
 
-  async setMatrixColor(r: number, g: number, b: number){
-    return this.bolt.queueMessage({
-      name:      'setMatrixColor',
-      device:    C.DeviceId.userIO,
-      command:   C.Cmds.io.matrixColor, // UserIOCommandIds.matrixColor,
-      target:    0x12,
-      data:      [r, g, b], 
-    });  
-  }  
+  // async setMatrixColor(r: number, g: number, b: number){
+  //   return this.bolt.queueMessage({
+  //     name:      'setMatrixColor',
+  //     device:    C.DeviceId.userIO,
+  //     command:   C.Cmds.io.matrixColor, // UserIOCommandIds.matrixColor,
+  //     target:    0x12,
+  //     data:      [r, g, b], 
+  //   });  
+  // }  
 
   /* Prints a char on the LED matrix  */
   async printChar(char: string, r: number, g: number, b: number){
@@ -229,6 +272,24 @@ export class Actuators {
     });  
   }
 
+
+
+// ENHAMCED MOVEMENT
+
+
+
+  // async calibrateNorth() {
+
+
+  // }
+
+  async rollVector(speed: number, length: number, heading: number) {
+
+    // we need calibrate, sensorStream
+    
+
+
+  }
   
   // - - - - - MOVEMENT // target 12
   // https://sdk.sphero.com/docs/sdk_documentation/drive/

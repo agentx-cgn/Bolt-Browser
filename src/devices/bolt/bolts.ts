@@ -132,23 +132,25 @@ class bolts {
 
     const bolt    = new Bolt(device);
     const success = await this.connectGATT(bolt, device);
+    const onGattServerDisconnected = bolt.receiver.onGattServerDisconnected.bind(bolt.receiver);
+    const advertisementreceived    = bolt.receiver.onAdvertisementReceived.bind(bolt.receiver);
 
     if (success) {
-      device.addEventListener('gattserverdisconnected', bolt.onGattServerDisconnected.bind(bolt));
-      // device.addEventListener('advertisementreceived',  bolt.onAdvertisementReceived.bind(bolt));
-      device.addEventListener('advertisementreceived',  (event) => console.log('connectBolt.advertisementreceived', event));
-      await bolt.awake();
+      device.addEventListener('gattserverdisconnected', onGattServerDisconnected);
+      device.addEventListener('advertisementreceived',  advertisementreceived);
       this.bolts.push(bolt);
+      await bolt.awake();
     }
 
   }
 
+  // doesnt work Z:150 Cannot read propelayrty 'gatt' of undefined
   public async disconnect (bolt?:Bolt) {
 
     console.log('Disconnecting...', bolt.name);
 
     if (bolt.device.gatt.connected) {
-      await bolt.device.gatt.disconnect();
+      bolt.device.gatt.disconnect();
       this.remove(bolt);
 
     } else {
@@ -220,9 +222,10 @@ class bolts {
       await charac.startNotifications();
     }
 
+    const characteristicvaluechanged = bolt.receiver.getCharacteristicValueParser();
+
 		bolt.characs.set(charac.uuid, charac);
-    // charac.addEventListener('characteristicvaluechanged', bolt.onCharacteristicValueChanged.bind(bolt));
-    charac.addEventListener('characteristicvaluechanged', bolt.sensors.getCharacteristicValueParser());
+    charac.addEventListener('characteristicvaluechanged', characteristicvaluechanged);
 
   }
 
