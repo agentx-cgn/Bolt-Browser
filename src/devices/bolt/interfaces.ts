@@ -5,6 +5,12 @@ export interface IUuid {
   uuid:    string,
 }
 
+
+export interface IEvent {
+  msg?:      any,
+  data?:     any
+}
+
 export interface ISensorData {
   length: number,
   accelerometer: {

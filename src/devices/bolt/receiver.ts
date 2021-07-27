@@ -1,33 +1,21 @@
 
 import { CONSTANTS as C } from '../constants';
-// import { Queue } from './queue';
 import { Bolt } from './bolt';
-import { Sensors } from './sensors';
-import { ICmdMessage, ICommand, ISensorData } from './interfaces';
+import { ICmdMessage, ICommand, IEvent, ISensorData } from './interfaces';
 import { decodeFlags, logDataView, maskToRaw, parseSensorResponse, flatSensorMask, wait } from './utils';
-
-export interface IEvent {
-  msg?:      any,
-  sender?:   any,
-  data?:     any
-}
 
 export class Receiver {
 
   private bolt:      Bolt;
   private callbacks: any;
-  private sensors:   Sensors;
 
   public logs = {
-    sensor: [] as any, // as unknown as ISensorData[],
-    // sensor: ISensorData[] = [],
+    sensor: [] as any,
   };
 
   constructor (bolt: Bolt) {
     this.bolt      = bolt;
-    this.sensors   = bolt.sensors;
     this.callbacks = {};
-    
   }
 
   on( event: string, callback: any ){
@@ -73,6 +61,11 @@ export class Receiver {
     
   }
 
+
+/*-------------------------------------------------------------------------------
+                NOTIFICATIONS 
+-------------------------------------------------------------------------------*/
+  
   getCharacteristicValueParser() {
 
     let self = this, i, packet: any[], sum: number, escaped: boolean;
@@ -151,7 +144,7 @@ export class Receiver {
   }
 
   /* Incoming Packet decoder */
-  decodePacket( packet: any ) {
+  decodePacket( packet: any ): ICommand {
 
     let command = {} as ICommand;
 
@@ -181,21 +174,18 @@ export class Receiver {
     command.checksum = packet.shift();
     command.endOfPacket = packet.shift();
 
-    // this.interpreteCommand(command);
     return command;
 
   }
-
-
-
 
   /* If the packet is a notification , calls the right handler, else print the command status */
   interpreteCommand( command: ICommand ) {
 
     if (command.seqNumber === 255) {
-      this.handleEvents(command)
+      this.fireEvent(command)
 
     } else {
+      // check error here
       this.fire('notification', { msg: command });
       // this.bolt.queue.notify(command);
       this.printCommandStatus(command);
@@ -204,7 +194,7 @@ export class Receiver {
 
   }
 
-  handleEvents (command: ICommand) {
+  fireEvent (command: ICommand) {
 
     /**
      * on charging
@@ -287,8 +277,8 @@ export class Receiver {
       // this.handleCompassNotify(command);
 
     } else {
-      console.log('handleEvents', 'UNKNOWN EVENT ', command);
-      console.log('handleEvents', 'UNKNOWN EVENT ', command.packet);
+      console.log('fireEvent', 'UNKNOWN EVENT ', command);
+      console.log('fireEvent', 'UNKNOWN EVENT ', command.packet);
       this.fire('unkown', { msg: command });
 
       // this.printCommandStatus(command)
@@ -300,6 +290,7 @@ export class Receiver {
     }
 
   }
+
 
 /*-------------------------------------------------------------------------------
                 DEBUG 

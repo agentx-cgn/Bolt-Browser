@@ -1,11 +1,9 @@
 
 
 import { CONSTANTS as C } from '../constants';
-// import { Queue } from './queue';
 import { Bolt } from './bolt';
-import { IEvent } from './receiver';
-// import { ICmdMessage } from './interfaces';
-import { decodeFlags, maskToRaw, parseSensorResponse, flatSensorMask, wait } from './utils';
+import { IEvent } from './interfaces';
+import { maskToRaw, flatSensorMask, wait } from './utils';
 
 export class Actuators {
 
@@ -18,11 +16,11 @@ export class Actuators {
   private commands = {
     wake:              { device: C.DeviceId.powerInfo, command: C.Cmds.power.wake,                            data: [] as any },
     sleep:             { device: C.DeviceId.powerInfo, command: C.Cmds.power.sleep,                           data: [] as any },
+    batteryStatus:     { device: C.DeviceId.powerInfo, command: C.Cmds.power.batteryVoltage,    target: 0x11, data: [] as any },
     calibrateCompass:  { device: C.DeviceId.sensor,    command: C.Cmds.sensor.calibrateToNorth, target: 0x12, data: [] as any },
     resetLocator:      { device: C.DeviceId.sensor,    command: C.Cmds.sensor.resetLocator,     target: 0x12, data: [] as any },
-    batteryStatus:     { device: C.DeviceId.powerInfo, command: C.Cmds.power.batteryVoltage,    target: 0x11, data: [] as any },
-    rotateMatrix:      { device: C.DeviceId.userIO,    command: C.Cmds.io.matrixRotation,       target: 0x12, data: [] as any },
-    setMatrixColor:    {device:  C.DeviceId.userIO,    command: C.Cmds.io.matrixColor,          target: 0x12, data: [] as any },
+    rotateMatrix:      { device: C.DeviceId.userIO,    command: C.Cmds.io.matrixRotation,       target: 0x12, data: [ /* 1|2|3|4 */ ] as any },
+    setMatrixColor:    {device:  C.DeviceId.userIO,    command: C.Cmds.io.matrixColor,          target: 0x12, data: [ /* r, g, b */ ] as any },
   } as any;
 
   queue (name: string, overwrites: any={} ) {
@@ -45,6 +43,7 @@ export class Actuators {
   }
 
   async setMatrixColor (r: number, g: number, b: number) { 
+    // destroys image
     await this.queue('setMatrixColor', {data: [r, g, b]});
   }
 
