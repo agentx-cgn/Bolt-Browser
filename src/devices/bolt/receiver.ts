@@ -65,18 +65,38 @@ export class Receiver {
 /*-------------------------------------------------------------------------------
                 NOTIFICATIONS 
 -------------------------------------------------------------------------------*/
+
+  /* If the packet is a notification , calls the right handler, else print the command status */
+  processPacket( packet: number[] ) {
+
+    const command = this.decodePacket(packet);
+
+    if (command.seqNumber === 255) {
+      this.fireEvent(command);
+
+    } else {
+      // check error here
+      this.fire('notification', { msg: command });
+      // this.bolt.queue.notify(command);
+      this.printCommandStatus(command);
+
+    }
+
+  }
   
   getCharacteristicValueParser() {
 
-    let self = this, i, packet: any[], sum: number, escaped: boolean;
-
-    const decodePacket       = this.decodePacket.bind(this);
-    const interpreteCommand  = this.interpreteCommand.bind(this);
+    let i, packet: any[], sum: number, escaped: boolean;
 
     function init() {
       sum     = 0;
       packet  = [];
       escaped = false;
+    }
+
+    const finalize = (packet: number[]) => {
+      this.processPacket(packet);
+      init();
     }
 
     return function onCharacteristicValueChanged (event: any) {
@@ -95,7 +115,9 @@ export class Receiver {
             break;
 
           case C.APIConstants.endOfPacket:
+
             sum -= packet[packet.length - 1];
+
             if (packet.length < 6) {
               console.log('Packet is too small');
               init();
@@ -106,11 +128,9 @@ export class Receiver {
               init();
               break;
             }
-            packet.push(value);
 
-            const command = decodePacket(packet);
-            interpreteCommand(command);
-            init();
+            packet.push(value);
+            finalize(packet);
 
           break;
 
@@ -139,18 +159,18 @@ export class Receiver {
 
       }
 
-    }.bind(self);
+    };
 
   }
 
   /* Incoming Packet decoder */
   decodePacket( packet: any ): ICommand {
 
-    let command = {} as ICommand;
+    let command = { data: [], packet: [ ...packet ] } as ICommand;
 
-    command.packet = [ ...packet ];
+    // command.packet = [ ...packet ];
     command.startOfPacket = packet.shift();
-    command.flags = decodeFlags(packet.shift());
+    command.flags         = decodeFlags(packet.shift());
 
     if (command.flags.hasTargetId) {
       command.targetId = packet.shift();
@@ -164,35 +184,21 @@ export class Receiver {
     command.commandId = packet.shift();
     command.seqNumber = packet.shift();
 
-    command.data = [];
+    // command.data = [];
 
     let dataLen = packet.length - 2;
     for (let i = 0; i < dataLen; i++) {
       command.data.push(packet.shift());
     }
 
-    command.checksum = packet.shift();
+    command.checksum    = packet.shift();
     command.endOfPacket = packet.shift();
 
     return command;
 
   }
 
-  /* If the packet is a notification , calls the right handler, else print the command status */
-  interpreteCommand( command: ICommand ) {
 
-    if (command.seqNumber === 255) {
-      this.fireEvent(command)
-
-    } else {
-      // check error here
-      this.fire('notification', { msg: command });
-      // this.bolt.queue.notify(command);
-      this.printCommandStatus(command);
-
-    }
-
-  }
 
   fireEvent (command: ICommand) {
 

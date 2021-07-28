@@ -1,6 +1,6 @@
 import m from "mithril";
 
-import { IAction } from './interfaces';
+import { IAction, IEvent } from './interfaces';
 import { CONSTANTS as C } from '../constants';
 import { Bolt } from './bolt';
 import { Receiver } from './receiver';
@@ -13,7 +13,7 @@ export class Queue {
   private running: boolean;
   private queue:   IAction[];
   private bolt:    Bolt;
-  private receiver:    Bolt;
+  // private receiver:    Bolt;
 
   public map;
   public find;
@@ -63,7 +63,7 @@ export class Queue {
 
   }
 
-  /*  Write a command on a specific characteristic */
+  /**  Write a command on a action characteristic */
   async write ( action: IAction, callback: any ) {
 
     try {
@@ -71,7 +71,7 @@ export class Queue {
       // console.log('write.ok', action.bolt.name, action.name, action.id, action.command.join(' '));
 
     } catch(error) { 
-      console.log('write.ok', error.message);	
+      console.log('Queue.write.error', error.message);	
     
     } finally {
       callback && callback(action);
@@ -80,59 +80,69 @@ export class Queue {
 
   }
 
-  /* Prints the status of a command */
-	onnotification (command: any) {
+  /** An action got acknowledged */
+  // onnotification (command: any) {
+  onnotification (event: IEvent) {
+
+    const command = event.msg;
 
     const action: IAction = this.find( (action: IAction) => action.id === command.seqNumber );
 
-		switch(command.data[0]){
+    switch ( command.data[0] ) {
 
-			case C.Errors.success:
+      case C.Errors.success:
+
         if (action.onSuccess) {
+
           action.onSuccess();
+
           if (command.data.length ) {
+            // ignore if only success
             if (!(command.data.length === 1) && command.data[0] !== 0) {
               console.log('Queue.notify.data', action.name, command.data)
             }
           }
+
         } else {
-          console.log('Queue.notify.no.onSuccess', command);
+          console.log('Queue.notify.no.onSuccess.on.action', command);
+
         }
+
       break;
 
-			case C.Errors.badDeviceId:
-	      action.onError('Error: Bad device id');
-				break;
-			case C.Errors.badCommandId:
-	      action.onError('Error: Bad command id');
-				break;
-			case C.Errors.notYetImplemented:
-	      action.onError('Error: Bad device id');
-				break; 
-			case C.Errors.commandIsRestricted:
-	      action.onError('Error: Command is restricted');
-				break;
-			case C.Errors.badDataLength:
-	      action.onError('Error: Bad data length');
-				break;
-			case C.Errors.commandFailed:
-	      action.onError('Error: Command failed');
-				break;
-			case C.Errors.badParameterValue:
-	      action.onError('Error: Bad paramater value');
-				break;
-			case C.Errors.busy:
-	      action.onError('Error: Busy');
-				break;
-			case C.Errors.badTargetId:
-	      action.onError('Error: Bad target id');
-				break;
-			case C.Errors.targetUnavailable:
-	      action.onError('Error: Target unavailable');
-				break;
-			default:
-	      action.onError('Error: Unknown error');
-		}
-	}
+      case C.Errors.badDeviceId:
+        action.onError('Error: Bad device id');
+        break;
+      case C.Errors.badCommandId:
+        action.onError('Error: Bad command id');
+        break;
+      case C.Errors.notYetImplemented:
+        action.onError('Error: Bad device id');
+        break; 
+      case C.Errors.commandIsRestricted:
+        action.onError('Error: Command is restricted');
+        break;
+      case C.Errors.badDataLength:
+        action.onError('Error: Bad data length');
+        break;
+      case C.Errors.commandFailed:
+        action.onError('Error: Command failed');
+        break;
+      case C.Errors.badParameterValue:
+        action.onError('Error: Bad paramater value');
+        break;
+      case C.Errors.busy:
+        action.onError('Error: Busy');
+        break;
+      case C.Errors.badTargetId:
+        action.onError('Error: Bad target id');
+        break;
+      case C.Errors.targetUnavailable:
+        action.onError('Error: Target unavailable');
+        break;
+      default:
+        action.onError('Error: Unknown error');
+    }
+  }
 
 }

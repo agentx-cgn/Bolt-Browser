@@ -37,8 +37,8 @@ export class Bolt {
   constructor (device: BluetoothDevice) {
     this.name      = device.name;
     this.device    = device;
-    this.queue     = new Queue(this);
     this.receiver  = new Receiver(this);
+    this.queue     = new Queue(this);
     this.sensors   = new Sensors(this);
     this.actuators = new Actuators(this);
   }
