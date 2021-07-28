@@ -1,8 +1,8 @@
 import m from "mithril";
 
 import { CONSTANTS as C }  from '../constants';
-import { IAction, ICmdMessage } from './interfaces'
-import { commandPushByte, wait } from './utils'
+// import { IAction, ICmdMessage } from './interfaces'
+import { wait } from './utils'
 import { Aruco } from '../../services/aruco';
 import { Receiver } from './receiver';
 import { Actuators } from './actuators';
@@ -46,81 +46,6 @@ export class Bolt {
   get heading () { return this.status.heading; }
   set heading ( value: number ) { this.status.heading = value; m.redraw() }
   get connected () { return this.device.gatt.connected }
-
-  /* Packet encoder */
-  createCommand( message: ICmdMessage ) {
-
-    const { device, command, target, data } = message;
-    const cmdflg = C.Flags.requestsResponse | C.Flags.resetsInactivityTimeout | (target ? C.Flags.commandHasTargetId : 0) ;
-    const bytes  = [];	  
-    let checkSum: number = 0;
-    
-    this.counter = (this.counter +1) % 255
-
-    bytes.push(C.APIConstants.startOfPacket);
-
-    bytes.push(cmdflg);
-    checkSum += cmdflg;
-
-    if (target){
-      bytes.push(target);
-      checkSum += target;
-    }
-
-    commandPushByte(bytes, device);
-    checkSum += device;
-
-    commandPushByte(bytes, command);
-    checkSum += command;
-
-    commandPushByte(bytes, this.counter);
-    checkSum += this.counter;
-
-    for( var i = 0 ; i < data.length ; i++ ){
-      commandPushByte(bytes, data[i]);
-      checkSum += data[i];
-    }
-
-    checkSum = (~checkSum) & 0xff;
-    commandPushByte(bytes, checkSum);
-
-    bytes.push(C.APIConstants.endOfPacket);
-
-    return bytes;
-
-  }
-
-  /* Put a command message on the queue */
-  async queueMessage( message: ICmdMessage ): Promise<any> {
-
-    return new Promise( (resolve, reject) => {
-
-      const action: IAction = {
-        name:         message.name,
-        bolt:         this,
-        command:      this.createCommand(message),
-        charac:       this.characs.get(C.APIV2_CHARACTERISTIC), 
-        acknowledged: false,
-        executed:     false,
-        onSuccess:    (command: any) => {
-          action.acknowledged = true;
-          resolve(command);
-          m.redraw();
-        },
-        onError:      ( error: string ) => {
-          console.log(error);
-          action.acknowledged = true;
-          reject(error);
-          m.redraw();
-        },
-      }
-
-      this.queue.append(action);
-
-    });
-
-  }
-
 
   async awake(){
 
@@ -191,20 +116,5 @@ export class Bolt {
       
     })();
   }
-
-
-  // onCharacteristicValueChanged (event: any) {
-    
-  //   const tgt  = event.currentTarget;
-  //   const val: DataView  = event.target.value;
-  //   const buf: ArrayBuffer = val.buffer;
-  //   const mesg = {
-  //     uuid:  tgt.uuid,
-  //     len:   event.target.value.byteLength,
-  //     value: JSON.stringify(tgt.value),
-  //   }
-  //   // console.log(this.name, 'onCharacteristicValueChanged', tgt.uuid, mesg.len, JSON.stringify(tgt.value));
-  //   console.log(this.name, 'onCharacteristicValueChanged', mesg.len, bufferToHex(buf));
-  // }
 
 }

@@ -272,14 +272,17 @@ export class Receiver {
 
       const sensordata = parseSensorResponse(command.data, this.bolt.status.rawMask);
       this.logs.sensor.push(sensordata);
-      this.fire('sensordata', { data: sensordata });
+      this.fire('sensordata', { sensordata });
       // this.handleSensorUpdate(command);
 
     } else if (
       command.deviceId  === C.DeviceId.sensor && 
       command.commandId === C.Cmds.sensor.compassNotify ) {
 
-      this.fire('compass', { msg: command });
+      let angle = command.data[0] << 8;
+      angle    += command.data[1];
+
+      this.fire('compass', { sensordata: angle });
       // this.handleCompassNotify(command);
 
     } else {

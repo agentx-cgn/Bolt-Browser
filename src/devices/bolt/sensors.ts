@@ -1,7 +1,7 @@
 
 import { Bolt } from './bolt';
 import { Receiver } from './receiver';
-import { ICommand, ISensorData } from './interfaces';
+import { ICommand, IEvent, ISensorData } from './interfaces';
 import { wait } from './utils';
 import { Canvas } from '../../components/canvas';
 export class Sensors {
@@ -17,15 +17,16 @@ export class Sensors {
 
 	activate() {
 
-		this.receiver.on('compass', async (heading: number) => {
-			console.log(this.bolt.name, 'onCompassNotify.set heading', heading);
-			await this.bolt.actuators.rotate(heading);
+		this.receiver.on('compass', async (event: IEvent) => {
+			console.log(this.bolt.name, 'onCompassNotify.setheading', event);
+			const heading = event.sensordata;
+			await this.bolt.actuators.rotate(-heading);
 			await this.bolt.actuators.resetYaw();
 			this.bolt.heading = heading;
 		});
 
-		this.receiver.on('willsleep', (...args: any) => {
-			console.log(this.bolt.name, 'onWillSleepAsync', 'keepAwake', this.bolt.status.keepAwake, args);
+		this.receiver.on('willsleep', (event: IEvent) => {
+			console.log(this.bolt.name, 'onWillSleepAsync', 'keepAwake', this.bolt.status.keepAwake, event.msg);
 			if (this.bolt.status.keepAwake) {
 				this.bolt.actuators.wake();
 				(async () => {
@@ -36,22 +37,22 @@ export class Sensors {
 			}
 		});
 
-		this.receiver.on('sleep',       (...args: any) => console.log(this.bolt.name, 'sleep',       args));
-		this.receiver.on('charging',    (...args: any) => console.log(this.bolt.name, 'charging',    args));
-		this.receiver.on('notcharging', (...args: any) => console.log(this.bolt.name, 'notcharging', args));
+		this.receiver.on('sleep',       (event: IEvent) => console.log(this.bolt.name, 'sleep',       event.msg));
+		this.receiver.on('charging',    (event: IEvent) => console.log(this.bolt.name, 'charging',    event.msg));
+		this.receiver.on('notcharging', (event: IEvent) => console.log(this.bolt.name, 'notcharging', event.msg));
 
-		this.receiver.on('collison',   (cmd: ICommand) => {
-			console.log(this.bolt.name, 'onCollision.data', cmd.data.join(' '));
+		this.receiver.on('collison',    (event: IEvent) => {
+			console.log(this.bolt.name, 'onCollision.data', event.msg.data.join(' '));
 		});
 		
 
-		this.receiver.on('sensordata', (data: ISensorData) => {
+		this.receiver.on('sensordata', (event: IEvent) => {
+
+			const data: ISensorData = event.sensordata;
 
 			function precise(x: number) {
 				return Number.parseFloat(String(x)).toPrecision(3);
 			}
-
-
 
 			this.bolt.status.position.x = data.locator.positionX;
 			this.bolt.status.position.y = data.locator.positionY;

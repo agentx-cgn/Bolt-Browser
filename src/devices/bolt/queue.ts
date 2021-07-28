@@ -1,65 +1,107 @@
 import m from "mithril";
 
-import { IAction, IEvent } from './interfaces';
+import { IAction, ICommand, IEvent, ICmdMessage } from './interfaces';
 import { CONSTANTS as C } from '../constants';
 import { Bolt } from './bolt';
-import { Receiver } from './receiver';
+import { commandPushByte } from './utils';
 
-let counter: number = 0;
 
-/* The objective of this queue is to send packets in turns to avoid GATT error */
 export class Queue {
-
-  private running: boolean;
-  private queue:   IAction[];
-  private bolt:    Bolt;
-  // private receiver:    Bolt;
-
+  
   public map;
   public find;
   public sort;
+  
+  private incrementer = 0;
+  private waiting: boolean;
+  private queue:   IAction[];
+  private bolt:    Bolt;
 
   constructor (bolt: Bolt) {
 
-    this.bolt = bolt;
-    this.running = false;
-    this.queue = [];
-    this.map  = Array.prototype.map.bind(this.queue);
-    this.find = Array.prototype.find.bind(this.queue);
-    this.sort = Array.prototype.sort.bind(this.queue);
+    this.bolt    = bolt;
+    this.waiting = false;
+    this.queue   = [];
+    this.map     = Array.prototype.map.bind(this.queue);
+    this.find    = Array.prototype.find.bind(this.queue);
+    this.sort    = Array.prototype.sort.bind(this.queue);
 
     this.bolt.receiver.on('notification', this.onnotification.bind(this));
 
   }
 
-  findNextAction () {
-    return this.find( (action: IAction) => !action.acknowledged && !action.executed);
-  }
 
-  append (action: IAction) {
-    action.id = (++counter) % 255;
-    action.acknowledged = false;
-    action.executed = false;
-    this.queue.push(action);
-    !this.running && this.execAction(action);
-  }  
+  /* Put a command message on the queue */
+  async queueMessage( message: ICmdMessage ): Promise<any> {
 
-  execAction (action: IAction) {
+    return new Promise( (resolve, reject) => {
 
-    this.running = true;
-    
-    const nextAction = this.findNextAction();
-    this.write( nextAction, (lastAction: IAction) => {
+      this.incrementer = (this.incrementer +1) % 255;
 
-      m.redraw()
-      this.running = false;
-      lastAction.executed = true;
-      const nextAction = this.findNextAction();
-      if (nextAction) {
-        this.execAction(nextAction);
+      const action: IAction = {
+
+        id:           this.incrementer,
+        name:         message.name,
+        bolt:         this.bolt,
+        command:      this.createCommand(this.incrementer, message),
+        charac:       this.bolt.characs.get(C.APIV2_CHARACTERISTIC), 
+        acknowledged: false,
+        executed:     false,
+
+        onSuccess:    ( command: any ) => {
+          action.acknowledged = true;
+          resolve(action);
+          m.redraw();
+        },
+
+        onError:      ( error: string ) => {
+          console.log(error);
+          action.acknowledged = true;
+          reject(error);
+          m.redraw();
+        },
+
       }
 
+      this.execute(action);
+
+      // this.queue.append(action);
+      // this.append(action);
+      // this.queue.push(action);
+      // !this.waiting && this.execute(action);
+
     });
+
+  }
+
+  // findNextAction () {
+  //   return this.find( (action: IAction) => !action.acknowledged && !action.executed);
+  // }
+
+  execute (action: IAction) {
+
+    const findNextAction = () => this.find( (action: IAction) => !action.acknowledged && !action.executed );
+
+    this.queue.push(action);
+
+    if ( !this.waiting ) {
+
+      this.waiting = true;
+      
+      const nextAction = findNextAction();
+      this.write( nextAction, (lastAction: IAction) => {
+
+        this.waiting = false;
+        lastAction.executed = true;
+        const nextAction = findNextAction();
+        if (nextAction) {
+          this.execute(nextAction);
+        }
+        m.redraw();
+
+      });
+
+    }
 
   }
 
@@ -74,19 +116,17 @@ export class Queue {
       console.log('Queue.write.error', error.message);	
     
     } finally {
-      callback && callback(action);
+      callback(action);
 
     }
 
   }
 
   /** An action got acknowledged */
-  // onnotification (command: any) {
-  onnotification (event: IEvent) {
+  onnotification ( event: IEvent ) {
 
-    const command = event.msg;
-
-    const action: IAction = this.find( (action: IAction) => action.id === command.seqNumber );
+    const command: ICommand = event.msg;
+    const action:  IAction  = this.find( (action: IAction) => action.id === command.seqNumber );
 
     switch ( command.data[0] ) {
 
@@ -96,11 +136,9 @@ export class Queue {
 
           action.onSuccess();
 
-          if (command.data.length ) {
-            // ignore if only success
-            if (!(command.data.length === 1) && command.data[0] !== 0) {
-              console.log('Queue.notify.data', action.name, command.data)
-            }
+          // don't log if only success
+          if ( (command.data.length > 1) ) {
+            console.log('Queue.notify.data', action.name, command.data)
           }
 
         } else {
@@ -143,6 +181,47 @@ export class Queue {
       default:
         action.onError('Error: Unknown error');
     }
+  }
+
+  /* Packet encoder */
+  createCommand( id: number, message: ICmdMessage ) {
+
+    const { device, command, target, data } = message;
+    const flags = C.Flags.requestsResponse | C.Flags.resetsInactivityTimeout | (target ? C.Flags.commandHasTargetId : 0) ;
+    const bytes = [];	  
+    let checkSum: number = 0;
+
+    bytes.push(C.APIConstants.startOfPacket);
+
+    bytes.push(flags);
+    checkSum += flags;
+
+    if (target){
+      bytes.push(target);
+      checkSum += target;
+    }
+
+    commandPushByte(bytes, device);
+    checkSum += device;
+
+    commandPushByte(bytes, command);
+    checkSum += command;
+
+    commandPushByte(bytes, id);
+    checkSum += id;
+
+    for( var i = 0 ; i < data.length ; i++ ){
+      commandPushByte(bytes, data[i]);
+      checkSum += data[i];
+    }
+
+    checkSum = (~checkSum) & 0xff;
+    commandPushByte(bytes, checkSum);
+
+    bytes.push(C.APIConstants.endOfPacket);
+
+    return bytes;
+
   }
 
 }

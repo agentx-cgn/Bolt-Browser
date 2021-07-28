@@ -7,8 +7,8 @@ export interface IUuid {
 
 
 export interface IEvent {
-  msg?:      any,
-  data?:     any
+  msg?:        any,
+  sensordata?: any
 }
 
 export interface ISensorData {
