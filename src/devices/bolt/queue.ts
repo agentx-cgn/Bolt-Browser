@@ -3,8 +3,7 @@ import m from "mithril";
 import { IAction, ICommand, IEvent, ICmdMessage } from './interfaces';
 import { CONSTANTS as C } from '../constants';
 import { Bolt } from './bolt';
-import { commandPushByte } from './utils';
-
+import { pushByte } from './utils';
 
 export class Queue {
   
@@ -55,7 +54,7 @@ export class Queue {
         },
 
         onError:      ( error: string ) => {
-          console.log(error);
+          console.log(this.bolt.name, 'error', message.name, error);
           action.acknowledged = true;
           reject(error);
           m.redraw();
@@ -65,18 +64,9 @@ export class Queue {
 
       this.execute(action);
 
-      // this.queue.append(action);
-      // this.append(action);
-      // this.queue.push(action);
-      // !this.waiting && this.execute(action);
-
     });
 
   }
-
-  // findNextAction () {
-  //   return this.find( (action: IAction) => !action.acknowledged && !action.executed);
-  // }
 
   execute (action: IAction) {
 
@@ -138,11 +128,11 @@ export class Queue {
 
           // don't log if only success
           if ( (command.data.length > 1) ) {
-            console.log('Queue.notify.data', action.name, command.data)
+            console.log(this.bolt.name, 'Queue.notify.data', action.name, command.data)
           }
 
         } else {
-          console.log('Queue.notify.no.onSuccess.on.action', command);
+          console.log(this.bolt.name, 'Queue.notify.no.onSuccess.on.action', command);
 
         }
 
@@ -191,7 +181,7 @@ export class Queue {
     const bytes = [];	  
     let checkSum: number = 0;
 
-    bytes.push(C.APIConstants.startOfPacket);
+    bytes.push(C.API.startOfPacket);
 
     bytes.push(flags);
     checkSum += flags;
@@ -201,24 +191,24 @@ export class Queue {
       checkSum += target;
     }
 
-    commandPushByte(bytes, device);
+    pushByte(bytes, device);
     checkSum += device;
 
-    commandPushByte(bytes, command);
+    pushByte(bytes, command);
     checkSum += command;
 
-    commandPushByte(bytes, id);
+    pushByte(bytes, id);
     checkSum += id;
 
     for( var i = 0 ; i < data.length ; i++ ){
-      commandPushByte(bytes, data[i]);
+      pushByte(bytes, data[i]);
       checkSum += data[i];
     }
 
     checkSum = (~checkSum) & 0xff;
-    commandPushByte(bytes, checkSum);
+    pushByte(bytes, checkSum);
 
-    bytes.push(C.APIConstants.endOfPacket);
+    bytes.push(C.API.endOfPacket);
 
     return bytes;
 

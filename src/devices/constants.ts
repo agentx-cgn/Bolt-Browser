@@ -10,7 +10,7 @@ const ANTIDOS_CHARACTERISTIC         = '00020005-574f-4f20-5370-6865726f2121';
 
 const useTheForce = new Uint8Array([0x75, 0x73, 0x65, 0x74, 0x68, 0x65, 0x66, 0x6f, 0x72, 0x63, 0x65, 0x2e, 0x2e, 0x2e, 0x62, 0x61, 0x6e, 0x64]);
 
-const APIConstants = {
+const API = {
   escapedStartOfPacket :   5,
   escapedEscape:          35,
   escapedEndOfPacket :    80,
@@ -20,7 +20,7 @@ const APIConstants = {
   endOfPacket:           216,
 }
 
-const BatteryState = {
+const Battery = {
   notCharging: 1,
   charging:    2,
   charged:     3,
@@ -43,52 +43,56 @@ const Errors = {
 }
 
 const Flags = {
-  isResponse:                1,
-  requestsResponse:          2,
-  requestsOnlyErrorResponse: 4,
-  resetsInactivityTimeout:   8,
-  commandHasTargetId:       16,
-  commandHasSourceId:       32,
+  isResponse:                   1,
+  requestsResponse:             2,
+  requestsOnlyErrorResponse:    4,
+  resetsInactivityTimeout:      8,
+  commandHasTargetId:          16,
+  commandHasSourceId:          32,
 }
 
-const DeviceId = {
-    apiProcessor:         16,
-    systemInfo:           17,
-    powerInfo:            19,
-    driving:              22,
-    sensor:               24,
-    userIO:               26,
+const Device = {
+  apiProcessor:                16,
+  systeminfo:                  17,
+  powerInfo:                   19,
+  driving:                     22,
+  sensor:                      24,
+  userIO:                      26,
 }
 
-const Cmds = {
+const CMD = {
 
-  systeminfo: {
-    mainApplicationVersion: 0x00,
-    bootloaderVersion:      0x01,
-    something:              0x06,
-    something6:             0x12,
-    something7:             0x28,
+  SystemInfo : {
+    mainApplicationVersion:  0x00,
+    bootloaderVersion:       0x01,
+    something2:              0x02, // bad command ID
+    something6:              0x06,
+    something12:             0x12,
+    something28:             0x28,
   },
 
-  driving: {
-    rawMotor:            1,
-    driveAsRc:           2,
-    driveAsSphero:       4,
-    resetYaw:            6,
-    driveWithHeading:    7,
-    tankDrive:           8,
-    stabilization:      12,
+  driving : {
+    rawMotor:                   1,
+    driveAsRc:                  2,
+    driveAsSphero:              4,
+    resetYaw:                   6,
+    driveWithHeading:           7,
+    tankDrive:                  8,
+    stabilization:             12,
   },
-  power : {
-    deepSleep:           0,
-    sleep:               1,
-    batteryVoltage:      3,
-    wake:               13,
-    willSleepAsync:     25,
-    sleepAsync:         26,
-    batteryStateChange: 33,
+
+  Power : {
+    deepSleep:                  0,
+    sleep:                      1,
+    batteryVoltage:             3,
+    wake:                      13,
+    willSleepAsync:            25,
+    sleepAsync:                26,
+    batteryStateChange:        33,
+    get_battery_percentage : 0x10, // ??
   },
-  io : {
+
+  IO : {
     playAudioFile:              7,
     audioVolume:                8,
     stopAudio:                 10,
@@ -105,35 +109,37 @@ const Cmds = {
     matrixFill:                62,
     printChar:                 66,
   },
-  sensor: {
-    sensorMask:              0,
-    sensorResponse:          2,
-    sensorMaskExtented:     12,
-    sensor1:                15,
-    configureCollision:     17,
-    collisionDetectedAsync: 18,
-    resetLocator:           19,
-    enableCollisionAsync:   20,
-    sensor2:                23,
-    calibrateToNorth:       37,
-    compassNotify:          38,
+
+  sensor : {
+    sensorMask:                 0,
+    sensorResponse:             2,
+    sensorMaskExtented:        12,
+    sensor1:                   15,
+    configureCollision:        17,
+    collisionDetectedAsync:    18,
+    resetLocator:              19,
+    enableCollisionAsync:      20,
+    sensor2:                   23,
+    calibrateToNorth:          37,
+    compassNotify:             38,
   }
+
 }
 
 const FrameRotation = {
-    deg0:   0x00,
-    deg90:  0x01,
-    deg180: 0x02,
-    deg270: 0x03,
+  deg0:   0x00,
+  deg90:  0x01,
+  deg180: 0x02,
+  deg270: 0x03,
 }
 
 const StabilizationIndex = {
-    no_control_system:            0x00,
-    full_control_system:          0x01,
-    pitch_control_system:         0x02,
-    roll_control_system:          0x03,
-    yaw_control_system:           0x04,
-    speed_and_yaw_control_system: 0x05,
+  no_control_system:            0x00,
+  full_control_system:          0x01,
+  pitch_control_system:         0x02,
+  roll_control_system:          0x03,
+  yaw_control_system:           0x04,
+  speed_and_yaw_control_system: 0x05,
 }
 
 // const DrivingCommandIds = {
@@ -223,14 +229,15 @@ const SensorMask = {
 
 
 export const CONSTANTS = {
-  Cmds,
+
+  CMD,
   SensorMask,
   SensorMaskValues,
-  DeviceId,
+  Device,
   Flags,
   Errors,
-  BatteryState,
-  APIConstants,
+  Battery,
+  API,
   useTheForce,
   
   StabilizationIndex,
@@ -243,6 +250,5 @@ export const CONSTANTS = {
   DFU_CONTROL_CHARACTERISTIC,
   DFU_INFO_CHARACTERISTIC,
   SUBS_CHARACTERISTIC,
-
 
 }

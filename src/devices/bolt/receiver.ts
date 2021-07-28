@@ -109,12 +109,12 @@ export class Receiver {
 
         switch (value) {
 
-          case C.APIConstants.startOfPacket:
+          case C.API.startOfPacket:
             if (packet === undefined || packet.length != 0) { init(); }
             packet.push(value);
             break;
 
-          case C.APIConstants.endOfPacket:
+          case C.API.endOfPacket:
 
             sum -= packet[packet.length - 1];
 
@@ -134,15 +134,15 @@ export class Receiver {
 
           break;
 
-          case C.APIConstants.escape:
+          case C.API.escape:
             escaped = true;
             break;
 
-          case C.APIConstants.escapedEscape:
-          case C.APIConstants.escapedStartOfPacket:
-          case C.APIConstants.escapedEndOfPacket:
+          case C.API.escapedEscape:
+          case C.API.escapedStartOfPacket:
+          case C.API.escapedEndOfPacket:
             if (escaped) {
-              value   = value | C.APIConstants.escapeMask;
+              value   = value | C.API.escapeMask;
               escaped = false;
             }
             packet.push(value);
@@ -218,57 +218,53 @@ export class Receiver {
      */
 
     if (
-      command.deviceId  === C.DeviceId.powerInfo && 
-      command.commandId === C.Cmds.power.batteryStateChange ) {
+      command.deviceId  === C.Device.powerInfo && 
+      command.commandId === C.CMD.Power.batteryStateChange ) {
 
       switch (command.data[0]) {
-        case C.BatteryState.charging:
-          this.fire('charging', { msg: command });
-          // this.handleCharging(command);
+        case C.Battery.charging:
+          this.fire('charging',    { msg: command });
         break;
-        case C.BatteryState.notCharging:
+        case C.Battery.notCharging:
           this.fire('notcharging', { msg: command });
-          // this.handleNotCharging(command);
         break;
-        case C.BatteryState.charged:
-          this.fire('charged', { msg: command });
-          // this.handleCharged(command)
+        case C.Battery.charged:
+          this.fire('charged',     { msg: command });
         break;
         default:
           console.log('Unknown battery state');
       }
 
     } else if (
-      command.deviceId  === C.DeviceId.powerInfo && 
-      command.commandId === C.Cmds.power.willSleepAsync ) {
+      command.deviceId  === C.Device.powerInfo && 
+      command.commandId === C.CMD.Power.willSleepAsync ) {
 
       this.fire('willsleep', { msg: command });
-      // this.handleWillSleepAsync(command);
 
     } else if (
-      command.deviceId  === C.DeviceId.powerInfo && 
-      command.commandId === C.Cmds.power.sleepAsync ) {
+      command.deviceId  === C.Device.powerInfo && 
+      command.commandId === C.CMD.Power.sleepAsync ) {
 
       this.fire('sleep', { msg: command });
       // this.handleSleepAsync(command);
 
     } else if (
-      command.deviceId  === C.DeviceId.powerInfo && 
-      command.commandId === C.Cmds.sensor.configureCollision ) { 
+      command.deviceId  === C.Device.powerInfo && 
+      command.commandId === C.CMD.sensor.configureCollision ) { 
       
       this.fire('unkown', { msg: command });
-      console.log('EVENT', 'powerInfo', 'configureCollision', command.data);
+      console.log('EVENT.unknown', 'powerInfo', 'configureCollision', command.data);
 
     } else if (
-      command.deviceId  === C.DeviceId.sensor && 
-      command.commandId === C.Cmds.sensor.collisionDetectedAsync ) {
+      command.deviceId  === C.Device.sensor && 
+      command.commandId === C.CMD.sensor.collisionDetectedAsync ) {
 
       this.fire('collision', { msg: command });
       // this.handleCollision(command);
 
     } else if (
-      command.deviceId  === C.DeviceId.sensor && 
-      command.commandId === C.Cmds.sensor.sensorResponse ) {
+      command.deviceId  === C.Device.sensor && 
+      command.commandId === C.CMD.sensor.sensorResponse ) {
 
       const sensordata = parseSensorResponse(command.data, this.bolt.status.rawMask);
       this.logs.sensor.push(sensordata);
@@ -276,8 +272,8 @@ export class Receiver {
       // this.handleSensorUpdate(command);
 
     } else if (
-      command.deviceId  === C.DeviceId.sensor && 
-      command.commandId === C.Cmds.sensor.compassNotify ) {
+      command.deviceId  === C.Device.sensor && 
+      command.commandId === C.CMD.sensor.compassNotify ) {
 
       let angle = command.data[0] << 8;
       angle    += command.data[1];
@@ -315,7 +311,7 @@ export class Receiver {
         console.log('Error: Bad device id');
         break;
       case C.Errors.badCommandId:
-        console.log('Error: Bad command id');
+        console.log('Error: Bad command id', command);
         break;
       case C.Errors.notYetImplemented:
         console.log('Error: Bad device id');

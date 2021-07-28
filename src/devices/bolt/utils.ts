@@ -6,21 +6,21 @@ export function  ab2str(buf: ArrayBuffer): string {
 
 export function bufferToHex (buffer: ArrayBuffer) {
   return [...new Uint8Array (buffer)]
-    .map (b => b.toString (16).padStart (2, "0"))
-    .join ("")
+    .map (b => b.toString (16).padStart (2, '0'))
+    .join ('')
   ;
 }
 
-export function commandPushByte(byteArray: number[], b: number ){
+export function pushByte(byteArray: number[], b: number ){
 	switch (b){
-		case C.APIConstants.startOfPacket:
-			byteArray.push(C.APIConstants.escape, C.APIConstants.escapedStartOfPacket);
+		case C.API.startOfPacket:
+			byteArray.push(C.API.escape, C.API.escapedStartOfPacket);
 		break;
-		case C.APIConstants.escape:
-			byteArray.push(C.APIConstants.escape, C.APIConstants.escapedEscape);
+		case C.API.escape:
+			byteArray.push(C.API.escape, C.API.escapedEscape);
 		break;
-		case C.APIConstants.endOfPacket:
-			byteArray.push(C.APIConstants.escape, C.APIConstants.escapedEndOfPacket);
+		case C.API.endOfPacket:
+			byteArray.push(C.API.escape, C.API.escapedEndOfPacket);
 		break;
 		default:
 			byteArray.push(b);
@@ -118,7 +118,7 @@ export function parseSensorResponse (data: any, mask: any) {
 
 }
 
-export function convertBinaryToFloat (data: number[], offset: number) {
+export function bin2Float (data: number[], offset: number) {
 
 	if ( offset + 4 > data.length ){
 		console.log('error');
@@ -145,13 +145,13 @@ export function  fillAngle (state: any) {
 
 	if (mask.aol.indexOf(C.SensorMask.orientationFilteredAll) >= 0){
 
-		let pitch = convertBinaryToFloat(data, offset);
+		let pitch = bin2Float(data, offset);
 		offset += 4;
 
-		let roll = convertBinaryToFloat(data, offset);
+		let roll = bin2Float(data, offset);
 		offset += 4;
 
-		let yaw = convertBinaryToFloat(data, offset);
+		let yaw = bin2Float(data, offset);
 		offset += 4;
 
 		response.angles = { pitch, roll, yaw};
@@ -167,13 +167,13 @@ export function fillAccelerometer (state: any) {
 
 	if (mask.aol.indexOf(C.SensorMask.accelerometerFilteredAll) >= 0){
 
-		let x = convertBinaryToFloat(data, offset);
+		let x = bin2Float(data, offset);
 		offset += 4;
 
-		let y = convertBinaryToFloat(data, offset);
+		let y = bin2Float(data, offset);
 		offset += 4;
 
-		let z = convertBinaryToFloat(data, offset);
+		let z = bin2Float(data, offset);
 		offset += 4;
 
 		response.accelerometer = { x,	y, z };
@@ -190,16 +190,16 @@ export function fillLocator (state: any) {
 
 	if (mask.aol.indexOf(C.SensorMask.locatorFilteredAll) >= 0){
     
-		let positionX = convertBinaryToFloat(data, offset) * 100.0;
+		let positionX = bin2Float(data, offset) * 100.0;
 		offset += 4;
 		
-		let positionY = convertBinaryToFloat(data, offset) * 100.0;
+		let positionY = bin2Float(data, offset) * 100.0;
 		offset += 4;
 
-		let velocityX = convertBinaryToFloat(data, offset) * 100.0;
+		let velocityX = bin2Float(data, offset) * 100.0;
 		offset += 4;
 
-		let velocityY = convertBinaryToFloat(data, offset) * 100.0;
+		let velocityY = bin2Float(data, offset) * 100.0;
 		offset += 4;
 
 		response.locator = { positionX, positionY, velocityX,	velocityY	};
@@ -217,13 +217,13 @@ export function  fillGyro (state: any) {
 
 	if (mask.gyro.indexOf(C.SensorMask.gyroFilteredAll) >= 0){
 
-		let x = convertBinaryToFloat(data, offset);
+		let x = bin2Float(data, offset);
 		offset += 4;
 
-		let y = convertBinaryToFloat(data, offset);
+		let y = bin2Float(data, offset);
 		offset += 4;
 
-		let z = convertBinaryToFloat(data, offset);
+		let z = bin2Float(data, offset);
 		offset += 4;
 
 		response.gyro = {	x, y,	z };

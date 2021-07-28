@@ -93,8 +93,9 @@ export class Bolt {
   }
 
   async info () {
-    await this.actuators.getInfo(C.Cmds.systeminfo.mainApplicationVersion);
-    await this.actuators.getInfo(C.Cmds.systeminfo.bootloaderVersion);
+    await this.actuators.getInfo(C.CMD.SystemInfo.mainApplicationVersion);
+    await this.actuators.getInfo(C.CMD.SystemInfo.bootloaderVersion);
+    await this.actuators.getInfo(C.CMD.Power.batteryVoltage);
     await this.actuators.batteryStatus();
   }
 
