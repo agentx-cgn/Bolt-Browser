@@ -111,6 +111,28 @@ const CMD = {
     printChar:                 66,
   },
 
+  // class SensorCommand(Enum):
+  //   set_sensor_streaming_mask = 0x00
+  //   get_sensor_streaming_mask = 0x01
+  //   sensor_streaming_data = 0x02
+  //   run_accel_gyro_self_test = 0x06
+  //   set_extended_sensor_streaming_mask = 0x0c
+  //   get_extended_sensor_streaming_mask = 0x0d
+  //   set_gyro_max_async = 0x0f
+  //   gyro_max_async = 0x10
+  //   configure_collision_detection = 0x11
+  //   collision_detected_async = 0x12
+  //   reset_locator = 0x13
+  //   enable_collision_detected_async = 0x14
+  //   subscribe_maneuver_async_notification = 0x15
+  //   maneuver_detection_async = 0x16
+  //   set_locator_flags = 0x17
+  //   enable_accelerometer_activity_notify = 0x19
+  //   accelerometer_activity_notify = 0x1a
+  //   magnetometer_calibrate_to_north = 0x25
+  //   magnetometer_north_yaw_notify = 0x26
+  //   get_ambient_light_sensor_value = 0x30
+
   sensor : {
     sensorMask:                 0,
     sensorResponse:             2,
@@ -123,6 +145,7 @@ const CMD = {
     sensor2:                   23,
     calibrateToNorth:          37,
     compassNotify:             38,
+    ambientLight:              0x30,
   }
 
 }

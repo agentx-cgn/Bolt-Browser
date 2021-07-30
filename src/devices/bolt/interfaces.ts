@@ -15,6 +15,7 @@ export interface IStatus {
   heading:    number,
   rawMask:    any, // {aol, gyro}
   position:   any,
+  ambient:    number[],
   velocity:   any,
   voltage:    number[],
   matrix:     IMatrix,

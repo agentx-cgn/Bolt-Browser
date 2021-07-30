@@ -27,6 +27,7 @@ export class Bolt {
     keepAwake:  true,
     heading:    0,
     rawMask:    0,
+    ambient:    [],
     position:   {},
     velocity:   {},
     voltage:    [],   // seen [0, 1, 124]
