@@ -20,11 +20,6 @@ export class Actuators {
     rotateMatrix:      { device: C.Device.userIO,    command: C.CMD.IO.matrixRotation,        target: 0x12, data: [ /* 0|1|2|3 */ ] as any },
     setMatrixColor:    { device: C.Device.userIO,    command: C.CMD.IO.matrixColor,           target: 0x12, data: [ /* r, g, b */ ] as any },
     ambientLight:      { device: C.Device.sensor,    command: C.CMD.sensor.ambientLight,      target: 0x12, data: [] as any },
-    // 171:     def get_ambient_light_sensor_value(self) -> float:
-    // 172          response = self.request(
-    // 173:             command_id=SensorCommand.get_ambient_light_sensor_value,
-    // 174              target_id=0x12,
-    // 175          )
   } as any;
 
   constructor (bolt: Bolt) {
@@ -50,14 +45,14 @@ export class Actuators {
   async wake             () { return this.queue('wake') }
   async sleep            () { return this.queue('sleep') }
   async resetLocator     () { return this.queue('resetLocator') }
-  async resetYaw         () { return this.queue('resetYaw') }
+  async resetYaw         () { return this.queue('resetYaw') }  // /* Sets the current orientation as orientation 0° */
   async calibrateCompass () { return this.queue('calibrateCompass') }
 
   
 // - - - - - INFO - - - - //
 
   async batteryVoltage   () { 
-    return await this
+    return await this 
       .queue('batteryVoltage')
       .then( cmd => { this.bolt.status.voltage = cmd.responseData; })
     ;
@@ -130,10 +125,10 @@ export class Actuators {
 
       const angle = e.sensordata;
       await wait (2000);
-      await this.resetYaw();
-      await this.rotate(-angle);
+      await this.rotate(angle);
       // await this.rotate(0);
       await wait (2000);
+      await this.resetYaw();
       await this.setMatrixImage(0, 0, 0, 200, 200, 200, Aruco.createImage(0));
 
       console.log('calibrateNorth.event', e);
@@ -141,6 +136,7 @@ export class Actuators {
     };
 
     this.bolt.receiver.on('compass', listener);
+    await this.resetYaw();
     return await this.calibrateCompass();
 
   }

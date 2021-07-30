@@ -25,6 +25,13 @@ export class Sensors {
 		// 	this.bolt.heading = heading;
 		// });
 
+	// 	* An 8-bit value is returned for each infrared sensor, assigned by mask.
+	// 	Mask description on BOLT: 32'h0000_00ff: front left sensor 32'h0000_ff00: front right sensor 32'h00ff_0000: back right sensor 32'hff00_0000: back left sensor
+	// 	* @returns Promise that resolves with the response from RVR for given command
+	// 	*/
+	//  getBotToBotInfraredReadings(): Promise<string | never>;
+	//  /**
+
 		this.receiver.on('willsleep', (event: IEvent) => {
 			console.log(this.bolt.name, 'onWillSleepAsync', 'keepAwake', this.bolt.status.keepAwake, event.msg);
 			if (this.bolt.status.keepAwake) {
