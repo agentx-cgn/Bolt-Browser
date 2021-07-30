@@ -12,9 +12,8 @@ class bolts {
   public find;
   public forEach;
 
-  private bolts: any = [];
-  private callback: any;
   private bluetooth: any;
+  private bolts:     any = [];
 
   constructor ( BT: any ) {
 
@@ -33,7 +32,7 @@ class bolts {
 
 				if (bolt.device.gatt.connected) {
           await bolt.actuators.sleep();
-          bolt.device.gatt.disconnect();
+          // bolt.device.gatt.disconnect();
 				}
 
 			}
@@ -91,40 +90,17 @@ class bolts {
     ;
   }
 
-    // const devices: BluetoothDevice[] = await this.bluetooth.find('SB-');
-
-    // for (const device of devices) {
-    //   const listener = (event: any) => {
-    //     console.log('advertisementreceived', event)
-    //     device.removeEventListener('advertisementreceived', listener);
-    //     this.connectBolt(device);
-    //     m.redraw();
-    //   }
-    //   device.addEventListener('advertisementreceived',  listener);
-    //   await device.watchAdvertisements()
-    //     .then( what => console.log('watchAdvertisements', what))
-    //     .catch( err => console.log('watchAdvertisements.error', err))
-    //   ;
-    // }
-
-
-
   public async pairBolt () {
 
     return this.bluetooth
       .pair('SB-')
-      .then( (device: BluetoothDevice) => {
-        return this.connectBolt(device);
-      })
-      .catch((err:any) => {
-        console.log('Bolts.pairBolt', err);
+      .then( (device: BluetoothDevice) => this.connectBolt(device) )
+      .catch( ( err: any ) => {
+        // DOMException: User cancelled the requestDevice() chooser.
+        // console.log('Bolts.pairBolt', err);
       })
       .finally(m.redraw)
     ;
-
-    // const device  = await this.bluetooth.pair('SB-');
-    // await this.connectBolt(device);
-    // m.redraw();
 
   }
 
@@ -139,7 +115,7 @@ class bolts {
       device.addEventListener('gattserverdisconnected', onGattServerDisconnected);
       device.addEventListener('advertisementreceived',  advertisementreceived);
       this.bolts.push(bolt);
-      await bolt.awake();
+      await bolt.reset();
     }
 
   }
@@ -176,7 +152,7 @@ class bolts {
       const server: BluetoothRemoteGATTServer      = await device.gatt.connect();
       const services: BluetoothRemoteGATTService[] = await server.getPrimaryServices();
 
-      console.log(device.name, 'watchingAdvertisements?', device.watchingAdvertisements);
+      // console.log(device.name, 'watchingAdvertisements?', device.watchingAdvertisements);
 
       for ( let service of services ){
 

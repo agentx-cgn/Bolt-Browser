@@ -17,19 +17,19 @@ export class Sensors {
 
 	activate() {
 
-		this.receiver.on('compass', async (event: IEvent) => {
-			console.log(this.bolt.name, 'onCompassNotify.setheading', event);
-			const heading = event.sensordata;
-			await this.bolt.actuators.rotate(-heading);
-			await this.bolt.actuators.resetYaw();
-			this.bolt.heading = heading;
-		});
+		// this.receiver.on('compass', async (event: IEvent) => {
+		// 	console.log(this.bolt.name, 'onCompassNotify.setheading', event);
+		// 	const heading = event.sensordata;
+		// 	await this.bolt.actuators.rotate(-heading);
+		// 	await this.bolt.actuators.resetYaw();
+		// 	this.bolt.heading = heading;
+		// });
 
 		this.receiver.on('willsleep', (event: IEvent) => {
 			console.log(this.bolt.name, 'onWillSleepAsync', 'keepAwake', this.bolt.status.keepAwake, event.msg);
 			if (this.bolt.status.keepAwake) {
-				this.bolt.actuators.wake();
 				(async () => {
+					await this.bolt.actuators.wake();
 					await this.bolt.actuators.setHeading(this.bolt.heading - 180);
 					await wait(1000);
 					await this.bolt.actuators.setHeading(this.bolt.heading);

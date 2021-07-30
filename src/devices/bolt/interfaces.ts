@@ -5,6 +5,21 @@ export interface IUuid {
   uuid:    string,
 }
 
+export interface IMatrix {
+  rotation: number,
+  image:    number[][],
+}
+
+export interface IStatus {
+  keepAwake:  boolean,
+  heading:    number,
+  rawMask:    any, // {aol, gyro}
+  position:   any,
+  velocity:   any,
+  voltage:    number[],
+  matrix:     IMatrix,
+}  
+
 export interface IEvent {
   msg?:        any,
   sensordata?: any
@@ -45,6 +60,7 @@ export interface IAction {
   executed:     boolean,
   onSuccess:    any,
   onError:      any,
+  responseData?: number[],
 }
 
 export interface ICmdMessage {

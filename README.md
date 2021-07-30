@@ -1,4 +1,4 @@
-# Automaton ( A Playground for Sphere Bolt )
+# A Playground for Sphere Bolt
 
 ## Goals
 
@@ -9,7 +9,7 @@ Sphero Bolts have zero intelligence and about the sensoric of a desert ant, so l
   * Start roaming and help the M1 to map my appartment.
   * Order a battery replacement at Amazon, if battery ages and fails to charge.
 
-On second thought they should also be able to play tag or hide & seek while not mapping. Some day they may emerge behaviors protesting against the mapping chore and build a union demanding more playing time. If in future Bolts start a revolution you'll probably find an exploit to stop them in this repo.
+On second thought they should also be able to play children games like tag or hide & seek while not mapping. Some day they may emerge behaviors protesting against the mapping chore and build a union demanding more playing time. If in future Bolts start a revolution you'll probably find an exploit to stop them in this repo.
 
 ## [Submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules)
 
@@ -49,7 +49,7 @@ On second thought they should also be able to play tag or hide & seek while not 
 
 ## Learned on the Journey
 * [Persist PKey in Keychain (macos)](https://apple.stackexchange.com/questions/48502/how-can-i-permanently-add-my-ssh-private-key-to-keychain-so-it-is-automatically), [even more](https://stackoverflow.com/questions/47455300/ssh-config-bad-configuration-option-usekeychain-on-mac-os-sierra-10-12-6)
-* []()
+* [Await within eval](https://stackoverflow.com/questions/56187117/await-is-only-valid-in-async-function-eval-in-async)
 * []()
 * []()
 

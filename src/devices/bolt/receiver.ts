@@ -7,7 +7,7 @@ import { decodeFlags, logDataView, maskToRaw, parseSensorResponse, flatSensorMas
 export class Receiver {
 
   private bolt:      Bolt;
-  private callbacks: any;
+  private listeners: any;
 
   public logs = {
     sensor: [] as any,
@@ -15,27 +15,27 @@ export class Receiver {
 
   constructor (bolt: Bolt) {
     this.bolt      = bolt;
-    this.callbacks = {};
+    this.listeners = {};
   }
 
-  on( event: string, callback: any ){
-    if(!this.callbacks[event]) this.callbacks[event] = [];
-    this.callbacks[event].push(callback);
+  on ( event: string, callback: any ) {
+    if(!this.listeners[event]) { this.listeners[event] = []; }
+    this.listeners[event].push(callback);
   }
 
-  off( event: string, callback: any ){ 
-    if (this.callbacks[event]) {
-      const index = this.callbacks.findIndex(callback);
-      if (index > -1) {
-        this.callbacks[event].splice(index, 0);
+  off ( event: string, callback: any ) { 
+    if (this.listeners[event]) {
+      const index = this.listeners[event].findIndex( (cb: any) => cb === callback);
+      if ( index > -1 ) {
+        this.listeners[event].splice(index, 1);
       }
     }
   }
 
   fire (event: string, msg: IEvent) {
-    const callbacks = this.callbacks[event];
-    if (callbacks) {
-      callbacks.forEach(( callback: any ) => callback(msg));
+    const listeners = this.listeners[event];
+    if (listeners) {
+      listeners.forEach(( callback: any ) => callback(msg));
     }
   }
 
@@ -168,23 +168,15 @@ export class Receiver {
 
     let command = { data: [], packet: [ ...packet ] } as ICommand;
 
-    // command.packet = [ ...packet ];
     command.startOfPacket = packet.shift();
     command.flags         = decodeFlags(packet.shift());
 
-    if (command.flags.hasTargetId) {
-      command.targetId = packet.shift();
-    }
-
-    if (command.flags.hasSourceId) {
-      command.sourceId = packet.shift();
-    }
+    command.flags.hasTargetId && (command.targetId = packet.shift());
+    command.flags.hasSourceId && (command.sourceId = packet.shift());
 
     command.deviceId  = packet.shift();
     command.commandId = packet.shift();
     command.seqNumber = packet.shift();
-
-    // command.data = [];
 
     let dataLen = packet.length - 2;
     for (let i = 0; i < dataLen; i++) {
@@ -253,7 +245,8 @@ export class Receiver {
       command.commandId === C.CMD.sensor.configureCollision ) { 
       
       this.fire('unkown', { msg: command });
-      console.log('EVENT.unknown', 'powerInfo', 'configureCollision', command.data);
+      // console.log('EVENT.unknown', 'powerInfo', 'configureCollision', command.data);
+      console.log('EVENT.unknown', command);
 
     } else if (
       command.deviceId  === C.Device.sensor && 
@@ -320,7 +313,7 @@ export class Receiver {
         console.log('Error: Command is restricted');
         break;
       case C.Errors.badDataLength:
-        console.log('Error: Bad data length');
+        console.log(this.bolt.name, command.name, 'Error: Bad data length', command);
         break;
       case C.Errors.commandFailed:
         console.log('Error: Command failed');

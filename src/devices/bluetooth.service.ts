@@ -8,20 +8,6 @@ class bluetooth {
 
 	constructor () {
 
-		// window.addEventListener("unload", (event) => { 
-		// 	this.devices.forEach( device => {
-		// 		console.log('Disconnecting...', device.name);
-		// 		if (device.gatt.connected) {
-		// 			device.gatt.disconnect();
-		// 		} else {
-		// 			console.log(device.name, 'is already disconnected');
-		// 		}
-		// 	})
-		// 	this.devices = [];
-		// 	console.log(' - - - BYE - - - ', '\n');
-
-		// });
-
 		document.addEventListener('visibilitychange', function logData() {
 			if (document.visibilityState === 'hidden') {
 				// console.log("visibilityState === 'hidden'");
@@ -49,7 +35,7 @@ class bluetooth {
 	private async find (namePrefix:string): Promise<void | BluetoothDevice[]> {
 
 		return navigator.bluetooth.getDevices()
-			.then( (devices:BluetoothDevice[]) => {
+			.then( ( devices:BluetoothDevice[] ) => {
 				return devices.filter( device => device.name.startsWith(namePrefix) );
 			})
 			.catch(error => {

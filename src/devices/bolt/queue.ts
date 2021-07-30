@@ -9,6 +9,7 @@ export class Queue {
   
   public map;
   public find;
+  public forEach;
   public sort;
   
   private incrementer = 0;
@@ -24,13 +25,13 @@ export class Queue {
     this.map     = Array.prototype.map.bind(this.queue);
     this.find    = Array.prototype.find.bind(this.queue);
     this.sort    = Array.prototype.sort.bind(this.queue);
+    this.forEach = Array.prototype.forEach.bind(this.queue);
 
     this.bolt.receiver.on('notification', this.onnotification.bind(this));
 
   }
 
-
-  /* Put a command message on the queue */
+  /* Put a command message on the queue, might execute */
   async queueMessage( message: ICmdMessage ): Promise<any> {
 
     return new Promise( (resolve, reject) => {
@@ -48,13 +49,14 @@ export class Queue {
         executed:     false,
 
         onSuccess:    ( command: any ) => {
+          // console.log('%c' + this.bolt.name, 'color: darkgreen', 'action.success', message.name);
           action.acknowledged = true;
           resolve(action);
           m.redraw();
         },
 
         onError:      ( error: string ) => {
-          console.log(this.bolt.name, 'error', message.name, error);
+          console.log('%c' + this.bolt.name, 'color: darkorange', 'error', message.name, error);
           action.acknowledged = true;
           reject(error);
           m.redraw();
@@ -122,19 +124,14 @@ export class Queue {
 
       case C.Errors.success:
 
-        if (action.onSuccess) {
+        action.responseData = command.data.slice(1); //, -1 ??
+        action.onSuccess();
 
-          action.onSuccess();
-
-          // don't log if only success
-          if ( (command.data.length > 1) ) {
-            console.log(this.bolt.name, 'Queue.notify.data', action.name, command.data)
-          }
-
-        } else {
-          console.log(this.bolt.name, 'Queue.notify.no.onSuccess.on.action', command);
-
+        // don't log if only success
+        if ( (command.data.length > 1) ) {
+          console.log(this.bolt.name, 'Queue.notify.data', action.name, command.data)
         }
+
 
       break;
 

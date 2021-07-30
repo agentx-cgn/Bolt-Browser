@@ -8,6 +8,7 @@ import { Receiver } from './receiver';
 import { Actuators } from './actuators';
 import { Sensors } from './sensors';
 import { Queue } from './queue';
+import { IStatus } from "./interfaces";
 
 export class Bolt { 
 
@@ -20,19 +21,20 @@ export class Bolt {
   public sensors:    Sensors;
   public receiver:   Receiver;
   
-  private counter:     number = 0;
+  // private counter:     number = 0;
 
-  public status = {
+  public status: IStatus = {
     keepAwake:  true,
     heading:    0,
-    rawMask:    NaN,
-    position:   {} as any,
-    velocity:   {} as any,
+    rawMask:    0,
+    position:   {},
+    velocity:   {},
+    voltage:    [],   // seen [0, 1, 124]
     matrix:     {
       rotation: 0,
-      image:    [] as number[][],
+      image:    [],
     }
-  } as any;
+  };
 
   constructor (device: BluetoothDevice) {
     this.name      = device.name;
@@ -47,40 +49,42 @@ export class Bolt {
   set heading ( value: number ) { this.status.heading = value; m.redraw() }
   get connected () { return this.device.gatt.connected }
 
-  async awake(){
+  async reset() {
 
     await this.characs.get(C.ANTIDOS_CHARACTERISTIC).writeValue(C.useTheForce);
 
     await this.actuators.wake();	
+    await this.actuators.info();	
     await this.actuators.setLedsColor(20, 0, 0, 10, 10, 10);
     await this.actuators.setMatrixColor(10, 10, 10);
-    await wait(1000);
-
-    await this.actuators.calibrateCompass();
-    await wait(2000);
-    
+    // await wait(1000);
+    await this.actuators.calibrateNorth();
+    await wait(4000);
+   
     await this.actuators.resetLocator();
-    await wait(100);
-    
-    await this.actuators.batteryStatus();
-    await wait(100);
-    
-    await this.actuators.setMatrixImage(0, 0, 0, 200, 200, 200, Aruco.createImage(0));
-    
-    // await this.actuators.rotate(90);
-    // await this.actuators.setMatrixColor(100, 100, 100);
-    // await this.actuators.printChar('#', 10, 40, 10);
+    await wait(1000);
     
   };
-
+  
   async shake () {
     this.actuators.roll(1, this.status.heading, 0);
   }
-
-
   
-  async reset () {
+  async config () {
+    await this.actuators.enableCollisionDetection();
+    await this.actuators.enableSensorStream();
+  }
+  
+  
+  
+  async ActionX () {
+    await this.actuators.setMatrixImage(0, 0, 0, 200, 200, 200, Aruco.createImage(0));
+    await this.actuators.rotate(90);
+    await this.actuators.setMatrixColor(100, 100, 100);
+    await this.actuators.printChar('#', 10, 40, 10);
+    await this.actuators.batteryVoltage();
     await this.actuators.resetLocator();
+    await this.actuators.calibrateCompass();
     await this.actuators.resetYaw();
     await this.actuators.rotate(90);
     await wait(300);
@@ -92,17 +96,8 @@ export class Bolt {
     await wait(300);
   }
 
-  async info () {
-    await this.actuators.getInfo(C.CMD.SystemInfo.mainApplicationVersion);
-    await this.actuators.getInfo(C.CMD.SystemInfo.bootloaderVersion);
-    await this.actuators.getInfo(C.CMD.Power.batteryVoltage);
-    await this.actuators.batteryStatus();
-  }
 
-  async config () {
-    await this.actuators.configureCollisionDetection();
-    await this.actuators.configureSensorStream();
-  }
+
 
   
   action () {

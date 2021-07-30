@@ -14,6 +14,8 @@ import { Bolts }  from './../devices/bolt/bolts';
 import { Bolt }   from './../devices/bolt/bolt';
 import { IAction } from "./../devices/bolt/interfaces";
 
+import { BoltCommands } from './commands';
+
 function setMatrixRandomColor(name: string) {
   const bolt: Bolt = Bolts.find((bolt:Bolt) => bolt.name === name)
   bolt.actuators.setMatrixRandomColor();
@@ -35,24 +37,12 @@ const LayoutComponent = Factory.create('Layout', {
         // const [ Page, Section ] = vnode.children;
 
         return m('div.layout', [
+
             m(Backdrop),
             m(Header, { route, params }),
 
             m('div.w-100.bg-gold.pa2',     Bolts.map( (bolt: Bolt) => {
-              return m('div.w-100', [
-                m('span.pa1.f3', bolt.name),
-                m('button.mh1', { onclick: bolt.reset.bind(bolt) },                             'reset'),
-                m('button.mh1', { onclick: bolt.info.bind(bolt) },                                'info'),
-                m('button.mh1', { onclick: bolt.config.bind(bolt) },                              'config'),
-                m('button.mh1', { onclick: () => action(bolt.name) },                             'Action'),
-                m('button.mh1', { onclick: () => setMatrixRandomColor(bolt.name) },               'RndCol'),
-                m('button.mh1', { onclick: () => Bolts.disconnect(bolt) },                        'DisConnect'),
-                m('button.mh1', { onclick: bolt.actuators.sleep.bind(bolt.actuators) },           'Sleep'),
-                m('button.mh1', { onclick: bolt.actuators.wake.bind(bolt.actuators) },            'Wake'),
-                m('button.mh1', { onclick: bolt.actuators.setHeading.bind(bolt.actuators, 0) },   'Head 0'),
-                m('button.mh1', { onclick: bolt.actuators.setHeading.bind(bolt.actuators, 180) }, 'Head 180'),
-                m('button.mh1', { onclick: bolt.actuators.resetYaw.bind(bolt.actuators, 180) },    'yaw' + bolt.heading),
-              ]);
+              return m(BoltCommands, { bolt });
             })),
 
             m('div.w-100.bg-light-green.pa2.f6', Bolts.map( (bolt: Bolt) => {
