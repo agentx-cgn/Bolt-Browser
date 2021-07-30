@@ -24,14 +24,15 @@ const BoltCommands = Factory.create('Layout', {
   view( vnode: any ) {
 
     const { bolt } = vnode.attrs;
+    const style = `backcolor: ${ bolt.config.colors.backcolor }`;
 
     return  (
-      m('div.w-100', [
+      m('div.w-100', { style }, [
         m('span.pa1.f3.mono', bolt.name),
         m('button.mh1.cmd', { onclick: () => Bolts.disconnect(bolt) },                         'disconnect'),
         m('button.mh1.cmd', { onclick: bolt.reset.bind(bolt) },                                'reset'),
         m('button.mh1.cmd', { onclick: bolt.actuators.info.bind(bolt.actuators) },             'info'),
-        m('button.mh1.cmd', { onclick: bolt.config.bind(bolt) },                               'config'),
+        m('button.mh1.cmd', { onclick: bolt.configure.bind(bolt) },                            'configure'),
         m('button.mh1.cmd', { onclick: () => action(bolt.name) },                              'Action'),
         m('button.mh1.cmd', { onclick: () => setMatrixRandomColor(bolt.name) },                'RndCol'),
         m('button.mh1.cmd', { onclick: bolt.actuators.sleep.bind(bolt.actuators) },            'Sleep'),

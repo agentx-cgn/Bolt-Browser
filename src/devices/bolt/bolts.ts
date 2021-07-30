@@ -12,6 +12,11 @@ class bolts {
   public find;
   public forEach;
 
+  private defaults = {
+    'SB-9129' : {colors: {console: '#FF0', backgound: '#880'}},
+    'SB-2B96' : {colors: {console: '#F0F', backgound: '#808'}},
+  } as any;
+
   private bluetooth: any;
   private bolts:     any = [];
 
@@ -106,7 +111,8 @@ class bolts {
 
   private async connectBolt(device: BluetoothDevice) {
 
-    const bolt    = new Bolt(device);
+    const defaults = this.defaults[device.name];
+    const bolt    = new Bolt(device, defaults);
     const success = await this.connectGATT(bolt, device);
     const onGattServerDisconnected = bolt.receiver.onGattServerDisconnected.bind(bolt.receiver);
     const advertisementreceived    = bolt.receiver.onAdvertisementReceived.bind(bolt.receiver);

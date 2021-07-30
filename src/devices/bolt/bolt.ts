@@ -13,6 +13,7 @@ import { IStatus } from "./interfaces";
 export class Bolt { 
 
   public name:       string;
+  public config:     any;
 
   public characs = new Map();
   public device:     BluetoothDevice;
@@ -37,7 +38,8 @@ export class Bolt {
     }
   };
 
-  constructor (device: BluetoothDevice) {
+  constructor (device: BluetoothDevice, config: any) {
+    this.config    = config;
     this.name      = device.name;
     this.device    = device;
     this.receiver  = new Receiver(this);
@@ -71,7 +73,7 @@ export class Bolt {
     this.actuators.roll(1, this.status.heading, 0);
   }
   
-  async config () {
+  async configure () {
     await this.actuators.enableCollisionDetection();
     await this.actuators.enableSensorStream();
   }

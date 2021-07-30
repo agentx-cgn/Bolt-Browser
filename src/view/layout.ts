@@ -41,21 +41,23 @@ const LayoutComponent = Factory.create('Layout', {
             m(Backdrop),
             m(Header, { route, params }),
 
-            m('div.w-100.bg-gold.pa2',     Bolts.map( (bolt: Bolt) => {
-              return m(BoltCommands, { bolt });
-            })),
+            m('div.w-100.pa2',     Bolts.map( (bolt: Bolt) => {
 
-            m('div.w-100.bg-light-green.pa2.f6', Bolts.map( (bolt: Bolt) => {
-              return m('div.w-100.code', {style: 'max-height: 80px; overflow-y: scroll'}, bolt.queue.sort(sortQueue).map( (cmd: IAction) => {
-                return m('div', [
-                  m('span.ph1', cmd.bolt.name),
-                  m('span.ph1', cmd.id),
-                  m('span.ph1', cmd.executed     ? 'I' : 'O'),
-                  m('span.ph1', cmd.acknowledged ? 'I' : 'O'),
-                  m('span.ph1', cmd.name),
-                  m('span.ph1.washed-blue', cmd.command.join(' ')),
-                ]);
-              }));
+              const style = `backcolor: ${ bolt.config.colors.backcolor }`;
+              
+              return [
+                m(BoltCommands, { bolt }),
+                m('div.w-100.code.f7.pa2', {style: 'max-height: 80px; overflow-y: scroll'}, bolt.queue.sort(sortQueue).map( (cmd: IAction) => {
+                  return m('div', [
+                    m('span.ph1', cmd.bolt.name),
+                    m('span.ph1', cmd.id),
+                    m('span.ph1', cmd.executed     ? 'I' : 'O'),
+                    m('span.ph1', cmd.acknowledged ? 'I' : 'O'),
+                    m('span.ph1', cmd.name),
+                    m('span.ph1.washed-blue', cmd.command.join(' ')),
+                  ]);
+                }))
+              ];
             })),
 
             m('div.w-100.bg-lightest-blue.pa2.f6', {}, [
