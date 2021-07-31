@@ -41,13 +41,13 @@ const LayoutComponent = Factory.create('Layout', {
             m(Backdrop),
             m(Header, { route, params }),
 
-            m('div.w-100.pa2',     Bolts.map( (bolt: Bolt) => {
+            m('div.w-100', Bolts.map( (bolt: Bolt) => {
 
-              const style = `backcolor: ${ bolt.config.colors.backcolor }`;
-              
+              const style = { backgroundColor: bolt.config.colors.backcolor, height: '80px', overflowY: 'scroll' };
+
               return [
                 m(BoltCommands, { bolt }),
-                m('div.w-100.code.f7.pa2', {style: 'max-height: 80px; overflow-y: scroll'}, bolt.queue.sort(sortQueue).map( (cmd: IAction) => {
+                m('div.w-100.code.f7.pa2', { style }, bolt.queue.sort(sortQueue).map( (cmd: IAction) => {
                   return m('div', [
                     m('span.ph1', cmd.bolt.name),
                     m('span.ph1', cmd.id),
@@ -60,7 +60,7 @@ const LayoutComponent = Factory.create('Layout', {
               ];
             })),
 
-            m('div.w-100.bg-lightest-blue.pa2.f6', {}, [
+            m('div.w-100.bg-eee.pa2.f6', {}, [
               m(Canvas)
             ]),
 

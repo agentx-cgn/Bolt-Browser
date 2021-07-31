@@ -67,10 +67,24 @@ const CMD = {
     mainApplicationVersion:  0x00,
     bootloaderVersion:       0x01,
     something2:              0x02, // bad command ID
-    something6:              0x06,
     something12:             0x12,
     something28:             0x28,
+    get_nordic_temperature:  0x0e, // ??
+    get_mac_address:         0x06, // ??
   },
+
+  // class DrivingCommand(Enum):
+  //   raw_motor = 0x01
+  //   set_ackermann_steering_parameters = 0x02  // two axis stuff
+  //   drift = 0x03
+  //   absolute_yaw_steering = 0x04
+  //   enable_flip_drive = 0x05
+  //   reset_yaw = 0x06
+  //   drive_with_heading = 0x07
+  //   tank_drive = 0x08
+  //   rc_car_drive = 0x09
+  //   drive_to_position = 0x0a
+  //   set_stabilization = 0x0c
 
   driving : {
     rawMotor:                   1,
@@ -90,8 +104,25 @@ const CMD = {
     willSleepAsync:            25,
     sleepAsync:                26,
     batteryStateChange:        33,
-    get_battery_percentage : 0x10, // ??
+    get_battery_percentage : 0x10, // ?? Bad command id
   },
+
+  // const UserIOCommandIds = {
+  //   playAudioFile : 7,
+  //   audioVolume : 8,
+  //   stopAudio : 10,
+  //   testSound : 24,
+  //   allLEDs : 28,
+  //   setUserProfile : 35,
+  //   matrixPixel :45,
+  //   matrixColor : 47,
+  //   clearMatrix : 56, 
+  //   matrixRotation : 58,
+  //   matrixScrollText : 59,
+  //   matrixScrollNotification: 60,
+  //   matrixLine : 61,
+  //   matrixFill : 62,
+  //   printChar : 66,
 
   IO : {
     playAudioFile:              7,
@@ -132,6 +163,9 @@ const CMD = {
   //   magnetometer_calibrate_to_north = 0x25
   //   magnetometer_north_yaw_notify = 0x26
   //   get_ambient_light_sensor_value = 0x30
+
+  // class AmbientLight(_Sensor):
+  //   ambient_light = SensorParameter(0x40000, 0.0, 120000.0)
 
   sensor : {
     sensorMask:                 0,

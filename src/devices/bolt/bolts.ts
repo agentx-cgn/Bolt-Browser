@@ -12,9 +12,9 @@ class bolts {
   public find;
   public forEach;
 
-  private defaults = {
-    'SB-9129' : {colors: {console: '#FF0', backgound: '#880'}},
-    'SB-2B96' : {colors: {console: '#F0F', backgound: '#808'}},
+  private configs = {
+    'SB-9129' : { colors: { console: '#FF0', backcolor: 'rgb(104, 160, 150)', matrix: [30, 240, 30] } },
+    'SB-2B96' : { colors: { console: '#F0F', backcolor: 'rgb(123, 145, 193)', matrix: [30, 30, 240] } },
   } as any;
 
   private bluetooth: any;
@@ -22,10 +22,15 @@ class bolts {
 
   constructor ( BT: any ) {
 
+    // allows: await Bolts.get('SB-9129').actuators.roll(0, 90) in console
+    window.Bolts = this;
+
     this.bluetooth = BT;
     this.map     = Array.prototype.map.bind(this.bolts);
     this.find    = Array.prototype.find.bind(this.bolts);
     this.forEach = Array.prototype.forEach.bind(this.bolts);
+
+    this.get = (name: string) => this.find( (bolt: Bolt) => bolt.name === name);
 
     this.findBolts();
 
@@ -47,6 +52,8 @@ class bolts {
 		});
 	}
 
+  get (name: string) { return this.find( (bolt: Bolt) => bolt.name === name); }
+
   async findBolts () {
 
     return navigator.bluetooth.getDevices()
@@ -67,11 +74,12 @@ class bolts {
 
             } else {
               console.log(device.name, 'advertisementreceived', {rssi: event.rssi, txPower: event.txPower})
-
+              
             }
           }
-
-          device.addEventListener('advertisementreceived',  listener);
+          
+          // happens after this.disconnect
+          // device.addEventListener('advertisementreceived',  listener);
 
           promises.push(
             device.watchAdvertisements()
@@ -111,8 +119,8 @@ class bolts {
 
   private async connectBolt(device: BluetoothDevice) {
 
-    const defaults = this.defaults[device.name];
-    const bolt    = new Bolt(device, defaults);
+    const config  = this.configs[device.name];
+    const bolt    = new Bolt(device, config);
     const success = await this.connectGATT(bolt, device);
     const onGattServerDisconnected = bolt.receiver.onGattServerDisconnected.bind(bolt.receiver);
     const advertisementreceived    = bolt.receiver.onAdvertisementReceived.bind(bolt.receiver);
@@ -126,10 +134,14 @@ class bolts {
 
   }
 
-  // doesnt work Z:150 Cannot read propelayrty 'gatt' of undefined
-  public async disconnect (bolt?:Bolt) {
+  public disconnectall () {
+    this.forEach(this.disconnect.bind(this));
+  }
 
-    console.log('Disconnecting...', bolt.name);
+  // doesnt work Z:150 Cannot read propelayrty 'gatt' of undefined
+  public async disconnect ( bolt?:Bolt ) {
+
+    console.log(bolt.name, 'Disconnecting ...', );
 
     if (bolt.device.gatt.connected) {
       bolt.device.gatt.disconnect();

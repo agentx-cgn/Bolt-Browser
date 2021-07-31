@@ -2,9 +2,11 @@
 
 import { CONSTANTS as C } from '../constants';
 import { Bolt } from './bolt';
-import { IEvent } from './interfaces';
+import { IEvent, TColor } from './interfaces';
 import { maskToRaw, flatSensorMask, wait } from './utils';
 import { Aruco } from '../../services/aruco';
+import { H } from "../../services/helper";
+
 export class Actuators {
 
   private bolt: Bolt;
@@ -12,14 +14,17 @@ export class Actuators {
   private commands = {
     wake:              { device: C.Device.powerInfo, command: C.CMD.Power.wake,                             data: [] as any },
     sleep:             { device: C.Device.powerInfo, command: C.CMD.Power.sleep,                            data: [] as any },
+    hibernate:         { device: C.Device.powerInfo, command: C.CMD.Power.deepSleep,                        data: [] as any },
     batteryVoltage:    { device: C.Device.powerInfo, command: C.CMD.Power.batteryVoltage,     target: 0x11, data: [] as any },
+    // batteryPercentage: { device: C.Device.powerInfo, command: C.CMD.Power.get_battery_percentage,     target: 0x11, data: [] as any },
     calibrateCompass:  { device: C.Device.sensor,    command: C.CMD.sensor.calibrateToNorth,  target: 0x12, data: [] as any },
     resetLocator:      { device: C.Device.sensor,    command: C.CMD.sensor.resetLocator,      target: 0x12, data: [] as any },
+    ambientLight:      { device: C.Device.sensor,    command: C.CMD.sensor.ambientLight,      target: 0x12, data: [] as any },
+    stabilize:         { device: C.Device.driving,   command: C.CMD.driving.stabilization,    target: 0x12, data: [ /* index */ ] as any },
     resetYaw:          { device: C.Device.driving,   command: C.CMD.driving.resetYaw,         target: 0x12, data: [] as any },
     roll:              { device: C.Device.driving,   command: C.CMD.driving.driveWithHeading, target: 0x12, data: [ /* speed, (heading >> 8) & 0xff, heading & 0xff, flags */] as any },
     rotateMatrix:      { device: C.Device.userIO,    command: C.CMD.IO.matrixRotation,        target: 0x12, data: [ /* 0|1|2|3 */ ] as any },
     setMatrixColor:    { device: C.Device.userIO,    command: C.CMD.IO.matrixColor,           target: 0x12, data: [ /* r, g, b */ ] as any },
-    ambientLight:      { device: C.Device.sensor,    command: C.CMD.sensor.ambientLight,      target: 0x12, data: [] as any },
   } as any;
 
   constructor (bolt: Bolt) {
@@ -30,31 +35,44 @@ export class Actuators {
     const command = Object.assign( { name }, this.commands[name], overwrites);
     return this.bolt.queue.queueMessage(command);
   }
+  
 
+// - - - - - ACTUATORS - - - - //
+  
   async info () {
     await this.getInfo(C.CMD.SystemInfo.mainApplicationVersion);
     await this.getInfo(C.CMD.SystemInfo.bootloaderVersion);
     await this.getInfo(C.CMD.Power.batteryVoltage);
     await this.batteryVoltage();
+    // await this.batteryPercentage(); bad command ID
     await this.ambientLight();
   }
-
-
-// - - - - - ACTUATORS - - - - //
   
+
+// - - - - - BASIC - - - - //
+
   async wake             () { return this.queue('wake') }
   async sleep            () { return this.queue('sleep') }
+  async hibernate        () { return this.queue('hibernate') }
   async resetLocator     () { return this.queue('resetLocator') }
   async resetYaw         () { return this.queue('resetYaw') }  // /* Sets the current orientation as orientation 0° */
   async calibrateCompass () { return this.queue('calibrateCompass') }
-
   
+  async stabilize        ( index: number ) { return this.queue('wake', { data: [index] }); }
+  
+
 // - - - - - INFO - - - - //
 
   async batteryVoltage   () { 
     return await this 
       .queue('batteryVoltage')
       .then( cmd => { this.bolt.status.voltage = cmd.responseData; })
+    ;
+  }
+  async batteryPercentage   () { 
+    return await this 
+      .queue('batteryPercentage')
+      .then( cmd => { this.bolt.status.percentage = cmd.responseData; })
     ;
   }
   
@@ -64,109 +82,134 @@ export class Actuators {
       .then( cmd => this.bolt.status.ambient = cmd.responseData )
     ;
   }
-
-
-  
-  async rotateMatrix (rotation: number) { 
-    this.bolt.status.matrix.rotation = rotation;
-    return await this.queue('rotateMatrix', {data: [rotation]});
-  }
-  
-  async setMatrixColor (r: number, g: number, b: number) { 
-    // destroys image
-    return await this.queue('setMatrixColor', {data: [r, g, b]});
-  }
   
   
 // - - - - - DRIVING - - - - //
 
+// flags=Flag.requests_response.value | Flag.command_has_target_id.value | Flag.resets_inactivity_timeout.value
+
+  async stabilizeFull() { return await this.stabilize(C.StabilizationIndex.full_control_system); }
+  async stabilizeNone() { return await this.stabilize(C.StabilizationIndex.no_control_system);   }
+
+  async timeDelimiter (secs: number) {
+
+    await wait (2000);
+    return Promise.resolve(true);
+
+  }
+
+  async rollUntil (speed: number, heading: number, delimiter: any) {
+
+    return this
+      .roll(speed, heading)
+      .then( () => {
+        return delimiter;
+      })
+      .then( () => {
+        return this.stop();
+      })
+    ;
+
+  }
+
+  async stop () { 
+    const heading = this.bolt.status.heading;
+    return await this
+      .queue('roll',  {data: [0, (heading >> 8) & 0xff, heading & 0xff, [] ]})
+    ;  
+  }
+
   async roll (speed: number, heading: number, flags: any=[]) { 
     return await this
       .queue('roll',  {data: [speed, (heading >> 8) & 0xff, heading & 0xff, flags]})
-    ;
-  }
+    ;  
+  }  
 
   async rotate (degrees=0) {
     degrees = degrees < 0 ? degrees + 360 : degrees;
     return await this.roll(0, degrees, [] as any);
-    // this.resetYaw();
-  }
+  }  
   
   /* Sets Sphero heading */
   async setHeading(heading: number){
     heading = heading < 0 ? heading + 360 : heading;
     return this.roll(0, heading, [] as any);
-  }  
-  
-  /* Stabilize the Sphero */
-  async stabilize(index: number){
-    return this.bolt.queue.queueMessage({
-      name:    'stabilize',
-      device:  C.Device.driving,
-      command: C.CMD.driving.stabilization, // .driveWithHeading, // DrivingCommandIds.driveWithHeading,
-      target:  0x12,
-      data:    [ index ],
-    });  
-  }  
-
-  async stabilizeFull() {
-    return this.stabilize(C.StabilizationIndex.full_control_system);
-  }
-  async stabilizeNone() {
-    return this.stabilize(C.StabilizationIndex.no_control_system);
-  }
-
+  }    
 
   async calibrateNorth () {
 
-    const listener = async (e: IEvent) => {
+    return new Promise( async (resolve /*, reject */) => {
 
-      this.bolt.receiver.off('compass', listener);
+      const listener = async (e: IEvent) => {
 
-      const angle = e.sensordata;
-      await wait (2000);
-      await this.rotate(angle);
-      // await this.rotate(0);
-      await wait (2000);
+        this.bolt.receiver.off('compass', listener);
+
+        const angle         = e.sensordata;
+        const color: TColor = this.bolt.config.colors.matrix;
+        await wait (1000);
+        await this.rotate(angle);
+        await wait (1000);
+        await this.resetYaw();
+        await this.setMatrixImage(0, 0, 0, ...color, Aruco.createImage(0));
+        this.bolt.status.heading = 0;
+
+        console.log('calibrateNorth.event', e);
+        resolve(0);
+
+      };
+      
+      this.bolt.receiver.on('compass', listener);
       await this.resetYaw();
-      await this.setMatrixImage(0, 0, 0, 200, 200, 200, Aruco.createImage(0));
+      await this.calibrateCompass();
 
-      console.log('calibrateNorth.event', e);
-
-    };
-
-    this.bolt.receiver.on('compass', listener);
-    await this.resetYaw();
-    return await this.calibrateCompass();
+    });
 
   }
 
-// - - - - - LIGHT
-    
-    /* Set the color of the LEd matrix and front and back LED */
-    async setAllLeds(r: number, g: number, b: number){
-      await this.setLedsColor(r, g, b);
-      await this.setMatrixColor(r, g, b);
-    }      
+  async piroutte () {
+    for (const deg in H.range(1, 37)) {
+      await this.roll(0, (deg as unknown as number) * 10);
+    }
+    return Promise.resolve(true);
+  }
+
+
+// - - - - - LIGHT / MATRIX - - - - //
   
-    /* Set the color of the matrix to random color */
-    async setMatrixRandomColor(){
-      const color = Math.round(0xffffff * Math.random());
-      const r = color >> 16, g = color >> 8 & 255, b = color & 255;
-      return this.setMatrixColor(r, g, b);
-    }      
+  async rotateMatrix (rotation: number) { 
+    this.bolt.status.matrix.rotation = rotation;
+    return await this.queue('rotateMatrix', {data: [rotation]});
+  }
+
+  async setMatrixColor (r: number, g: number, b: number) { 
+    // destroys image
+    return await this.queue('setMatrixColor', {data: [r, g, b]});
+  }
   
-    async setMatrixImage(br: number, bg: number, bb: number, r: number, g: number, b: number, image: number[][]) {
-      await this.setMatrixColor(br, bg, bb);
-      let x: number, y: number;
-      for (x=0; x<8; x++){
-        for (y=0; y<8; y++){
-          if(image[x][y]) {
-            await this.setMatrixPixel (y, x, r, g, b);
-          }
+  /* Set the color of the LEd matrix and front and back LED */
+  async setAllLeds(r: number, g: number, b: number){
+    await this.setLedsColor(r, g, b);
+    await this.setMatrixColor(r, g, b);
+  }      
+
+  /* Set the color of the matrix to random color */
+  async setMatrixRandomColor(){
+    const color = Math.round(0xffffff * Math.random());
+    const r = color >> 16, g = color >> 8 & 255, b = color & 255;
+    return this.setMatrixColor(r, g, b);
+  }      
+
+  async setMatrixImage(br: number, bg: number, bb: number, r: number, g: number, b: number, image: number[][]) {
+    await this.setMatrixColor(br, bg, bb);
+    let x: number, y: number;
+    for (x=0; x<8; x++){
+      for (y=0; y<8; y++){
+        if(image[x][y]) {
+          await this.setMatrixPixel (y, x, r, g, b);
         }
       }
     }
+  }
 
   /* Prints a char on the LED matrix  */
   async printChar(char: string, r: number, g: number, b: number){
@@ -323,17 +366,28 @@ export class Actuators {
   // response = self.request(SystemInfoCommand.get_mac_address)
   // return ":".join(chr(b1) + chr(b2) for b1, b2 in zip(response.data[0::2], response.data[1::2]))
 
+  // def set_led_matrix_text_scrolling(self, string: str, color: Color, speed: int = 0x10, repeat: bool = True):
+  // """
+  // Print text on matrix
+
+  // :param str string: max length 6 symbols
+  // :param Color color:
+  // :param int speed: max value is 0x1e (30)
+  // :param bool repeat:
+  // :return:
+  // """
   // self.request(
-  //   command_id=UserIOCommand.set_led_matrix_text_scrolling,
-  //   data=[
-  //       *color.to_list(),
-  //       speed % 0x1e,
-  //       int(repeat),
-  //       *[ord(c) for c in string[:7]],
-  //       0x00,  # end line
-  //   ],
-  //   target_id=0x12,
-// )
+  //     command_id=UserIOCommand.set_led_matrix_text_scrolling,
+  //     data=[
+  //         *color.to_list(),
+  //         speed % 0x1e,
+  //         int(repeat),
+  //         *[ord(c) for c in string[:7]],
+  //         0x00,  # end line
+  //     ],
+  //     target_id=0x12,
+  // )
+
 
 
   // async wake () { return this.bolt.queue.queueMessage({

@@ -40,8 +40,8 @@ export class Receiver {
   }
 
       
-  onGattServerDisconnected (event: any) {
-    console.log(this.bolt.name, 'onGattServerDisconnected', event);
+  onGattServerDisconnected (event: Event) {
+    console.log(this.bolt.name, 'onGattServerDisconnected');
   }
 
   onAdvertisementReceived  (event: BluetoothAdvertisementEvent) {
@@ -165,6 +165,18 @@ export class Receiver {
 
   /* Incoming Packet decoder */
   decodePacket( packet: any ): ICommand {
+
+    // Packet structure:
+    // ---------------------------------
+    // - start      [1 byte]
+    // - flags      [1 byte]
+    // - source_id  [1 byte] (optional)
+    // - target_id  [1 byte] (optional)
+    // - device_id  [1 byte]
+    // - command_id [1 byte]
+    // - data       [n byte]
+    // - checksum   [1 byte]
+    // - end        [1 byte]
 
     let command = { data: [], packet: [ ...packet ] } as ICommand;
 

@@ -1,6 +1,15 @@
 
 import { Bolt } from './bolt';
+import { Bolts } from './bolts';
 
+declare global {
+  interface Window {
+      Bolts: typeof Bolts;
+  }
+}
+
+
+export type TColor = [number, number, number];
 export interface IUuid {
   uuid:    string,
 }
@@ -18,6 +27,7 @@ export interface IStatus {
   ambient:    number[],
   velocity:   any,
   voltage:    number[],
+  percentage:    number[],
   matrix:     IMatrix,
 }  
 

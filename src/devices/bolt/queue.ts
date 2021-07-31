@@ -175,7 +175,8 @@ export class Queue {
 
     const { device, command, target, data } = message;
     const flags = C.Flags.requestsResponse | C.Flags.resetsInactivityTimeout | (target ? C.Flags.commandHasTargetId : 0) ;
-    const bytes = [];	  
+    const bytes = [];	
+      
     let checkSum: number = 0;
 
     bytes.push(C.API.startOfPacket);

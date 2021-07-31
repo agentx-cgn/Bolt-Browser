@@ -1,8 +1,5 @@
 
 
-.f7 {
-  font-size: 0.7rem;
-}
 
 .cmd {
   background-color: #eee;
@@ -18,6 +15,93 @@
   color: #333;
 }
 
-.mono {
-  font-family: monospace;
+
+/* overwrite or extend tachyons here */
+
+.f7        { font-size: 0.7rem; }
+
+.dn        {display: none !important;}
+.outline   { outline: 1px solid white; }
+.vih       { visibility: hidden;}
+
+.z10       { z-index: 10;}
+.z11       { z-index: 11;}
+.z12       { z-index: 12;}
+
+.ll0       { left: 0;}
+.w1r       { width: 1rem;}
+
+.chess     { font-family: 'Chess'; }
+.fior      { font-family: 'Iosevka-Term-Regular'; }
+.fiom      { font-family: 'Iosevka-Term-Medium'; }
+.fiob      { font-family: 'Iosevka-Term-Bold'; }
+.sail      { font-family: 'SairaCondensed-Light'; }
+.sair      { font-family: 'SairaCondensed-Regular'; }
+.saim      { font-family: 'SairaCondensed-Medium'; }
+.mono      { font-family: monospace; }
+
+.lh1       { line-height: 1rem; }
+.h05       { height:  0.5rem; }
+.pa0       { padding: 0 !important; }
+.ma0       { margin:  0 !important; }
+
+.cred      { color: darkred; }
+.c156      { color: #156; }
+.cfe6      { color: #fe6} ;
+
+.ctb10      {color:            rgba(0,0,0,.1);}
+.ctb20      {color:            rgba(0,0,0,.2);}
+.ctw80      {color:            rgba(255,255,255,0.8);}
+.ctr20      {color:            rgba(255,0,0,.4);}
+.btb20      {background-color: rgba(0,0,0,.2);}
+.btw20      {background-color: rgba(255,255,255,.2);}
+
+.cfff      { color: #fff; }
+.ceee      { color: #eee; }
+.cddd      { color: #ddd; }
+.cccc      { color: #ccc; }
+.cbbb      { color: #bbb; }
+.caaa      { color: #aaa; }
+.c999      { color: #999; }
+.c888      { color: #888; }  // background
+.c777      { color: #777; }
+.c666      { color: #666; }
+.c555      { color: #555; }
+.c444      { color: #444; }
+.c333      { color: #333; }
+.c000      { color: #000; }
+
+.ctrans    { color: transparent !important; }
+.bg-trans  { background-color: transparent !important; }
+.bg-8a8    { background-color: #8a8; }
+.bg-89a    { background-color: #89a; } // selected data
+.bg-89b    { background-color: #89b; } // selected data
+.bg-a88    { background-color: #a88; } // selected navigation
+.bg-fdd    { background-color: #fdd; }
+.bg-aa7    { background-color: #aa7; } // game flag neutral
+.bg-fa7    { background-color: #fa7; } // game flag active
+
+.bg-fff    { background-color: #fff; }
+.bg-eee    { background-color: #eee; }
+.bg-ddd    { background-color: #ddd; }
+.bg-ccc    { background-color: #ccc; }
+.bg-aaa    { background-color: #aaa; }
+.bg-999    { background-color: #999; }
+.bg-888    { background-color: #888; }
+.bg-555    { background-color: #555; } // header bg
+.bg-333    { background-color: #333; } // header bg
+
+.flex-grow {
+    flex: 1 0 auto;
+}
+.flex-shrink {
+    flex: 0 1 auto;
+}
+.viewport-y {
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+.viewport-xy {
+    overflow-y: auto;
+    overflow-x: auto;
 }
