@@ -40,12 +40,11 @@ export class Actuators {
 // - - - - - ACTUATORS - - - - //
   
   async info () {
-    await this.getInfo(C.CMD.SystemInfo.mainApplicationVersion);
-    await this.getInfo(C.CMD.SystemInfo.bootloaderVersion);
-    await this.getInfo(C.CMD.Power.batteryVoltage);
     await this.batteryVoltage();
-    // await this.batteryPercentage(); bad command ID
     await this.ambientLight();
+    // await this.getInfo(C.CMD.SystemInfo.mainApplicationVersion);
+    // await this.getInfo(C.CMD.SystemInfo.bootloaderVersion);
+    // await this.batteryPercentage(); bad command ID
   }
   
 
@@ -93,7 +92,7 @@ export class Actuators {
 
   async timeDelimiter (secs: number) {
 
-    await wait (2000);
+    await wait (secs);
     return Promise.resolve(true);
 
   }

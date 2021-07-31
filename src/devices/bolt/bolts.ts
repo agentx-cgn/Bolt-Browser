@@ -3,6 +3,7 @@
 import m from "mithril";
 
 import { CONSTANTS as C }  from '../constants';
+// import { BluetoothAdvertisingEvent }  from './interfaces';
 import { Bluetooth as BT }  from '../bluetooth.service';
 import { Bolt } from './bolt';
 
@@ -65,7 +66,7 @@ class bolts {
         for (const device of devices) {
 
           let connecting = false;
-          const listener = async (event: any) => { // BluetoothAdvertisingEvent
+          const listener = async (event: BluetoothAdvertisementEvent) => { // BluetoothAdvertisingEvent
             if (!connecting){
               connecting = true;
               console.log('advertisementreceived', 'connecting...', event)
@@ -77,9 +78,9 @@ class bolts {
               
             }
           }
-          
-          // happens after this.disconnect
-          // device.addEventListener('advertisementreceived',  listener);
+
+          // needed for getDevices
+          device.addEventListener('advertisementreceived',  listener);
 
           promises.push(
             device.watchAdvertisements()

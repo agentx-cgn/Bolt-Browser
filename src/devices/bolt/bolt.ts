@@ -54,14 +54,16 @@ export class Bolt {
 
   async reset() {
 
-    const color: TColor = this.config.colors.matrix;
+    const colorBolt:  TColor = this.config.colors.matrix;
+    const colorFront: TColor = [10, 0, 0];
+    const colorBack:  TColor = [ 5, 5, 5];
 
     await this.characs.get(C.ANTIDOS_CHARACTERISTIC).writeValue(C.useTheForce);
 
     await this.actuators.wake();	
-    await this.actuators.setLedsColor(10, 0, 0, 5, 5, 5); // red = north
+    await this.actuators.setLedsColor(...colorFront, ...colorBack); // red = north
     await this.actuators.info();	
-    await this.actuators.setMatrixColor(...color);
+    await this.actuators.setMatrixColor(...colorBolt);
     await this.actuators.calibrateNorth();
     await wait(4000);
     

@@ -2,6 +2,15 @@
 import { Bolt } from './bolt';
 import { Bolts } from './bolts';
 
+export interface BluetoothAdvertisementEvent extends Event {
+  device: BluetoothDevice;
+  rssi: number;
+  txPower: number;
+  manufacturerData?: BluetoothManufacturerData | undefined;
+  serviceData?: BluetoothServiceData | undefined;
+  uuids?: BluetoothServiceUUID[] | undefined;
+}
+
 declare global {
   interface Window {
       Bolts: typeof Bolts;
