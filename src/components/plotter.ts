@@ -60,6 +60,7 @@ const Plotter = Factory.create('Plotter', {
     plotCoords (ctx: CanvasRenderingContext2D, meta: any) {
 
       const imax     = parseInt(String(meta.max), 10);
+      const imaxx     = parseInt(String(meta.max), 10);
       const scale    = meta.scale;
       const fontSize = parseInt(String(12 / scale), 10);
 
@@ -101,7 +102,7 @@ const Plotter = Factory.create('Plotter', {
 
     plotSeries (ctx: CanvasRenderingContext2D, meta: any, series: any) {
 
-      console.log('Plotter.scale.max', meta.scale, meta.max);
+      // console.log('Plotter.scale.max', meta.scale, meta.max);
 
       series.forEach( (serie:any) => {
 
@@ -113,7 +114,7 @@ const Plotter = Factory.create('Plotter', {
           plot.strokeRect(ctx, x, y, 2 / meta.scale);
         });
 
-        console.log('plotted', serie.color, serie.data.length)
+        // console.log('plotted', serie.color, serie.data.length)
 
       });
 
@@ -131,23 +132,23 @@ const Plotter = Factory.create('Plotter', {
 
     render ( ) {
 
-      const series = [];
+      const series = [] as any;
       meta.max = 0;
 
       if (cvs && ctx ) {
 
         cvs.width = cvs.width;
 
-        // Bolts.forEach ( (bolt: Bolt) => {
-        //   const data = bolt.receiver.logs.sensor.slice(-50);
-        //   Plotter.analyze(data);
-        //   series.push({ color: bolt.config.colors.plot, data });
-        // });
+        Bolts.forEach ( (bolt: Bolt) => {
+          const data = bolt.receiver.logs.sensor.slice(-50);
+          Plotter.analyze(data);
+          series.push({ color: bolt.config.colors.plot, data });
+        });
 
-        if (meta.max === 0) {
-          Plotter.analyze(testData);
-          series.push({ color: 'darkred', data: testData });
-        }
+        // if (meta.max === 0) {
+        //   Plotter.analyze(testData);
+        //   series.push({ color: 'darkred', data: testData });
+        // }
 
 
         ctx.save();

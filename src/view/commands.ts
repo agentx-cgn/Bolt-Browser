@@ -35,7 +35,7 @@ const BoltCommands = Factory.create('Layout', {
         m('button.mh1.cmd', { onclick: bolt.actuators.stabilizeNone.bind(bolt.actuators) },         'Stab OFF'),
         m('button.mh1.cmd', { onclick: bolt.actuators.stabilizeFull.bind(bolt.actuators) },         '⛢'),
 
-        m('button.mh1.cmd', { onclick: () => bolt.actuators.enableSensors() },                 'Sensor ON'),
+        m('button.mh1.cmd', { onclick: () => bolt.actuators.enableSensorsAll() },                 'Sensor ON'),
         m('button.mh1.cmd', { onclick: () => bolt.actuators.disableSensors() },                'Sensor OFF'),
 
         m('button.mh1.cmd', { onclick: () => bolt.actuators.roll(25,   0) },                '▲'),

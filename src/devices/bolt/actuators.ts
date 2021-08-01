@@ -6,6 +6,7 @@ import { IEvent, TColor, TNum } from './interfaces';
 import { maskToRaw, flatSensorMask, wait } from './utils';
 import { Aruco } from '../../services/aruco';
 import { H } from "../../services/helper";
+import { resolve } from '../../../webpack.config';
 
 export class Actuators {
 
@@ -43,6 +44,9 @@ export class Actuators {
 
 // EDU: current firmware versions 4.2.41, 4.2.44
 
+// night, ceiling light: [0, 65, 64, 82, 18], [0, 65, 66, 43, 241]
+// battery max 141, min: 1.01
+
   async info () {
     await this.batteryVoltage();
     await this.ambientLight();
@@ -72,21 +76,21 @@ export class Actuators {
 
   async batteryVoltage   () {
     return await this
-    .queue('batteryVoltage')
-    .then( cmd => { this.bolt.status.voltage = cmd.responseData; })
+      .queue('batteryVoltage')
+      .then( cmd => { this.bolt.status.voltage = cmd.responseData; })
     ;
   }
   async batteryPercentage   () {
     return await this
-    .queue('batteryPercentage')
-    .then( cmd => { this.bolt.status.percentage = cmd.responseData; })
+      .queue('batteryPercentage')
+      .then( cmd => { this.bolt.status.percentage = cmd.responseData; })
     ;
   }
 
   async ambientLight () {
     return await this
-    .queue('ambientLight')
-    .then( cmd => this.bolt.status.ambient = cmd.responseData )
+      .queue('ambientLight')
+      .then( cmd => this.bolt.status.ambient = cmd.responseData )
     ;
   }
 
@@ -104,22 +108,42 @@ export class Actuators {
     ;
   }
 
-  async timeDelimiter (secs: number) {
+  timeDelimiter (msecs: number) {
 
-    await wait (secs);
-    return Promise.resolve(true);
+    const period = 250, now = new Date();
+    let timeout, interval: number;
+
+    console.log('Delimiter.in :', now.toISOString());
+
+    return {
+      do (action: any) {
+
+        return new Promise( (resolve) => {
+
+          const finish = () => {
+            clearInterval(interval);
+            console.log('Delimiter.out:', (new Date()).toISOString());
+            resolve(true);
+          }
+          interval = window.setInterval(action, period);
+          timeout  = window.setTimeout(finish, msecs);
+
+        });
+      }
+    }
 
   }
 
   async rollUntil (speed: number, heading: number, delimiter: any) {
 
-    return this
-      .roll(speed, heading)
-      .then( () => {
-        return delimiter;
-      })
-      .then( () => {
-        return this.stop();
+    const action = async () => await this.roll(speed, heading);
+    await this.printChar('I', 100, 100, 100);
+
+    return delimiter
+      .do(action)
+      .then( async () => {
+        await this.printChar('0', 100, 100, 100);
+        return await this.stop();
       })
     ;
 
@@ -300,23 +324,24 @@ export class Actuators {
 
   /* Enables sensor data streaming */
 	async disableSensors() {
-
     var mask = [ C.SensorMaskValues.off ];
 		this.bolt.status.rawMask = maskToRaw(mask);
 		await this.sensorMask(flatSensorMask(this.bolt.status.rawMask.aol), 0);
 		await this.sensorMaskExtended(flatSensorMask(this.bolt.status.rawMask.gyro));
-
   }
 
-	async enableSensors(interval=2000) {
-
-		var mask = [
+	async enableSensorsAll(interval=2000) {
+    return await this.enableSensors(interval, [
 			C.SensorMaskValues.accelerometer,
 			C.SensorMaskValues.orientation,
 			C.SensorMaskValues.locator,
 			C.SensorMaskValues.gyro,
-		];
-
+		]);
+  }
+	async enableSensorsLocation(interval=1000) {
+    return await this.enableSensors(interval, [ C.SensorMaskValues.locator ]);
+  }
+	async enableSensors(interval: number, mask: number[]) {
 		this.bolt.status.rawMask = maskToRaw(mask);
 		await this.sensorMask(flatSensorMask(this.bolt.status.rawMask.aol), interval);
 		await this.sensorMaskExtended(flatSensorMask(this.bolt.status.rawMask.gyro));

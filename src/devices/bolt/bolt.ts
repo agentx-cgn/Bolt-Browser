@@ -11,7 +11,7 @@ import { Sensors } from './sensors';
 import { Queue } from './queue';
 import { H } from "../../services/helper";
 
-export class Bolt { 
+export class Bolt {
 
   public name:       string;
   public config:     any;
@@ -22,7 +22,7 @@ export class Bolt {
   public actuators:  Actuators;
   public sensors:    Sensors;
   public receiver:   Receiver;
-  
+
   public status: IStatus = {
     keepAwake:  true,
     heading:    0,
@@ -62,36 +62,36 @@ export class Bolt {
 
     await this.characs.get(C.ANTIDOS_CHARACTERISTIC).writeValue(C.useTheForce);
 
-    await this.actuators.wake();	
-    await this.actuators.stabilizeFull();	
+    await this.actuators.wake();
+    await this.actuators.stabilizeFull();
     await this.actuators.setLedsColor(...colorFront, ...colorBack); // red = north
-    await this.actuators.info();	
+    await this.actuators.info();
     await this.actuators.setMatrixColor(...colorBolt);
     await this.actuators.calibrateNorth();
     await wait(4000);
-    
+
     await this.actuators.resetLocator();
     await wait(1000);
-    
+
   };
-  
+
   async shake () {
     this.actuators.roll(1, this.status.heading, 0);
   }
-  
+
   async configure () {
     await this.actuators.enableCollisionDetection();
-    await this.actuators.enableSensors();
+    await this.actuators.enableSensorsLocation();
   }
-  
-  
+
+
   async action () {
 
-    await this.actuators.rollUntil(16, 0, this.actuators.timeDelimiter(4000))
+    await this.actuators.rollUntil(20, 0, this.actuators.timeDelimiter(8000))
 
   }
-    
-    
+
+
     async ActionX () {
     await this.actuators.rotateMatrix(C.FrameRotation.deg180);
     await this.actuators.setMatrixImage(0, 0, 0, 200, 200, 200, Aruco.createImage(0));
