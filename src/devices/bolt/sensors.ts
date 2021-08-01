@@ -3,7 +3,7 @@ import { Bolt } from './bolt';
 import { Receiver } from './receiver';
 import { ICommand, IEvent, ISensorData } from './interfaces';
 import { wait } from './utils';
-import { Canvas } from '../../components/canvas';
+import { Plotter } from '../../components/plotter';
 export class Sensors {
 
 	private bolt:     Bolt;
@@ -16,14 +16,6 @@ export class Sensors {
 	}
 
 	activate() {
-
-		// this.receiver.on('compass', async (event: IEvent) => {
-		// 	console.log(this.bolt.name, 'onCompassNotify.setheading', event);
-		// 	const heading = event.sensordata;
-		// 	await this.bolt.actuators.rotate(-heading);
-		// 	await this.bolt.actuators.resetYaw();
-		// 	this.bolt.heading = heading;
-		// });
 
 	// 	* An 8-bit value is returned for each infrared sensor, assigned by mask.
 	// 	Mask description on BOLT: 32'h0000_00ff: front left sensor 32'h0000_ff00: front right sensor 32'h00ff_0000: back right sensor 32'hff00_0000: back left sensor
@@ -66,7 +58,7 @@ export class Sensors {
 			this.bolt.status.velocity.x = data.locator.velocityX;
 			this.bolt.status.velocity.y = data.locator.velocityY;
 
-			Canvas.render();
+			Plotter.render();
 
 			const loc = data.locator;
 			const  plog = {

@@ -4,7 +4,7 @@ import m from "mithril";
 // // import { H }        from '../view/services/helper';
 import { Header }       from '../components/header/header';
 import { Backdrop }     from '../components/backdrop';
-import { Canvas }     from '../components/canvas';
+import { Plotter }     from '../components/plotter';
 // import { Nothing }  from './components/misc';
 import { Last }         from '../components/last';
 import Factory      from '../components/factory';
@@ -62,7 +62,7 @@ const LayoutComponent = Factory.create('Layout', {
             })),
 
             m('div.w-100.bg-eee.pa2.f6.flex.flex-row', {}, [
-              m(Canvas),
+              m(Plotter, {size: 512} ),
               m('div', {}, Bolts.map(( bolt: Bolt ) => {
                 return m(BoltStatus, { bolt });
               }))

@@ -40,6 +40,8 @@ export class Actuators {
   
 
 // - - - - - ACTUATORS - - - - //
+
+// EDU: current firmware versions 4.2.41, 4.2.44
   
   async info () {
     await this.batteryVoltage();

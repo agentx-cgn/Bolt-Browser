@@ -14,8 +14,8 @@ class bolts {
   public forEach;
 
   private configs = {
-    'SB-9129' : { colors: { console: '#FF0', backcolor: 'rgb(104, 160, 150)', matrix: [30, 240, 30] } },
-    'SB-2B96' : { colors: { console: '#F0F', backcolor: 'rgb(123, 145, 193)', matrix: [30, 30, 240] } },
+    'SB-9129' : { colors: { console: '#FF0', plot: 'green', backcolor: 'rgb(104, 160, 150)', matrix: [30, 240, 30] } },
+    'SB-2B96' : { colors: { console: '#F0F', plot: 'blue',  backcolor: 'rgb(123, 145, 193)', matrix: [30, 30, 240] } },
   } as any;
 
   private bluetooth: any;
