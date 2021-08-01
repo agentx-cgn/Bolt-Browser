@@ -44,8 +44,8 @@ export class Actuators {
 
 // EDU: current firmware versions 4.2.41, 4.2.44
 
-// night, ceiling light: [0, 65, 64, 82, 18], [0, 65, 66, 43, 241]
-// battery max 141, min: 1.01
+// night, ceiling light: [0, 65, 64, 82, 18], [0, 65, 66, 43, 241], [0, 65, 64, 82, 18]
+// battery max 164, min: 1.01
 
   async info () {
     await this.batteryVoltage();
@@ -110,8 +110,8 @@ export class Actuators {
 
   timeDelimiter (msecs: number) {
 
-    const period = 250, now = new Date();
-    let timeout, interval: number;
+    const period = 500, now = new Date();
+    let timeout: number, interval: number;
 
     console.log('Delimiter.in :', now.toISOString());
 
@@ -121,6 +121,7 @@ export class Actuators {
         return new Promise( (resolve) => {
 
           const finish = () => {
+            clearTimeout(timeout);
             clearInterval(interval);
             console.log('Delimiter.out:', (new Date()).toISOString());
             resolve(true);
@@ -137,12 +138,12 @@ export class Actuators {
   async rollUntil (speed: number, heading: number, delimiter: any) {
 
     const action = async () => await this.roll(speed, heading);
-    await this.printChar('I', 100, 100, 100);
+    await this.printChar('I');
 
     return delimiter
       .do(action)
       .then( async () => {
-        await this.printChar('0', 100, 100, 100);
+        await this.printChar('0');
         return await this.stop();
       })
     ;
@@ -250,7 +251,10 @@ export class Actuators {
   }
 
   /* Prints a char on the LED matrix  */
-  async printChar(char: string, r: number, g: number, b: number){
+  async printChar(char: string) {
+    return await this.printCharColor(char, ...this.bolt.config.colors.matrix as TColor);
+  }
+  async printCharColor(char: string, r: number, g: number, b: number){
     return this.bolt.queue.queueMessage({
       name:      'printChar',
       device:    C.Device.userIO,

@@ -87,7 +87,8 @@ export class Bolt {
 
   async action () {
 
-    await this.actuators.rollUntil(20, 0, this.actuators.timeDelimiter(8000))
+    await this.actuators.rollUntil(20,   0, this.actuators.timeDelimiter(8000));
+    await this.actuators.rollUntil(20, 180, this.actuators.timeDelimiter(8000));
 
   }
 
@@ -97,7 +98,7 @@ export class Bolt {
     await this.actuators.setMatrixImage(0, 0, 0, 200, 200, 200, Aruco.createImage(0));
     await this.actuators.rotate(90);
     await this.actuators.setMatrixColor(100, 100, 100);
-    await this.actuators.printChar('#', 10, 40, 10);
+    await this.actuators.printChar('#');
     await this.actuators.batteryVoltage();
     await this.actuators.resetLocator();
     await this.actuators.calibrateCompass();
