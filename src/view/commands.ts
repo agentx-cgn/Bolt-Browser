@@ -16,6 +16,7 @@ const BoltCommands = Factory.create('Layout', {
     const style = { background: bolt.config.colors.backcolor };
 
     // https://www.w3schools.com/charsets/ref_utf_arrows.asp
+    // ⇧⇦⇨⇩
 
     return  (
       m('div.w-100', { style }, [
@@ -32,15 +33,16 @@ const BoltCommands = Factory.create('Layout', {
 
         m('button.mh1.cmd', { onclick: bolt.actuators.piroutte.bind(bolt.actuators) },         '↺↻'),
         m('button.mh1.cmd', { onclick: bolt.actuators.stabilizeNone.bind(bolt.actuators) },         'Stab OFF'),
-        m('button.mh1.cmd', { onclick: bolt.actuators.stabilizeFull.bind(bolt.actuators) },         'Stab ON'),
+        m('button.mh1.cmd', { onclick: bolt.actuators.stabilizeFull.bind(bolt.actuators) },         '⛢'),
 
         m('button.mh1.cmd', { onclick: () => bolt.actuators.enableSensors() },                 'Sensor ON'),
         m('button.mh1.cmd', { onclick: () => bolt.actuators.disableSensors() },                'Sensor OFF'),
 
-        m('button.mh1.cmd', { onclick: () => bolt.actuators.roll(15,   0) },                '⇧'),
-        m('button.mh1.cmd', { onclick: () => bolt.actuators.roll(15, 270) },                '⇦'),
-        m('button.mh1.cmd', { onclick: () => bolt.actuators.roll(15,  90) },                '⇨'),
-        m('button.mh1.cmd', { onclick: () => bolt.actuators.roll(15, 180) },                '⇩'),
+        m('button.mh1.cmd', { onclick: () => bolt.actuators.roll(25,   0) },                '▲'),
+        m('button.mh1.cmd', { onclick: () => bolt.actuators.roll(25, 270) },                '◀'),
+        m('button.mh1.cmd', { onclick: () => bolt.actuators.roll(25,  90) },                '▶'),
+        m('button.mh1.cmd', { onclick: () => bolt.actuators.roll(25, 180) },                '▼'),
+        m('button.mh1.cmd', { onclick: () => bolt.actuators.roll(0,    0) },                '◾'),
 
 
         // m('button.mh1.cmd', { onclick: bolt.actuators.setMatrixRandomColor.bind(bolt) },       'RndCol'),
