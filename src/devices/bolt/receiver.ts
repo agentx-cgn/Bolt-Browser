@@ -254,7 +254,7 @@ export class Receiver {
 
     } else if (
       command.deviceId  === C.Device.powerInfo && 
-      command.commandId === C.CMD.sensor.configureCollision ) { 
+      command.commandId === C.CMD.Sensor.configureCollision ) { 
       
       this.fire('unkown', { msg: command });
       // console.log('EVENT.unknown', 'powerInfo', 'configureCollision', command.data);
@@ -262,14 +262,14 @@ export class Receiver {
 
     } else if (
       command.deviceId  === C.Device.sensor && 
-      command.commandId === C.CMD.sensor.collisionDetectedAsync ) {
+      command.commandId === C.CMD.Sensor.collisionDetectedAsync ) {
 
       this.fire('collision', { msg: command });
       // this.handleCollision(command);
 
     } else if (
       command.deviceId  === C.Device.sensor && 
-      command.commandId === C.CMD.sensor.sensorResponse ) {
+      command.commandId === C.CMD.Sensor.sensorResponse ) {
 
       const sensordata = parseSensorResponse(command.data, this.bolt.status.rawMask);
       this.logs.sensor.push(sensordata);
@@ -278,7 +278,7 @@ export class Receiver {
 
     } else if (
       command.deviceId  === C.Device.sensor && 
-      command.commandId === C.CMD.sensor.compassNotify ) {
+      command.commandId === C.CMD.Sensor.compassNotify ) {
 
       let angle = command.data[0] << 8;
       angle    += command.data[1];

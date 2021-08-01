@@ -15,6 +15,7 @@ import { Bolt }   from './../devices/bolt/bolt';
 import { IAction } from "./../devices/bolt/interfaces";
 
 import { BoltCommands } from './commands';
+import { BoltStatus } from './status';
 
 function setMatrixRandomColor(name: string) {
   const bolt: Bolt = Bolts.find((bolt:Bolt) => bolt.name === name)
@@ -60,8 +61,11 @@ const LayoutComponent = Factory.create('Layout', {
               ];
             })),
 
-            m('div.w-100.bg-eee.pa2.f6', {}, [
-              m(Canvas)
+            m('div.w-100.bg-eee.pa2.f6.flex.flex-row', {}, [
+              m(Canvas),
+              m('div', {}, Bolts.map(( bolt: Bolt ) => {
+                return m(BoltStatus, { bolt });
+              }))
             ]),
 
             // m('div.w-100.bg-lightest-blue.pa2.f6', Bolts.map( (bolt: Bolt) => {

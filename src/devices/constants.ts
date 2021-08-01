@@ -86,7 +86,7 @@ const CMD = {
   //   drive_to_position = 0x0a
   //   set_stabilization = 0x0c
 
-  driving : {
+  Driving : {
     rawMotor:                   1,
     driveAsRc:                  2,
     driveAsSphero:              4,
@@ -167,7 +167,7 @@ const CMD = {
   // class AmbientLight(_Sensor):
   //   ambient_light = SensorParameter(0x40000, 0.0, 120000.0)
 
-  sensor : {
+  Sensor : {
     sensorMask:                 0,
     sensorResponse:             2,
     sensorMaskExtented:        12,
@@ -262,27 +262,27 @@ const SensorMaskValues = {
 
 const SensorMask = {
 
-  off: 0,
-  velocityY: 1 << 3,
-  velocityX: 1 << 4,
-  locatorY: 1 << 5,
-  locatorX: 1 << 6,
+  off:                          0,
+  velocityY:              1 <<  3,
+  velocityX:              1 <<  4,
+  locatorY:               1 <<  5,
+  locatorX:               1 <<  6,
 
-  gyroZFiltered: 1 << 23,
-  gyroYFiltered: 1 << 24,
-  gyroXFiltered: 1 << 25,
+  gyroZFiltered:          1 << 23,
+  gyroYFiltered:          1 << 24,
+  gyroXFiltered:          1 << 25,
 
   accelerometerZFiltered: 1 << 13,
   accelerometerYFiltered: 1 << 14,
   accelerometerXFiltered: 1 << 15,
-  imuYawAngleFiltered: 1 << 16,
-  imuRollAngleFiltered: 1 << 17,
-  imuPitchAngleFiltered: 1 << 18,
+  imuYawAngleFiltered:    1 << 16,
+  imuRollAngleFiltered:   1 << 17,
+  imuPitchAngleFiltered:  1 << 18,
 
-  gyroFilteredAll: 58720256,
-  orientationFilteredAll: 458752,
-  accelerometerFilteredAll: 57344,
-  locatorFilteredAll: 120,
+  gyroFilteredAll:        58720256,
+  orientationFilteredAll:   458752,
+  accelerometerFilteredAll:  57344,
+  locatorFilteredAll:          120,
 }
 
 

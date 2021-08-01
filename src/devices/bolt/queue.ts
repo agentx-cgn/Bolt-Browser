@@ -56,7 +56,7 @@ export class Queue {
         },
 
         onError:      ( error: string ) => {
-          console.log('%c' + this.bolt.name, 'color: darkorange', 'error', message.name, error);
+          console.log('%c' + this.bolt.name, 'color: darkorange', 'error', message, error);
           action.acknowledged = true;
           reject(error);
           m.redraw();
@@ -176,7 +176,7 @@ export class Queue {
     const { device, command, target, data } = message;
     const flags = C.Flags.requestsResponse | C.Flags.resetsInactivityTimeout | (target ? C.Flags.commandHasTargetId : 0) ;
     const bytes = [];	
-      
+
     let checkSum: number = 0;
 
     bytes.push(C.API.startOfPacket);

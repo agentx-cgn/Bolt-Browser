@@ -2,14 +2,14 @@
 import { Bolt } from './bolt';
 import { Bolts } from './bolts';
 
-export interface BluetoothAdvertisementEvent extends Event {
-  device: BluetoothDevice;
-  rssi: number;
-  txPower: number;
-  manufacturerData?: BluetoothManufacturerData | undefined;
-  serviceData?: BluetoothServiceData | undefined;
-  uuids?: BluetoothServiceUUID[] | undefined;
-}
+// export interface BluetoothAdvertisementEvent extends Event {
+//   device: BluetoothDevice;
+//   rssi: number;
+//   txPower: number;
+//   manufacturerData?: BluetoothManufacturerData | undefined;
+//   serviceData?: BluetoothServiceData | undefined;
+//   uuids?: BluetoothServiceUUID[] | undefined;
+// }
 
 declare global {
   interface Window {
@@ -19,6 +19,7 @@ declare global {
 
 
 export type TColor = [number, number, number];
+export type TNum   = number[];
 export interface IUuid {
   uuid:    string,
 }
@@ -31,6 +32,7 @@ export interface IMatrix {
 export interface IStatus {
   keepAwake:  boolean,
   heading:    number,
+  stabilization:    number,
   rawMask:    any, // {aol, gyro}
   position:   any,
   ambient:    number[],

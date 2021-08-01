@@ -27,8 +27,14 @@ const BoltCommands = Factory.create('Layout', {
         m('button.mh1.cmd', { onclick: bolt.actuators.info.bind(bolt.actuators) },             'Info'),
         m('button.mh1.cmd', { onclick: bolt.actuators.setHeading.bind(bolt.actuators, 0) },    'Head 0'),
         m('button.mh1.cmd', { onclick: bolt.actuators.setHeading.bind(bolt.actuators, 180) },  'Head 180'),
-        m('button.mh1.cmd', { onclick: bolt.actuators.piroutte.bind(bolt.actuators) },         'Pirouette'),
 
+        m('button.mh1.cmd', { onclick: bolt.actuators.piroutte.bind(bolt.actuators) },         'Pirouette'),
+        m('button.mh1.cmd', { onclick: bolt.actuators.stabilizeNone.bind(bolt.actuators) },         'Stab OFF'),
+        m('button.mh1.cmd', { onclick: bolt.actuators.stabilizeFull.bind(bolt.actuators) },         'Stab ON'),
+        
+        m('button.mh1.cmd', { onclick: () => bolt.actuators.enableSensors() },                 'Sensor ON'),
+        m('button.mh1.cmd', { onclick: () => bolt.actuators.disableSensors() },                'Sensor OFF'),
+        
         // m('button.mh1.cmd', { onclick: bolt.actuators.setMatrixRandomColor.bind(bolt) },       'RndCol'),
         // m('button.mh1.cmd', { onclick: bolt.actuators.resetYaw.bind(bolt.actuators, 180) },    'Yaw' + bolt.heading),
       ])

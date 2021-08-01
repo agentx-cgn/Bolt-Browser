@@ -68,7 +68,7 @@ const Canvas = Factory.create('Canvas', {
             max   = Math.max(maxx, maxy) * 1.1;
             scale = size / max / 2;
 
-            console.log(scale, max);
+            console.log('Canvas.scale.max', scale, max);
             ctx.scale(scale, scale);  // 
 
             ctx.lineWidth = 2 / scale;

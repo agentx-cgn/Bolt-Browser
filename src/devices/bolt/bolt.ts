@@ -27,6 +27,7 @@ export class Bolt {
     keepAwake:  true,
     heading:    0,
     rawMask:    0,
+    stabilization: NaN,
     ambient:    [],
     position:   {},
     velocity:   {},
@@ -52,6 +53,7 @@ export class Bolt {
   set heading ( value: number ) { this.status.heading = value; m.redraw() }
   get connected () { return this.device.gatt.connected }
 
+
   async reset() {
 
     const colorBolt:  TColor = this.config.colors.matrix;
@@ -61,6 +63,7 @@ export class Bolt {
     await this.characs.get(C.ANTIDOS_CHARACTERISTIC).writeValue(C.useTheForce);
 
     await this.actuators.wake();	
+    await this.actuators.stabilizeFull();	
     await this.actuators.setLedsColor(...colorFront, ...colorBack); // red = north
     await this.actuators.info();	
     await this.actuators.setMatrixColor(...colorBolt);
@@ -78,7 +81,7 @@ export class Bolt {
   
   async configure () {
     await this.actuators.enableCollisionDetection();
-    await this.actuators.enableSensorStream();
+    await this.actuators.enableSensors();
   }
   
   

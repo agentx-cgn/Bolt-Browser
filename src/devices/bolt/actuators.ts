@@ -2,7 +2,7 @@
 
 import { CONSTANTS as C } from '../constants';
 import { Bolt } from './bolt';
-import { IEvent, TColor } from './interfaces';
+import { IEvent, TColor, TNum } from './interfaces';
 import { maskToRaw, flatSensorMask, wait } from './utils';
 import { Aruco } from '../../services/aruco';
 import { H } from "../../services/helper";
@@ -12,19 +12,21 @@ export class Actuators {
   private bolt: Bolt;
   
   private commands = {
-    wake:              { device: C.Device.powerInfo, command: C.CMD.Power.wake,                             data: [] as any },
-    sleep:             { device: C.Device.powerInfo, command: C.CMD.Power.sleep,                            data: [] as any },
-    hibernate:         { device: C.Device.powerInfo, command: C.CMD.Power.deepSleep,                        data: [] as any },
-    batteryVoltage:    { device: C.Device.powerInfo, command: C.CMD.Power.batteryVoltage,     target: 0x11, data: [] as any },
-    // batteryPercentage: { device: C.Device.powerInfo, command: C.CMD.Power.get_battery_percentage,     target: 0x11, data: [] as any },
-    calibrateCompass:  { device: C.Device.sensor,    command: C.CMD.sensor.calibrateToNorth,  target: 0x12, data: [] as any },
-    resetLocator:      { device: C.Device.sensor,    command: C.CMD.sensor.resetLocator,      target: 0x12, data: [] as any },
-    ambientLight:      { device: C.Device.sensor,    command: C.CMD.sensor.ambientLight,      target: 0x12, data: [] as any },
-    stabilize:         { device: C.Device.driving,   command: C.CMD.driving.stabilization,    target: 0x12, data: [ /* index */ ] as any },
-    resetYaw:          { device: C.Device.driving,   command: C.CMD.driving.resetYaw,         target: 0x12, data: [] as any },
-    roll:              { device: C.Device.driving,   command: C.CMD.driving.driveWithHeading, target: 0x12, data: [ /* speed, (heading >> 8) & 0xff, heading & 0xff, flags */] as any },
-    rotateMatrix:      { device: C.Device.userIO,    command: C.CMD.IO.matrixRotation,        target: 0x12, data: [ /* 0|1|2|3 */ ] as any },
-    setMatrixColor:    { device: C.Device.userIO,    command: C.CMD.IO.matrixColor,           target: 0x12, data: [ /* r, g, b */ ] as any },
+    wake:              { device: C.Device.powerInfo, command: C.CMD.Power.wake,                             data: [] as TNum },
+    sleep:             { device: C.Device.powerInfo, command: C.CMD.Power.sleep,                            data: [] as TNum },
+    hibernate:         { device: C.Device.powerInfo, command: C.CMD.Power.deepSleep,                        data: [] as TNum },
+    batteryVoltage:    { device: C.Device.powerInfo, command: C.CMD.Power.batteryVoltage,     target: 0x11, data: [] as TNum },
+    calibrateCompass:  { device: C.Device.sensor,    command: C.CMD.Sensor.calibrateToNorth,  target: 0x12, data: [] as TNum },
+    resetLocator:      { device: C.Device.sensor,    command: C.CMD.Sensor.resetLocator,      target: 0x12, data: [] as TNum },
+    ambientLight:      { device: C.Device.sensor,    command: C.CMD.Sensor.ambientLight,      target: 0x12, data: [] as TNum },
+    stabilize:         { device: C.Device.driving,   command: C.CMD.Driving.stabilization,    target: 0x12, data: [ /* index */ ] as TNum },
+    resetYaw:          { device: C.Device.driving,   command: C.CMD.Driving.resetYaw,         target: 0x12, data: [] as TNum },
+    roll:              { device: C.Device.driving,   command: C.CMD.Driving.driveWithHeading, target: 0x12, data: [ /* speed, (heading >> 8) & 0xff, heading & 0xff, flags */] as TNum },
+    rotateMatrix:      { device: C.Device.userIO,    command: C.CMD.IO.matrixRotation,        target: 0x12, data: [ /* 0|1|2|3 */ ] as TNum },
+    setMatrixColor:    { device: C.Device.userIO,    command: C.CMD.IO.matrixColor,           target: 0x12, data: [ /* r, g, b */ ] as TNum },
+    
+    // batteryPercentage: { device: C.Device.powerInfo, command: C.CMD.Power.get_battery_percentage,     target: 0x11, data: [] as TNum },
+  
   } as any;
 
   constructor (bolt: Bolt) {
@@ -53,45 +55,55 @@ export class Actuators {
   async wake             () { return this.queue('wake') }
   async sleep            () { return this.queue('sleep') }
   async hibernate        () { return this.queue('hibernate') }
-  async resetLocator     () { return this.queue('resetLocator') }
   async resetYaw         () { return this.queue('resetYaw') }  // /* Sets the current orientation as orientation 0° */
   async calibrateCompass () { return this.queue('calibrateCompass') }
   
-  async stabilize        ( index: number ) { return this.queue('wake', { data: [index] }); }
+  async resetLocator     () { 
+    return await this
+      .queue('resetLocator')
+      .then( () => { this.bolt.status.position = { x: 0, y: 0}; })
+    ;
+  }
   
-
-// - - - - - INFO - - - - //
-
+  
+  // - - - - - INFO - - - - //
+  
   async batteryVoltage   () { 
     return await this 
-      .queue('batteryVoltage')
-      .then( cmd => { this.bolt.status.voltage = cmd.responseData; })
+    .queue('batteryVoltage')
+    .then( cmd => { this.bolt.status.voltage = cmd.responseData; })
     ;
   }
   async batteryPercentage   () { 
     return await this 
-      .queue('batteryPercentage')
-      .then( cmd => { this.bolt.status.percentage = cmd.responseData; })
+    .queue('batteryPercentage')
+    .then( cmd => { this.bolt.status.percentage = cmd.responseData; })
     ;
   }
   
   async ambientLight () {
     return await this
-      .queue('ambientLight')
-      .then( cmd => this.bolt.status.ambient = cmd.responseData )
+    .queue('ambientLight')
+    .then( cmd => this.bolt.status.ambient = cmd.responseData )
     ;
   }
   
+
+  // - - - - - DRIVING - - - - //
   
-// - - - - - DRIVING - - - - //
-
-// flags=Flag.requests_response.value | Flag.command_has_target_id.value | Flag.resets_inactivity_timeout.value
-
+  // flags=Flag.requests_response.value | Flag.command_has_target_id.value | Flag.resets_inactivity_timeout.value
+  
   async stabilizeFull() { return await this.stabilize(C.StabilizationIndex.full_control_system); }
   async stabilizeNone() { return await this.stabilize(C.StabilizationIndex.no_control_system);   }
-
+  async stabilize       ( index: number ) { 
+    return this
+      .queue('stabilize', { data: [index] })
+      .then( () => this.bolt.status.stabilization = index )
+    ; 
+  }
+  
   async timeDelimiter (secs: number) {
-
+    
     await wait (secs);
     return Promise.resolve(true);
 
@@ -259,12 +271,24 @@ export class Actuators {
 
 // - - - -  CONFIGURE
 
+// * @param  {number} xThreshold An 8-bit settable threshold for the X (left/right)
+// * and Y (front/back) axes of Sphero. A value of 00h disables the contribution of that axis.
+// * @param  {number} yThreshold An 8-bit settable threshold for the X (left/right)
+// * and Y (front/back) axes of Sphero. A value of 00h disables the contribution of that axis.
+// * @param  {number} xSpeed An 8-bit settable speed value for the X and Y axes.
+// * This setting is ranged by the speed, then added to Xt, Yt to generate the final threshold value.
+// * @param  {number} ySpeed An 8-bit settable speed value for the X and Y axes.
+// * This setting is ranged by the speed, then added to Xt, Yt to generate the final threshold value.
+// * @param  {number} deadTime An 8-bit post-collision dead time to prevent retriggering; specified in 10ms increments.
+// * @param  {number=0x01} method Detection method type to use. Currently the only method
+// * supported is 01h. Use 00h to completely disable this service.
+
 	/* Enables collision detection */
 	async enableCollisionDetection(xThreshold = 100, yThreshold = 100, xSpeed = 100, ySpeed = 100, deadTime = 10, method = 0x01) {
 		return this.bolt.queue.queueMessage({
 			name:    'configureCollisionDetection',
 			device:  C.Device.sensor,
-			command: C.CMD.sensor.configureCollision, // SensorCommandIds.configureCollision,
+			command: C.CMD.Sensor.configureCollision, // SensorCommandIds.configureCollision,
 			target:  0x12,
 			data:    [method, xThreshold, xSpeed, yThreshold, ySpeed, deadTime]
 		});
@@ -272,7 +296,16 @@ export class Actuators {
 	}
 
   /* Enables sensor data streaming */
-	async enableSensorStream(interval=2000) {
+	async disableSensors() {
+
+    var mask = [ C.SensorMaskValues.off ];
+		this.bolt.status.rawMask = maskToRaw(mask);
+		await this.sensorMask(flatSensorMask(this.bolt.status.rawMask.aol), 0);
+		await this.sensorMaskExtended(flatSensorMask(this.bolt.status.rawMask.gyro));
+
+  }
+
+	async enableSensors(interval=2000) {
 
 		var mask = [
 			C.SensorMaskValues.accelerometer,
@@ -293,7 +326,7 @@ export class Actuators {
 		return this.bolt.queue.queueMessage({
 			name:    'sensorMask',
 			device:  C.Device.sensor,
-			command: C.CMD.sensor.sensorMask, // SensorCommandIds.sensorMask,
+			command: C.CMD.Sensor.sensorMask, // SensorCommandIds.sensorMask,
 			target:  0x12,
 			data: [(
 				interval >> 8)   & 0xff,
@@ -312,7 +345,7 @@ export class Actuators {
 		return this.bolt.queue.queueMessage({
 			name: 'sensorMaskExtended',
 			device: C.Device.sensor,
-			command: C.CMD.sensor.sensorMaskExtented, // SensorCommandIds.sensorMaskExtented,
+			command: C.CMD.Sensor.sensorMaskExtented, // SensorCommandIds.sensorMaskExtented,
 			target: 0x12,
 			data: [
 				(rawValue >> 24) & 0xff,
