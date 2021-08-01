@@ -15,6 +15,8 @@ const BoltCommands = Factory.create('Layout', {
     const bolt: Bolt = vnode.attrs.bolt;
     const style = { background: bolt.config.colors.backcolor };
 
+    // https://www.w3schools.com/charsets/ref_utf_arrows.asp
+
     return  (
       m('div.w-100', { style }, [
         m('span.pa1.f3.mono', bolt.name),
@@ -28,13 +30,19 @@ const BoltCommands = Factory.create('Layout', {
         m('button.mh1.cmd', { onclick: bolt.actuators.setHeading.bind(bolt.actuators, 0) },    'Head 0'),
         m('button.mh1.cmd', { onclick: bolt.actuators.setHeading.bind(bolt.actuators, 180) },  'Head 180'),
 
-        m('button.mh1.cmd', { onclick: bolt.actuators.piroutte.bind(bolt.actuators) },         'Pirouette'),
+        m('button.mh1.cmd', { onclick: bolt.actuators.piroutte.bind(bolt.actuators) },         '↺↻'),
         m('button.mh1.cmd', { onclick: bolt.actuators.stabilizeNone.bind(bolt.actuators) },         'Stab OFF'),
         m('button.mh1.cmd', { onclick: bolt.actuators.stabilizeFull.bind(bolt.actuators) },         'Stab ON'),
-        
+
         m('button.mh1.cmd', { onclick: () => bolt.actuators.enableSensors() },                 'Sensor ON'),
         m('button.mh1.cmd', { onclick: () => bolt.actuators.disableSensors() },                'Sensor OFF'),
-        
+
+        m('button.mh1.cmd', { onclick: () => bolt.actuators.roll(15,   0) },                '⇧'),
+        m('button.mh1.cmd', { onclick: () => bolt.actuators.roll(15, 270) },                '⇦'),
+        m('button.mh1.cmd', { onclick: () => bolt.actuators.roll(15,  90) },                '⇨'),
+        m('button.mh1.cmd', { onclick: () => bolt.actuators.roll(15, 180) },                '⇩'),
+
+
         // m('button.mh1.cmd', { onclick: bolt.actuators.setMatrixRandomColor.bind(bolt) },       'RndCol'),
         // m('button.mh1.cmd', { onclick: bolt.actuators.resetYaw.bind(bolt.actuators, 180) },    'Yaw' + bolt.heading),
       ])
