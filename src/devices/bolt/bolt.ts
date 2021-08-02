@@ -84,6 +84,8 @@ export class Bolt {
 
   async reset() {
 
+    this.receiver.logs = { sensor: [] };
+
     const colorBolt:  TColor = this.config.colors.matrix;
     const colorFront: TColor = [10, 0, 0];
     const colorBack:  TColor = [ 5, 5, 5];

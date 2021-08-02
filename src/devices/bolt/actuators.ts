@@ -161,6 +161,28 @@ export class Actuators {
     return await this.roll(0, this.bolt.heading + degrees);
   }
 
+  async rollEight (times: number) {
+
+
+
+
+  }
+
+  async circle (speed: number) {
+
+    const steps = 10, delta = 360 / steps;
+    const start = (this.bolt.heading + delta) % 360, end = start + 360;
+    const range = H.range(start, end, delta) as number[]
+
+    for (const heading of range) {
+      await this.roll(speed, heading);
+      await wait (1000);
+    }
+
+    return await this.stop();
+
+  }
+
   async piroutte () {
 
     const steps = 10, delta = 360 / steps;

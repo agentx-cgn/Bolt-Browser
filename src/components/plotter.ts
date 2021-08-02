@@ -140,7 +140,9 @@ const Plotter = Factory.create('Plotter', {
         cvs.width = cvs.width;
 
         Bolts.forEach ( (bolt: Bolt) => {
-          const data = bolt.receiver.logs.sensor.slice(-50);
+          const data = bolt.receiver.logs.sensor.slice(-100);
+          // always keep origin
+          data.unshift({ locator: { positionX: 0, positionY: 0}});
           Plotter.analyze(data);
           series.push({ color: bolt.config.colors.plot, data });
         });
