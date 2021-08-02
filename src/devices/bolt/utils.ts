@@ -24,7 +24,7 @@ export function pushByte(byteArray: number[], b: number ){
 		break;
 		default:
 			byteArray.push(b);
-	}	    
+	}
 }
 
 export function decodeFlags(flags: number){
@@ -95,10 +95,10 @@ export function maskToRaw (sensorMask: number[]) {
 
 }
 
-// const flatSensorMask = (sensorMask) => 
+// const flatSensorMask = (sensorMask) =>
 export function flatSensorMask (sensorMask: number[]) {
   return sensorMask.reduce((bits, m) => { return (bits |= m); }, 0);
-} 
+}
 
 export function parseSensorResponse (data: any, mask: any) {
 
@@ -121,7 +121,8 @@ export function parseSensorResponse (data: any, mask: any) {
 export function bin2Float (data: number[], offset: number) {
 
 	if ( offset + 4 > data.length ){
-		console.log('error');
+		// this happens  when sensors start streaminf about three times
+		// console.log('error');
 		return 0;
 	}
 
@@ -189,10 +190,10 @@ export function fillLocator (state: any) {
 	let { offset, response } = state;
 
 	if (mask.aol.indexOf(C.SensorMask.locatorFilteredAll) >= 0){
-    
+
 		let positionX = bin2Float(data, offset) * 100.0;
 		offset += 4;
-		
+
 		let positionY = bin2Float(data, offset) * 100.0;
 		offset += 4;
 

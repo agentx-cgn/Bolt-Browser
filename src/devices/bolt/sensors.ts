@@ -9,8 +9,8 @@ export class Sensors {
 	private bolt:     Bolt;
 	private receiver: Receiver;
 
-	constructor(bolt: Bolt) {
-		this.bolt = bolt;
+	constructor (bolt: Bolt) {
+		this.bolt     = bolt;
 		this.receiver = this.bolt.receiver;
 		this.activate();
 	}
@@ -23,27 +23,6 @@ export class Sensors {
 	// 	*/
 	//  getBotToBotInfraredReadings(): Promise<string | never>;
 	//  /**
-
-		this.receiver.on('willsleep', (event: IEvent) => {
-			console.log(this.bolt.name, 'onWillSleepAsync', 'keepAwake', this.bolt.status.keepAwake, event.msg);
-			if (this.bolt.status.keepAwake) {
-				(async () => {
-					await this.bolt.actuators.wake();
-					await this.bolt.actuators.setHeading(this.bolt.heading - 180);
-					await wait(1000);
-					await this.bolt.actuators.setHeading(this.bolt.heading);
-				})();
-			}
-		});
-
-		this.receiver.on('sleep',       (event: IEvent) => console.log(this.bolt.name, 'sleep',       event.msg));
-		this.receiver.on('charging',    (event: IEvent) => console.log(this.bolt.name, 'charging',    event.msg));
-		this.receiver.on('notcharging', (event: IEvent) => console.log(this.bolt.name, 'notcharging', event.msg));
-
-		this.receiver.on('collison',    (event: IEvent) => {
-			console.log(this.bolt.name, 'onCollision.data', event.msg.data.join(' '));
-		});
-		
 
 		this.receiver.on('sensordata', (event: IEvent) => {
 
@@ -67,7 +46,7 @@ export class Sensors {
 				vx: precise(loc.velocityX),
 				vy: precise(loc.velocityY),
 			}
-			console.log(this.bolt.name, 'onSensorUpdate', loc.positionX, loc.positionY);
+			// console.log(this.bolt.name, 'onSensorUpdate', loc.positionX, loc.positionY);
 
 		});
 
@@ -76,11 +55,11 @@ export class Sensors {
 
 
 
-	
-	
+
+
 
 /*-------------------------------------------------------------------------------
-								EVENT HANDLERS 
+								EVENT HANDLERS
 -------------------------------------------------------------------------------*/
 
 

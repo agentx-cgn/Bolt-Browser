@@ -24,7 +24,7 @@ const HomeComponent = class {
     this.bolts.find((bolt:Bolt) => bolt.name === name).action();
   }
 
-  view (  ) { 
+  view (  ) {
 
     return m('div.fl.w-100', [
       m('div.w-100.bg-light-blue.pa2',     [
@@ -42,8 +42,8 @@ const HomeComponent = class {
           m('button.mh1', { onclick: this.bolts.disconnect.bind(this.bolts, bolt) }, 'DisConnect'),
           m('button.mh1', { onclick: bolt.actuators.sleep.bind(bolt.actuators) }, 'Sleep'),
           m('button.mh1', { onclick: bolt.actuators.wake.bind(bolt.actuators) }, 'Wake'),
-          m('button.mh1', { onclick: bolt.actuators.setHeading.bind(bolt.actuators, 0) }, 'Head 0'),
-          m('button.mh1', { onclick: bolt.actuators.setHeading.bind(bolt.actuators, 180) }, 'Head 180'),
+          // m('button.mh1', { onclick: bolt.actuators.setHeading.bind(bolt.actuators, 0) }, 'Head 0'),
+          // m('button.mh1', { onclick: bolt.actuators.setHeading.bind(bolt.actuators, 180) }, 'Head 180'),
           m('button.mh1', { onclick: bolt.actuators.resetYaw.bind(bolt.actuators, 180) }, 'resetYaw'),
         ]);
       })),

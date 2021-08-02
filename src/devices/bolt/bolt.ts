@@ -1,7 +1,7 @@
 import m from "mithril";
 
 import { CONSTANTS as C }  from '../constants';
-import { IStatus, TColor } from "./interfaces";
+import { IStatus, TColor, IEvent } from "./interfaces";
 import { wait } from './utils'
 
 import { Aruco } from '../../services/aruco';
@@ -23,23 +23,29 @@ export class Bolt {
   public sensors:    Sensors;
   public receiver:   Receiver;
 
+  public magic = {
+    rollInterval: 1000,
+
+  };
+
   public status: IStatus = {
-    keepAwake:  true,
-    heading:    0,
-    rawMask:    0,
-    stabilization: NaN,
-    ambient:    [],
-    position:   {},
-    velocity:   {},
-    voltage:    [],   // seen [0, 1, 124]
-    percentage: [],   // seen [0, 1, 124]
-    matrix:     {
-      rotation: 0,
-      image:    [],
+    keepAwake:       true,
+    heading:          0,
+    rawMask:          0,
+    stabilization:   NaN,
+    ambient:         [],
+    position:        {},
+    velocity:        {},
+    voltage:         [],   // seen [0, 1, 124]
+    percentage:      [],   // seen [0, 1, 124]
+    matrix: {
+      rotation:       0,
+      image:         [],
     }
   };
 
   constructor (device: BluetoothDevice, config: any) {
+
     this.config    = config;
     this.name      = device.name;
     this.device    = device;
@@ -47,12 +53,34 @@ export class Bolt {
     this.queue     = new Queue(this);
     this.sensors   = new Sensors(this);
     this.actuators = new Actuators(this);
+
+    // bolt get activated from Bolts after connected
+
   }
 
   get heading () { return this.status.heading; }
-  set heading ( value: number ) { this.status.heading = value; m.redraw() }
+  set heading ( value: number ) { this.status.heading = (value + 360) % 360; m.redraw() }
   get connected () { return this.device.gatt.connected }
 
+  activate () {
+
+    this.receiver.on('willsleep', async (event: IEvent) => {
+			console.log(this.name, 'onWillSleepAsync', 'keepAwake', this.status.keepAwake, event.msg);
+			if (this.status.keepAwake) {
+				await this.actuators.wake();
+				await this.actuators.piroutte();
+			}
+		});
+
+		this.receiver.on('sleep',       (event: IEvent) => console.log(this.name, 'sleep',       event.msg));
+		this.receiver.on('charging',    (event: IEvent) => console.log(this.name, 'charging',    event.msg));
+		this.receiver.on('notcharging', (event: IEvent) => console.log(this.name, 'notcharging', event.msg));
+
+		this.receiver.on('collison',    (event: IEvent) => {
+			console.log(this.name, 'onCollision.data', event.msg.data.join(' '));
+		});
+
+  }
 
   async reset() {
 
@@ -76,7 +104,7 @@ export class Bolt {
   };
 
   async shake () {
-    this.actuators.roll(1, this.status.heading, 0);
+    await this.actuators.roll(1, this.status.heading);
   }
 
   async configure () {
@@ -84,16 +112,19 @@ export class Bolt {
     await this.actuators.enableSensorsLocation();
   }
 
-
   async action () {
 
-    await this.actuators.rollUntil(20,   0, this.actuators.timeDelimiter(8000));
-    await this.actuators.rollUntil(20, 180, this.actuators.timeDelimiter(8000));
+    await this.actuators.printChar('1');
+    await this.actuators.rollUntil(25, this.status.heading,      this.actuators.timeDelimiter(8000));
+    await this.actuators.printChar('2');
+    await this.actuators.rollUntil(25, this.status.heading -180, this.actuators.timeDelimiter(8000));
+    await this.actuators.printChar('3');
 
   }
 
+  /**         STUFF          */
 
-    async ActionX () {
+  async ActionX () {
     await this.actuators.rotateMatrix(C.FrameRotation.deg180);
     await this.actuators.setMatrixImage(0, 0, 0, 200, 200, 200, Aruco.createImage(0));
     await this.actuators.rotate(90);
@@ -112,9 +143,5 @@ export class Bolt {
     await this.actuators.rotate(0);
     await wait(300);
   }
-
-
-
-
 
 }

@@ -35,7 +35,7 @@ class bolts {
 
     this.findBolts();
 
-    window.addEventListener("unload",  async () => { 
+    window.addEventListener("unload",  async () => {
 
 			for (const bolt of this.bolts) {
 
@@ -75,7 +75,7 @@ class bolts {
 
             } else {
               console.log(device.name, 'advertisementreceived', {rssi: event.rssi, txPower: event.txPower})
-              
+
             }
           }
 
@@ -131,6 +131,7 @@ class bolts {
       device.addEventListener('advertisementreceived',  advertisementreceived);
       this.bolts.push(bolt);
       await bolt.reset();
+      bolt.activate();
     }
 
   }
@@ -188,9 +189,9 @@ class bolts {
           // console.log('UUID_SPHERO_SERVICE_INITIALIZE');
           let characteristics = await service.getCharacteristics();
           for (let charac of characteristics) {
-            if (charac.uuid === C.ANTIDOS_CHARACTERISTIC     || 
-                charac.uuid === C.DFU_CONTROL_CHARACTERISTIC || 
-                charac.uuid === C.DFU_INFO_CHARACTERISTIC    || 
+            if (charac.uuid === C.ANTIDOS_CHARACTERISTIC     ||
+                charac.uuid === C.DFU_CONTROL_CHARACTERISTIC ||
+                charac.uuid === C.DFU_INFO_CHARACTERISTIC    ||
                 charac.uuid === C.SUBS_CHARACTERISTIC
             ){
               await this.mapCharacteristic(bolt, charac);
@@ -206,7 +207,7 @@ class bolts {
     } catch (err) {
       console.log('Bolts.connectGATT', device.name, err);
       return false;
-    
+
 	  }
 
 	}
