@@ -3,11 +3,23 @@ import { CONSTANTS as C } from '../constants';
 import { Bolt } from './bolt';
 import { ICmdMessage, ICommand, IEvent, ISensorData } from './interfaces';
 import { decodeFlags, logDataView, maskToRaw, parseSensorResponse, flatSensorMask, wait } from './utils';
+import * as Mousetrap from 'Mousetrap';
+
 
 export class Receiver {
 
   private bolt:      Bolt;
   private listeners: any;
+
+  // register keys
+  private keymap = {
+    'space' : () => { this.fire('key:space', {}); return false; },
+    'esc'   : () => { this.fire('key:esc',   {}); return false; },
+    'left'  : () => { this.fire('key:left',  {}); return false; },
+    'right' : () => { this.fire('key:right', {}); return false; },
+    'up'    : () => { this.fire('key:up',    {}); return false; },
+    'down'  : () => { this.fire('key:down',  {}); return false; },
+  };
 
   public logs = {
     sensor: [] as any,
@@ -16,6 +28,12 @@ export class Receiver {
   constructor (bolt: Bolt) {
     this.bolt      = bolt;
     this.listeners = {};
+
+    for (const [key, fn] of Object.entries(this.keymap)) {
+      Mousetrap.bind(key, fn);
+    }
+
+
   }
 
   on ( event: string, callback: any ) {
@@ -23,7 +41,7 @@ export class Receiver {
     this.listeners[event].push(callback);
   }
 
-  off ( event: string, callback: any ) { 
+  off ( event: string, callback: any ) {
     if (this.listeners[event]) {
       const index = this.listeners[event].findIndex( (cb: any) => cb === callback);
       if ( index > -1 ) {
@@ -39,31 +57,31 @@ export class Receiver {
     }
   }
 
-      
+
   onGattServerDisconnected (event: Event) {
     console.log(this.bolt.name, 'onGattServerDisconnected');
   }
 
   onAdvertisementReceived  (event: BluetoothAdvertisementEvent) {
-    
+
     console.log('  Device Name: ' + event.device.name);
     console.log('  Device ID: '   + event.device.id);
     console.log('  RSSI: '        + event.rssi);
     console.log('  TX Power: '    + event.txPower);
     console.log('  UUIDs: '       + event.uuids);
-    
+
     event.manufacturerData.forEach(( valueDataView: DataView, key: number ) => {
       logDataView('Manufacturer', String(key), valueDataView);
     });
     event.serviceData.forEach(( valueDataView: DataView, key: string ) => {
       logDataView('Service', key, valueDataView);
     });
-    
+
   }
 
 
 /*-------------------------------------------------------------------------------
-                NOTIFICATIONS 
+                NOTIFICATIONS
 -------------------------------------------------------------------------------*/
 
   /* If the packet is a notification , calls the right handler, else print the command status */
@@ -83,7 +101,7 @@ export class Receiver {
     }
 
   }
-  
+
   getCharacteristicValueParser() {
 
     let i, packet: any[], sum: number, escaped: boolean;
@@ -222,7 +240,7 @@ export class Receiver {
      */
 
     if (
-      command.deviceId  === C.Device.powerInfo && 
+      command.deviceId  === C.Device.powerInfo &&
       command.commandId === C.CMD.Power.batteryStateChange ) {
 
       switch (command.data[0]) {
@@ -240,35 +258,35 @@ export class Receiver {
       }
 
     } else if (
-      command.deviceId  === C.Device.powerInfo && 
+      command.deviceId  === C.Device.powerInfo &&
       command.commandId === C.CMD.Power.willSleepAsync ) {
 
       this.fire('willsleep', { msg: command });
 
     } else if (
-      command.deviceId  === C.Device.powerInfo && 
+      command.deviceId  === C.Device.powerInfo &&
       command.commandId === C.CMD.Power.sleepAsync ) {
 
       this.fire('sleep', { msg: command });
       // this.handleSleepAsync(command);
 
     } else if (
-      command.deviceId  === C.Device.powerInfo && 
-      command.commandId === C.CMD.Sensor.configureCollision ) { 
-      
+      command.deviceId  === C.Device.powerInfo &&
+      command.commandId === C.CMD.Sensor.configureCollision ) {
+
       this.fire('unkown', { msg: command });
       // console.log('EVENT.unknown', 'powerInfo', 'configureCollision', command.data);
       console.log('EVENT.unknown', command);
 
     } else if (
-      command.deviceId  === C.Device.sensor && 
+      command.deviceId  === C.Device.sensor &&
       command.commandId === C.CMD.Sensor.collisionDetectedAsync ) {
 
       this.fire('collision', { msg: command });
       // this.handleCollision(command);
 
     } else if (
-      command.deviceId  === C.Device.sensor && 
+      command.deviceId  === C.Device.sensor &&
       command.commandId === C.CMD.Sensor.sensorResponse ) {
 
       const sensordata = parseSensorResponse(command.data, this.bolt.status.rawMask);
@@ -277,7 +295,7 @@ export class Receiver {
       // this.handleSensorUpdate(command);
 
     } else if (
-      command.deviceId  === C.Device.sensor && 
+      command.deviceId  === C.Device.sensor &&
       command.commandId === C.CMD.Sensor.compassNotify ) {
 
       let angle = command.data[0] << 8;
@@ -303,7 +321,7 @@ export class Receiver {
 
 
 /*-------------------------------------------------------------------------------
-                DEBUG 
+                DEBUG
 -------------------------------------------------------------------------------*/
 
   /* Prints the status of a command */
@@ -349,4 +367,3 @@ export class Receiver {
 
 
 }
-

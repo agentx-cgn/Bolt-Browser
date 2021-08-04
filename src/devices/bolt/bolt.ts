@@ -28,6 +28,15 @@ export class Bolt {
 
   };
 
+  private keymap = {
+    'key:space': (event: IEvent) => { this.reset()},
+    'key:esc':   (event: IEvent) => {},
+    'key:up':    (event: IEvent) => { this.actuators.roll(25, this.heading) },
+    'key:down':  (event: IEvent) => { this.actuators.roll(25, this.heading -180)},
+    'key:left':  (event: IEvent) => { this.actuators.rotate(-30) },
+    'key:right': (event: IEvent) => { this.actuators.rotate(+30) },
+  }
+
   public status: IStatus = {
     keepAwake:       true,
     heading:          0,
@@ -56,6 +65,26 @@ export class Bolt {
 
     // bolt get activated from Bolts after connected
 
+    /**
+      States:
+        disconnected (connect) => connected (reset) => ready
+                                                              (action)   =>  inAction    (reset) => ready
+                                                              (sequence) =>  inSequence  (reset) => ready
+
+        reset:
+          calibrate
+          resetYaw
+          heading 0
+          rotate 0
+          matrix
+          lights
+
+          ready   accept key downs, collision, sensors
+          ALWAYS  accept space for reset
+     *
+     */
+
+
   }
 
   get heading () { return this.status.heading; }
@@ -64,6 +93,12 @@ export class Bolt {
 
   activate () {
 
+    // keys
+    for (const [key, fn] of Object.entries(this.keymap)) {
+      this.receiver.on(key, fn);
+    }
+
+    // keep awake
     this.receiver.on('willsleep', async (event: IEvent) => {
 			console.log(this.name, 'onWillSleepAsync', 'keepAwake', this.status.keepAwake, event.msg);
 			if (this.status.keepAwake) {
@@ -72,13 +107,16 @@ export class Bolt {
 			}
 		});
 
+    // collision
+		this.receiver.on('collison',    (event: IEvent) => {
+      this.actuators.printChar('!');
+			console.log(this.name, 'onCollision.data', event.msg.data.join(' '));
+		});
+
+    // just notify
 		this.receiver.on('sleep',       (event: IEvent) => console.log(this.name, 'sleep',       event.msg));
 		this.receiver.on('charging',    (event: IEvent) => console.log(this.name, 'charging',    event.msg));
 		this.receiver.on('notcharging', (event: IEvent) => console.log(this.name, 'notcharging', event.msg));
-
-		this.receiver.on('collison',    (event: IEvent) => {
-			console.log(this.name, 'onCollision.data', event.msg.data.join(' '));
-		});
 
   }
 
@@ -93,10 +131,12 @@ export class Bolt {
     await this.characs.get(C.ANTIDOS_CHARACTERISTIC).writeValue(C.useTheForce);
 
     await this.actuators.wake();
+    await this.actuators.stop();
     await this.actuators.stabilizeFull();
+    await this.actuators.disableSensors();
     await this.actuators.setLedsColor(...colorFront, ...colorBack); // red = north
-    await this.actuators.info();
     await this.actuators.setMatrixColor(...colorBolt);
+    await this.actuators.info();
     await this.actuators.calibrateNorth();
     await wait(4000);
 
@@ -115,13 +155,19 @@ export class Bolt {
   }
 
   async action () {
+    await this.actuators.printChar('0');
+    await this.actuators.rollToPoint({x: 50, y: 50});
+    await this.actuators.printChar('1');
+    await this.actuators.rollToPoint({x:  0, y:  0});
+    await this.actuators.printChar('2');
+  }
 
+  async ActionRollUntil () {
     await this.actuators.printChar('1');
     await this.actuators.rollUntil(25, this.status.heading,      this.actuators.timeDelimiter(8000));
     await this.actuators.printChar('2');
     await this.actuators.rollUntil(25, this.status.heading -180, this.actuators.timeDelimiter(8000));
     await this.actuators.printChar('3');
-
   }
 
   /**         STUFF          */

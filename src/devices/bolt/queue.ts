@@ -6,12 +6,12 @@ import { Bolt } from './bolt';
 import { pushByte } from './utils';
 
 export class Queue {
-  
+
   public map;
   public find;
   public forEach;
   public sort;
-  
+
   private incrementer = 0;
   private waiting: boolean;
   private queue:   IAction[];
@@ -44,7 +44,7 @@ export class Queue {
         name:         message.name,
         bolt:         this.bolt,
         command:      this.createCommand(this.incrementer, message),
-        charac:       this.bolt.characs.get(C.APIV2_CHARACTERISTIC), 
+        charac:       this.bolt.characs.get(C.APIV2_CHARACTERISTIC),
         acknowledged: false,
         executed:     false,
 
@@ -79,7 +79,7 @@ export class Queue {
     if ( !this.waiting ) {
 
       this.waiting = true;
-      
+
       const nextAction = findNextAction();
       this.write( nextAction, (lastAction: IAction) => {
 
@@ -104,9 +104,9 @@ export class Queue {
       await action.charac.writeValue(new Uint8Array(action.command));
       // console.log('write.ok', action.bolt.name, action.name, action.id, action.command.join(' '));
 
-    } catch(error) { 
-      console.log('Queue.write.error', error.message);	
-    
+    } catch(error) {
+      console.log('Queue.write.error', error.message);
+
     } finally {
       callback(action);
 
@@ -129,7 +129,13 @@ export class Queue {
 
         // don't log if only success
         if ( (command.data.length > 1) ) {
-          console.log(this.bolt.name, 'Queue.notify.data', action.name, command.data)
+          if ( !(
+            // no longer interested in these
+            action.name === 'batteryVoltage' ||
+            action.name === 'ambientLight'
+          )) {
+            console.log(this.bolt.name, 'Queue.notify.data', action.name, command.data)
+          }
         }
 
 
@@ -143,7 +149,7 @@ export class Queue {
         break;
       case C.Errors.notYetImplemented:
         action.onError('Error: Bad device id');
-        break; 
+        break;
       case C.Errors.commandIsRestricted:
         action.onError('Error: Command is restricted');
         break;
@@ -175,7 +181,7 @@ export class Queue {
 
     const { device, command, target, data } = message;
     const flags = C.Flags.requestsResponse | C.Flags.resetsInactivityTimeout | (target ? C.Flags.commandHasTargetId : 0) ;
-    const bytes = [];	
+    const bytes = [];
 
     let checkSum: number = 0;
 

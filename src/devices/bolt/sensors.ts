@@ -15,6 +15,13 @@ export class Sensors {
 		this.activate();
 	}
 
+	/** TODOs
+	 *
+	 *  deal with sensor drift
+	 *  deal with swapping North and South
+	 *
+	 */
+
 	activate() {
 
 	// 	* An 8-bit value is returned for each infrared sensor, assigned by mask.
@@ -51,100 +58,5 @@ export class Sensors {
 		});
 
 	}
-
-
-
-
-
-
-
-/*-------------------------------------------------------------------------------
-								EVENT HANDLERS
--------------------------------------------------------------------------------*/
-
-
-
-	// on(eventName: any, handler: any) {
-	// 	this.listeners[eventName] = handler;
-	// }
-
-	// handleCollision(command: any) {
-	// 	let handler = this.listeners['onCollision'];
-	// 	if (handler) {
-	// 		handler(command);
-	// 	} else {
-	// 		console.log('Event detected: onCollision, no handler for this event');
-	// 	}
-	// }
-
-	// handleCompassNotify(command: any) {
-	// 	let handler = this.listeners['onCompassNotify'];
-	// 	if (handler) {
-	// 		let angle = command.data[0] << 8;
-	// 		angle += command.data[1];
-	// 		handler(angle);
-
-	// 	} else {
-	// 		console.log('Event detected: onCompassNotify, no handler for this event');
-	// 	}
-	// }
-
-	// handleWillSleepAsync(command: any) {
-	// 	let handler = this.listeners['onWillSleepAsync'];
-	// 	if (handler) {
-	// 		handler(command);
-	// 	} else {
-	// 		console.log('Event detected: onWillSleepAsync, no handler for this event');
-	// 	}
-	// }
-
-	// handleSleepAsync(command: any) {
-	// 	let handler = this.listeners['onSleepAsync'];
-	// 	if (handler) {
-	// 		handler(command);
-	// 	} else {
-	// 		console.log('Event detected: onSleepAsync, no handler for this event');
-	// 	}
-	// }
-
-	// handleCharging(command: any) {
-	// 	let handler = this.listeners['onCharging'];
-	// 	if (handler) {
-	// 		handler(command);
-	// 	} else {
-	// 		console.log('Event detected: onCharging, no handler for this event');
-	// 	}
-	// }
-
-	// handleNotCharging(command: any) {
-	// 	let handler = this.listeners['onNotCharging'];
-	// 	if (handler) {
-	// 		handler(command);
-	// 	} else {
-	// 		console.log('Event detected: onNotCharging, no handler for this event');
-	// 	}
-	// }
-
-	// handleCharged(command: any) {
-	// 	let handler = this.listeners['onCharged'];
-	// 	if (handler) {
-	// 		handler(command);
-	// 	} else {
-	// 		console.log('Event detected: onCharged, no handler for this event');
-	// 	}
-	// }
-
-	// handleSensorUpdate(command: any) {
-	// 	let handler = this.listeners['onSensorUpdate'];
-	// 	if (handler) {
-	// 		const parsedResponse = parseSensorResponse(command.data, this.bolt.status.rawMask);
-	// 		handler(parsedResponse);
-	// 	} else {
-	// 		console.log('Event detected: onSensorUpdate, no handler for this event');
-	// 	}
-	// }
-
-
-
 
 };

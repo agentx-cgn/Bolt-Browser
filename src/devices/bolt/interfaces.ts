@@ -40,7 +40,7 @@ export interface IStatus {
   voltage:    number[],
   percentage:    number[],
   matrix:     IMatrix,
-}  
+}
 
 export interface IEvent {
   msg?:        any,
@@ -73,7 +73,7 @@ export interface ISensorData {
 }
 
 export interface IAction {
-  id:           number,     
+  id:           number,
   name:         string,
   bolt:         Bolt,
   command:      number[],
@@ -89,23 +89,28 @@ export interface ICmdMessage {
   name:         string,
   device:       number,
   command:      number,
-  data:         any[], 
+  data:         any[],
   target?:      number,
 }
 
 export interface IFlags {
-  
+
 }
 export interface ICommand {
   targetId?:      number,
-  sourceId?:      number, 
+  sourceId?:      number,
   packet:         number[],
   startOfPacket:  number,
   flags:          any,
-  deviceId:       number, 
-  commandId:      number, 
+  deviceId:       number,
+  commandId:      number,
   seqNumber:      number,
   data:           number[],
   checksum:       number,
   endOfPacket:    number,
+}
+
+export interface IPoint {
+  x: number,
+  y: number,
 }
