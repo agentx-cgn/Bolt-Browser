@@ -156,10 +156,14 @@ export class Bolt {
 
   async action () {
     await this.actuators.printChar('0');
-    await this.actuators.rollToPoint({x: 50, y: 50});
+    await this.actuators.rollToPoint({x:   0, y:  40});
     await this.actuators.printChar('1');
-    await this.actuators.rollToPoint({x:  0, y:  0});
+    await this.actuators.rollToPoint({x:  40, y:  40});
     await this.actuators.printChar('2');
+    await this.actuators.rollToPoint({x:  40, y:   0});
+    await this.actuators.printChar('3');
+    await this.actuators.rollToPoint({x:   0, y:   0});
+    await this.actuators.printChar('4');
   }
 
   async ActionRollUntil () {

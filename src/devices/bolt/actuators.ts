@@ -133,15 +133,29 @@ export class Actuators {
 
   }
 
-// function angle (L, x0, y0, x1, y1) {console.log(L, x0, y0, '|', x1, y1, '=>', ~~(Math.atan2(y0 - y1, x0 - x1) * 180 / Math.PI) -270) }
-// angle('N', 0, 0,   0,  10)
-// angle('E', 0, 0,  10,   0)
-// angle('S', 0, 0,   0, -10)
-// angle('N', 0, 0, -10,   0)
-// N 0 0 | 0 10 => -360
-// VM1231:1 E 0 0 | 10 0 => -90
-// VM1231:1 S 0 0 | 0 -10 => -180
-// VM1231:1 N 0 0 | -10 0 => -270
+/*
+function angle (L, x0, y0, x1, y1) {console.log(L, x0, y0, '|', x1, y1, '=>', ~~(Math.atan2(y0 - y1, x0 - x1) * 180 / Math.PI) -270) }
+angle('N', 0, 0,   0,  10)
+angle('E', 0, 0,  10,   0)
+angle('S', 0, 0,   0, -10)
+angle('N', 0, 0, -10,   0)
+
+N 0 0 | 0 10 => -360
+VM1231:1 E 0 0 | 10 0 => -90
+VM1231:1 S 0 0 | 0 -10 => -180
+VM1231:1 N 0 0 | -10 0 => -270
+
+function angle (L, soll, x0, y0, x1, y1) {console.log(L, soll, '=>', +(~~(Math.atan2(y0 - y1, x0 - x1) * -180 / Math.PI) +270) ) }
+angle('N',   0, 0,   0,   0,  10)
+angle('E',  90, 0,   0,  10,   0)
+angle('S', 180, 0,   0,   0, -10)
+angle('W', 270, 0,   0, -10,   0)
+N 0 => 360
+E 90 => 90
+S 180 => 180
+W 270 => 270
+
+*/
 
   async rollToPoint (target: IPoint, tolerance=10) {
 
@@ -158,7 +172,9 @@ export class Actuators {
         // heading  = Math.atan2(target.x - x, target.y - y) * 360 / Math.PI; // curves
         // heading  = Math.atan2(target.y - y, target.x - x) * 180 / Math.PI; // straight, but 90° off
         // heading  = Math.atan2(target.y - y, target.x - x) * 360 / Math.PI;  // straight, but 180° off
-        heading  = Math.atan2(y - target.y, x - target.x) * 180 / Math.PI -270;
+        // heading  = Math.atan2(y - target.y, x - target.x) * 180 / Math.PI -270;
+
+        heading = Math.atan2(y - target.y, x - target.x) * -180 / Math.PI +270;
         heading = (heading + 360) % 360;
 
         speed = (
