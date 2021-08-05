@@ -21,7 +21,7 @@ function setMatrixRandomColor(name: string) {
   const bolt: Bolt = Bolts.find((bolt:Bolt) => bolt.name === name)
   bolt.actuators.setMatrixRandomColor();
 }
-  
+
 function action(name: string) {
   Bolts.find((bolt:Bolt) => bolt.name === name).action();
 }
@@ -44,7 +44,7 @@ const LayoutComponent = Factory.create('Layout', {
 
             m('div.w-100', Bolts.map( (bolt: Bolt) => {
 
-              const style = { backgroundColor: bolt.config.colors.backcolor, height: '80px', overflowY: 'scroll' };
+              const style = { backgroundColor: bolt.config.colors.backcolor + '88', maxHeight: '80px', overflowY: 'scroll' };
 
               return [
                 m(BoltCommands, { bolt }),

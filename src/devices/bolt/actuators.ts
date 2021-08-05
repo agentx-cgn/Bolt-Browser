@@ -162,20 +162,21 @@ W 270 => 270
     const msecsInterval = this.bolt.magic.rollInterval;
     let speed: number, x: number, y: number, distance: number, heading: number;
 
-    return new Promise( async (resolve) => {
+    return new Promise( async (resolve, reject) => {
+
+      this.bolt.receiver.on('fullstop', async () => {
+        this.bolt.receiver.off('sensordata', sensorListener);
+        console.log('rollToPoint.fullstop');
+        reject('fullstop');
+      });
 
       const sensorListener = async (event: IEvent) => {
 
         x        = event.sensordata.locator.positionX;
         y        = event.sensordata.locator.positionY;
         distance = Math.hypot(target.x - x, target.y - y);
-        // heading  = Math.atan2(target.x - x, target.y - y) * 360 / Math.PI; // curves
-        // heading  = Math.atan2(target.y - y, target.x - x) * 180 / Math.PI; // straight, but 90° off
-        // heading  = Math.atan2(target.y - y, target.x - x) * 360 / Math.PI;  // straight, but 180° off
-        // heading  = Math.atan2(y - target.y, x - target.x) * 180 / Math.PI -270;
-
-        heading = Math.atan2(y - target.y, x - target.x) * -180 / Math.PI +270;
-        heading = (heading + 360) % 360;
+        heading  = Math.atan2(y - target.y, x - target.x) * -180 / Math.PI +270;
+        heading  = (heading + 360) % 360;
 
         speed = (
           distance > 100 ? 100 :
@@ -198,6 +199,7 @@ W 270 => 270
         }
 
       }
+
 
       console.log('rollToPoint.in :', this.bolt.status.position, '=>', target);
 
@@ -266,7 +268,7 @@ W 270 => 270
     const start = (this.bolt.heading + delta) % 360, end = start + 360;
     const range = H.range(start, end, delta) as number[];
 
-    console.log(range);
+    // console.log(range);
 
     for (const heading of range) {
       await this.roll(0, heading);

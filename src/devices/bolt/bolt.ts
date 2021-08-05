@@ -29,15 +29,17 @@ export class Bolt {
   };
 
   private keymap = {
-    'key:space': (event: IEvent) => { this.reset()},
-    'key:esc':   (event: IEvent) => {},
-    'key:up':    (event: IEvent) => { this.actuators.roll(25, this.heading) },
-    'key:down':  (event: IEvent) => { this.actuators.roll(25, this.heading -180)},
-    'key:left':  (event: IEvent) => { this.actuators.rotate(-30) },
-    'key:right': (event: IEvent) => { this.actuators.rotate(+30) },
+    'key:space': (event: IEvent) => { console.log('key:space');  this.reset()},
+    'key:esc':   (event: IEvent) => { console.log('key:esc');                                          },
+    'key:up':    (event: IEvent) => { console.log('key:up');     this.actuators.roll(25, this.heading) },
+    'key:down':  (event: IEvent) => { console.log('key:down');   this.actuators.roll(25, this.heading -180)},
+    'key:left':  (event: IEvent) => { console.log('key:left');   this.actuators.rotate(-30) },
+    'key:right': (event: IEvent) => { console.log('key:right');  this.actuators.rotate(+30) },
   }
 
   public status: IStatus = {
+    rssi:            NaN,
+    txPower:         NaN,
     keepAwake:       true,
     heading:          0,
     rawMask:          0,
@@ -98,6 +100,8 @@ export class Bolt {
       this.receiver.on(key, fn);
     }
 
+    this.receiver
+
     // keep awake
     this.receiver.on('willsleep', async (event: IEvent) => {
 			console.log(this.name, 'onWillSleepAsync', 'keepAwake', this.status.keepAwake, event.msg);
@@ -106,6 +110,12 @@ export class Bolt {
 				await this.actuators.piroutte();
 			}
 		});
+
+		this.receiver.on('key:space',    async (event: IEvent) => {
+      this.receiver.fire('fullstop', {});
+      await this.actuators.stop();
+      await this.actuators.disableSensors();
+    });
 
     // collision
 		this.receiver.on('collison',    (event: IEvent) => {
@@ -119,6 +129,9 @@ export class Bolt {
 		this.receiver.on('notcharging', (event: IEvent) => console.log(this.name, 'notcharging', event.msg));
 
   }
+
+  async fullstop() {  }
+
 
   async reset() {
 

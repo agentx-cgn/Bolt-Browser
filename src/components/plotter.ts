@@ -73,9 +73,10 @@ const Plotter = Factory.create('Plotter', {
       ctx.fillText('0,0', 8 / scale, -8 / scale );
 
       // show min max
+      const off = 1.05;
       ctx.strokeStyle = '#800'
       ctx.fillStyle = '#888';
-      ctx.strokeRect(meta.minx, meta.miny, meta.maxx - meta.minx, meta.maxy - meta.miny);
+      ctx.strokeRect(meta.minx * off, meta.miny * off, (meta.maxx - meta.minx) * off, (meta.maxy - meta.miny) * off);
       ctx.textAlign = 'right';
       ctx.fillText( `${imax},${imax}`, imax -4/scale, imax -4/scale );
 
@@ -139,18 +140,18 @@ const Plotter = Factory.create('Plotter', {
 
         cvs.width = cvs.width;
 
-        Bolts.forEach ( (bolt: Bolt) => {
-          const data = bolt.receiver.logs.sensor.slice(-100);
-          // always keep origin
-          data.unshift({ locator: { positionX: 0, positionY: 0}});
-          Plotter.analyze(data);
-          series.push({ color: bolt.config.colors.plot, data });
-        });
+        // Bolts.forEach ( (bolt: Bolt) => {
+        //   const data = bolt.receiver.logs.sensor.slice(-100);
+        //   // always keep origin
+        //   data.unshift({ locator: { positionX: 0, positionY: 0}});
+        //   Plotter.analyze(data);
+        //   series.push({ color: bolt.config.colors.plot, data });
+        // });
 
-        // if (meta.max === 0) {
-        //   Plotter.analyze(testData);
-        //   series.push({ color: 'darkred', data: testData });
-        // }
+        if (meta.max === 0) {
+          Plotter.analyze(testData);
+          series.push({ color: 'darkred', data: testData });
+        }
 
 
         ctx.save();

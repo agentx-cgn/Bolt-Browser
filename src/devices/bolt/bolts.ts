@@ -15,7 +15,7 @@ class bolts {
 
   private configs = {
     'SB-9129' : { colors: { console: '#FF0', plot: 'green', backcolor: 'rgb(104, 160, 150)', matrix: [30, 240, 30] } },
-    'SB-2B96' : { colors: { console: '#F0F', plot: 'blue',  backcolor: 'rgb(123, 145, 193)', matrix: [30, 30, 240] } },
+    'SB-2B96' : { colors: { console: '#F0F', plot: 'blue',  backcolor: '#7b91c1', matrix: [30, 30, 240] } },
   } as any;
 
   private bluetooth: any;
@@ -66,15 +66,23 @@ class bolts {
         for (const device of devices) {
 
           let connecting = false;
-          const listener = async (event: BluetoothAdvertisementEvent) => { // BluetoothAdvertisingEvent
+
+          const listener = async (event: BluetoothAdvertisementEvent) => {
             if (!connecting){
               connecting = true;
               console.log('advertisementreceived', 'connecting...', event)
+              m.redraw();
               await this.connectBolt(device);
               m.redraw();
 
             } else {
-              console.log(device.name, 'advertisementreceived', {rssi: event.rssi, txPower: event.txPower})
+              const bolt: Bolt = this.find( (bolt: Bolt) => bolt.name === device.name );
+              if (bolt) {
+                bolt.status.rssi    = event.rssi;
+                bolt.status.txPower = event.txPower;
+              }
+              m.redraw();
+              console.log(device.name, 'advertisementreceived', {rssi: event.rssi, txPower: event.txPower});
 
             }
           }
@@ -120,16 +128,17 @@ class bolts {
 
   private async connectBolt(device: BluetoothDevice) {
 
-    const config  = this.configs[device.name];
-    const bolt    = new Bolt(device, config);
+    const bolt = new Bolt(device, this.configs[device.name]);
+    this.bolts.push(bolt);
+    m.redraw();
+
     const success = await this.connectGATT(bolt, device);
     const onGattServerDisconnected = bolt.receiver.onGattServerDisconnected.bind(bolt.receiver);
-    const advertisementreceived    = bolt.receiver.onAdvertisementReceived.bind(bolt.receiver);
+    const onAdvertisementreceived  = bolt.receiver.onAdvertisementReceived.bind(bolt.receiver);
 
     if (success) {
       device.addEventListener('gattserverdisconnected', onGattServerDisconnected);
-      device.addEventListener('advertisementreceived',  advertisementreceived);
-      this.bolts.push(bolt);
+      device.addEventListener('advertisementreceived',  onAdvertisementreceived);
       await bolt.reset();
       bolt.activate();
     }

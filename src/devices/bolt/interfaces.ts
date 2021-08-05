@@ -30,16 +30,18 @@ export interface IMatrix {
 }
 
 export interface IStatus {
-  keepAwake:  boolean,
-  heading:    number,
-  stabilization:    number,
-  rawMask:    any, // {aol, gyro}
-  position:   any,
-  ambient:    number[],
-  velocity:   any,
-  voltage:    number[],
+  rssi:          number,
+  txPower:       number,
+  keepAwake:     boolean,
+  heading:       number,
+  stabilization: number,
+  rawMask:       any, // {aol, gyro}
+  position:      any,
+  ambient:       number[],
+  velocity:      any,
+  voltage:       number[],
   percentage:    number[],
-  matrix:     IMatrix,
+  matrix:        IMatrix,
 }
 
 export interface IEvent {
