@@ -28,8 +28,8 @@ export class Bolt {
 
   };
 
-  private keymap = {
-    'key:space': (event: IEvent) => { console.log('key:space');  this.reset()},
+  // simple
+  private keymapSimpleCommands = {
     'key:esc':   (event: IEvent) => { console.log('key:esc');                                          },
     'key:up':    (event: IEvent) => { console.log('key:up');     this.actuators.roll(25, this.heading) },
     'key:down':  (event: IEvent) => { console.log('key:down');   this.actuators.roll(25, this.heading -180)},
@@ -95,12 +95,18 @@ export class Bolt {
 
   activate () {
 
-    // keys
-    for (const [key, fn] of Object.entries(this.keymap)) {
+    // Simple Movement
+    for (const [key, fn] of Object.entries(this.keymapSimpleCommands)) {
       this.receiver.on(key, fn);
     }
 
-    this.receiver
+    // stop everything on SPACE
+    this.receiver.on('key:space',    async (event: IEvent) => {
+      this.receiver.fire('fullstop', {});
+      await this.actuators.stop();
+      await this.sensors.disableSensors();
+      await this.actuators.blinkChar('S', 5);
+    });
 
     // keep awake
     this.receiver.on('willsleep', async (event: IEvent) => {
@@ -110,12 +116,6 @@ export class Bolt {
 				await this.actuators.piroutte();
 			}
 		});
-
-		this.receiver.on('key:space',    async (event: IEvent) => {
-      this.receiver.fire('fullstop', {});
-      await this.actuators.stop();
-      await this.actuators.disableSensors();
-    });
 
     // collision
 		this.receiver.on('collison',    (event: IEvent) => {
@@ -145,11 +145,11 @@ export class Bolt {
 
     await this.actuators.wake();
     await this.actuators.stop();
+    await this.sensors.disableSensors();
     await this.actuators.stabilizeFull();
-    await this.actuators.disableSensors();
     await this.actuators.setLedsColor(...colorFront, ...colorBack); // red = north
     await this.actuators.setMatrixColor(...colorBolt);
-    await this.actuators.info();
+    // await this.actuators.info();
     await this.actuators.calibrateNorth();
     await wait(4000);
 
@@ -163,8 +163,8 @@ export class Bolt {
   }
 
   async configure () {
-    await this.actuators.enableCollisionDetection();
-    await this.actuators.enableSensorsLocation();
+    await this.sensors.enableCollisionEvent();
+    await this.sensors.enableLocationEvent();
   }
 
   async action () {
@@ -177,6 +177,7 @@ export class Bolt {
     await this.actuators.printChar('3');
     await this.actuators.rollToPoint({x:   0, y:   0});
     await this.actuators.printChar('4');
+    await this.actuators.roll(0, 0);
   }
 
   async ActionRollUntil () {

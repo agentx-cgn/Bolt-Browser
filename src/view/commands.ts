@@ -20,42 +20,42 @@ const BoltCommands = Factory.create('Layout', {
 
     return  ( !bolt.connected
       ? m('div.w-100', { style }, m('[', [
-          m('span.mv3.f3.mono', bolt.name),
-          m('span.pl3.f5.mono', `Connecting: rssi: ${bolt.status.rssi}, txPOwer: ${bolt.status.txPower}`)
+          m('span.ma3.f3.mono', bolt.name),
+          m('span.ml3.f5.mono', `Connecting: rssi: ${bolt.status.rssi}, txPOwer: ${bolt.status.txPower}`)
         ]))
       : m('div.w-100', { style }, [
-          m('span.mv3.f3.mono', bolt.name),
-          m('button.mh1.cmd', { onclick: () => Bolts.disconnect(bolt) },                         'Disconnect'),
-          m('button.mh1.cmd', { onclick: bolt.actuators.sleep.bind(bolt.actuators) },            'Sleep'),
-          m('button.mh1.cmd', { onclick: bolt.actuators.wake.bind(bolt.actuators) },             'Wake'),
-          m('button.mh1.cmd', { onclick: bolt.reset.bind(bolt) },                                'Reset'),
-          m('button.mh1.cmd', { onclick: bolt.action.bind(bolt) },                               'Action'),
-          m('button.mh1.cmd', { onclick: bolt.configure.bind(bolt) },                                '⚙'),
-          m('button.mh1.cmd', { onclick: bolt.actuators.info.bind(bolt.actuators) },             'Info'),
-          // m('button.mh1.cmd', { onclick: bolt.actuators.setHeading.bind(bolt.actuators, 0) },    'Head 0'),
-          // m('button.mh1.cmd', { onclick: bolt.actuators.setHeading.bind(bolt.actuators, 180) },  'Head 180'),
+          m('span.f3.ma3.mono', bolt.name),
+          m('button.br2.mh1.cmd', { onclick: () => Bolts.disconnect(bolt) },                             'Disconnect'),
+          m('button.br2.mh1.cmd', { onclick: bolt.actuators.sleep.bind(bolt.actuators) },                'Sleep'),
+          m('button.br2.mh1.cmd', { onclick: bolt.actuators.wake.bind(bolt.actuators) },                 'Wake'),
+          m('button.br2.mh1.cmd', { onclick: bolt.reset.bind(bolt) },                                    'Reset'),
+          m('button.br2.mh1.cmd', { onclick: bolt.action.bind(bolt) },                                   'Action'),
+          m('button.br2.mh1.cmd', { onclick: bolt.configure.bind(bolt) },                                '⚙'),
+          // m('button.br2.mh1.cmd', { onclick: bolt.sensors.info.bind(bolt.actuators) },                 'Info'),
 
           m('span.mono.pl2.cfff', 'Stab'),
-          m('button.mh1.cmd', { onclick: bolt.actuators.stabilizeFull.bind(bolt.actuators) },        'Full'),
-          m('button.mh1.cmd', { onclick: bolt.actuators.stabilizeNone.bind(bolt.actuators) },        'Off'),
+          m('button.br2.mh1.cmd', { onclick: bolt.actuators.stabilizeFull.bind(bolt.actuators) },        'Full'),
+          m('button.br2.mh1.cmd', { onclick: bolt.actuators.stabilizeNone.bind(bolt.actuators) },        'Off'),
 
           m('span.mono.pl2.cfff', 'Sensor'),
-          m('button.mh1.cmd', { onclick: () => bolt.actuators.enableSensorsAll() },                  'On'),
-          m('button.mh1.cmd', { onclick: () => bolt.actuators.disableSensors() },                    'Off'),
+          m('button.br2.mh1.cmd', { onclick: () => bolt.sensors.enableSensorsAll() },                  'On'),
+          m('button.br2.mh1.cmd', { onclick: () => bolt.sensors.disableSensors() },                    'Off'),
 
           m('span.mono.pl2.cfff', 'Roll'),
-          m('button.mh1.cmd', { onclick: () => bolt.actuators.roll(25,   0) },                       '▲'),
-          m('button.mh1.cmd', { onclick: () => bolt.actuators.roll(25, 270) },                       '◀'),
-          m('button.mh1.cmd', { onclick: () => bolt.actuators.roll(25,  90) },                       '▶'),
-          m('button.mh1.cmd', { onclick: () => bolt.actuators.roll(25, 180) },                       '▼'),
-          m('button.mh1.cmd', { onclick: () => bolt.actuators.roll(0,    0) },                       '◾'),
+          m('button.br2.mh1.cmd', { onclick: () => bolt.actuators.roll(25,   0) },                       '▲'),
+          m('button.br2.mh1.cmd', { onclick: () => bolt.actuators.roll(25, 270) },                       '◀'),
+          m('button.br2.mh1.cmd', { onclick: () => bolt.actuators.roll(25,  90) },                       '▶'),
+          m('button.br2.mh1.cmd', { onclick: () => bolt.actuators.roll(25, 180) },                       '▼'),
+          m('button.br2.mh1.cmd', { onclick: () => bolt.actuators.roll(0,    0) },                       '◾'),
 
-          m('button.mh1.cmd', { onclick: () => bolt.actuators.rotate(-30) },                         '↰'),
-          m('button.mh1.cmd', { onclick: bolt.actuators.piroutte.bind(bolt.actuators) },             '↻'),
-          m('button.mh1.cmd', { onclick: () => bolt.actuators.rotate(+30) },                         '↱'),
-          m('button.mh1.cmd', { onclick: () => bolt.actuators.roll(25, bolt.heading) },              '↑'),
+          m('button.br2.mh1.cmd', { onclick: () => bolt.actuators.rotate(-30) },                         '↰'),
+          m('button.br2.mh1.cmd', { onclick: bolt.actuators.piroutte.bind(bolt.actuators) },             '↻'),
+          m('button.br2.mh1.cmd', { onclick: () => bolt.actuators.rotate(+30) },                         '↱'),
+          m('button.br2.mh1.cmd', { onclick: () => bolt.actuators.roll(25, bolt.heading) },              '↑'),
 
 
+          // m('button.mh1.cmd', { onclick: bolt.actuators.setHeading.bind(bolt.actuators, 0) },    'Head 0'),
+          // m('button.mh1.cmd', { onclick: bolt.actuators.setHeading.bind(bolt.actuators, 180) },  'Head 180'),
           // m('button.mh1.cmd', { onclick: bolt.actuators.setMatrixRandomColor.bind(bolt) },       'RndCol'),
           // m('button.mh1.cmd', { onclick: bolt.actuators.resetYaw.bind(bolt.actuators, 180) },    'Yaw' + bolt.heading),
         ])

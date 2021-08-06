@@ -11,19 +11,21 @@ export class Actuators {
 
   private bolt: Bolt;
 
-  private commands = {
-    wake: { device: C.Device.powerInfo, command: C.CMD.Power.wake, data: [] as TNum },
-    sleep: { device: C.Device.powerInfo, command: C.CMD.Power.sleep, data: [] as TNum },
-    hibernate: { device: C.Device.powerInfo, command: C.CMD.Power.deepSleep, data: [] as TNum },
-    batteryVoltage: { device: C.Device.powerInfo, command: C.CMD.Power.batteryVoltage, target: 0x11, data: [] as TNum },
-    calibrateCompass: { device: C.Device.sensor, command: C.CMD.Sensor.calibrateToNorth, target: 0x12, data: [] as TNum },
-    resetLocator: { device: C.Device.sensor, command: C.CMD.Sensor.resetLocator, target: 0x12, data: [] as TNum },
-    ambientLight: { device: C.Device.sensor, command: C.CMD.Sensor.ambientLight, target: 0x12, data: [] as TNum },
-    stabilize: { device: C.Device.driving, command: C.CMD.Driving.stabilization, target: 0x12, data: [ /* index */] as TNum },
-    resetYaw: { device: C.Device.driving, command: C.CMD.Driving.resetYaw, target: 0x12, data: [] as TNum },
-    roll: { device: C.Device.driving, command: C.CMD.Driving.driveWithHeading, target: 0x12, data: [ /* speed, (heading >> 8) & 0xff, heading & 0xff, flags */] as TNum },
-    rotateMatrix: { device: C.Device.userIO, command: C.CMD.IO.matrixRotation, target: 0x12, data: [ /* 0|1|2|3 */] as TNum },
-    setMatrixColor: { device: C.Device.userIO, command: C.CMD.IO.matrixColor, target: 0x12, data: [ /* r, g, b */] as TNum },
+  private actions = {
+    ping:               { device: C.Device.apiProcessor,  command: C.CMD.Api.ping,                                  data: [] as TNum },
+    wake:               { device: C.Device.powerInfo,     command: C.CMD.Power.wake,                                data: [] as TNum },
+    sleep:              { device: C.Device.powerInfo,     command: C.CMD.Power.sleep,                               data: [] as TNum },
+    hibernate:          { device: C.Device.powerInfo,     command: C.CMD.Power.deepSleep,                           data: [] as TNum },
+    // batteryVoltage:     { device: C.Device.powerInfo,     command: C.CMD.Power.batteryVoltage,      target: 0x11,   data: [] as TNum },
+    // batteryState:       { device: C.Device.powerInfo,     command: C.CMD.Power.batteryState,        target: 0x11,   data: [] as TNum },
+    // ambientLight:       { device: C.Device.sensor,        command: C.CMD.Sensor.ambientLight,       target: 0x12,   data: [] as TNum },
+    calibrateCompass:   { device: C.Device.sensor,        command: C.CMD.Sensor.calibrateToNorth,   target: 0x12,   data: [] as TNum },
+    resetLocator:       { device: C.Device.sensor,        command: C.CMD.Sensor.resetLocator,       target: 0x12,   data: [] as TNum },
+    stabilize:          { device: C.Device.driving,       command: C.CMD.Driving.stabilization,     target: 0x12,   data: [ /* index */] as TNum },
+    resetYaw:           { device: C.Device.driving,       command: C.CMD.Driving.resetYaw,          target: 0x12,   data: [] as TNum },
+    roll:               { device: C.Device.driving,       command: C.CMD.Driving.driveWithHeading,  target: 0x12,   data: [ /* speed, (heading >> 8) & 0xff, heading & 0xff, flags */] as TNum },
+    rotateMatrix:       { device: C.Device.userIO,        command: C.CMD.IO.matrixRotation,         target: 0x12,   data: [ /* 0|1|2|3 */] as TNum },
+    setMatrixColor:     { device: C.Device.userIO,        command: C.CMD.IO.matrixColor,            target: 0x12,   data: [ /* r, g, b */] as TNum },
 
     // batteryPercentage: { device: C.Device.powerInfo, command: C.CMD.Power.get_battery_percentage,     target: 0x11, data: [] as TNum },
 
@@ -34,25 +36,14 @@ export class Actuators {
   }
 
   async queue(name: string, overwrites: any = {}) {
-    const command = Object.assign({ name }, this.commands[name], overwrites);
-    return await this.bolt.queue.queueMessage(command);
+    const message = Object.assign({ name }, this.actions[name], overwrites);
+    return await this.bolt.queue.queueMessage(message);
   }
 
 
   // - - - - - ACTUATORS - - - - //
 
-  // EDU: current firmware versions 4.2.41, 4.2.44
 
-  // night, ceiling light: [0, 65, 64, 82, 18], [0, 65, 66, 43, 241], [0, 65, 64, 82, 18]
-  // battery max 164, min: 1.01
-
-  async info() {
-    await this.batteryVoltage();
-    await this.ambientLight();
-    // await this.getInfo(C.CMD.SystemInfo.mainApplicationVersion);
-    // await this.getInfo(C.CMD.SystemInfo.bootloaderVersion);
-    // await this.batteryPercentage(); bad command ID
-  }
 
 
   // - - - - - BASIC - - - - //
@@ -73,10 +64,22 @@ export class Actuators {
 
   // - - - - - INFO - - - - //
 
+  async ping() {
+    return await this
+      .queue('ping')
+      .then(data => { console.log('ping', data); })
+    ;
+  }
   async batteryVoltage() {
     return await this
       .queue('batteryVoltage')
       .then(cmd => { this.bolt.status.voltage = cmd.responseData.slice(-1).join(' '); })
+    ;
+  }
+  async batteryState() {
+    return await this
+      .queue('batteryState')
+      .then(data => { console.log('batteryState', data); })
     ;
   }
   async batteryPercentage() {
@@ -157,7 +160,7 @@ W 270 => 270
 
 */
 
-  async rollToPoint (target: IPoint, tolerance=10) {
+  async rollToPoint (target: IPoint, tolerance=20) {
 
     const msecsInterval = this.bolt.magic.rollInterval;
     let speed: number, x: number, y: number, distance: number, heading: number;
@@ -167,7 +170,7 @@ W 270 => 270
       this.bolt.receiver.on('fullstop', async () => {
         this.bolt.receiver.off('sensordata', sensorListener);
         console.log('rollToPoint.fullstop');
-        reject('fullstop');
+        resolve('fullstop');
       });
 
       const sensorListener = async (event: IEvent) => {
@@ -186,7 +189,7 @@ W 270 => 270
 
         if (distance < tolerance) {
           await this.stop();
-          await this.disableSensors();
+          await this.bolt.sensors.disableSensors();
           this.bolt.receiver.off('sensordata', sensorListener);
           console.log('rollToPoint.out:', this.bolt.status.position, '=>', target);
           resolve(distance);
@@ -194,7 +197,7 @@ W 270 => 270
 
         } else {
           await this.roll(speed, heading);
-          console.log('rollToPoint.tck:', this.bolt.status.position, '=>', target, 'd', ~~distance, 'h', ~~heading);
+          // console.log('rollToPoint.tck:', this.bolt.status.position, '=>', target, 'd', ~~distance, 'h', ~~heading);
 
         }
 
@@ -203,7 +206,7 @@ W 270 => 270
 
       console.log('rollToPoint.in :', this.bolt.status.position, '=>', target);
 
-      await this.enableSensorsLocation(msecsInterval);
+      await this.bolt.sensors.enableLocationEvent(msecsInterval);
 
       this.bolt.receiver.on('sensordata', sensorListener);
 
@@ -224,7 +227,7 @@ W 270 => 270
 
 
   async stop() {
-    await this.disableSensors();
+    // await this.disableSensors();
     return await this.roll(0, this.bolt.status.heading);
   }
 
@@ -351,6 +354,17 @@ W 270 => 270
     return Promise.resolve(true);
   }
 
+
+  /* Blinks as char  */
+  async blinkChar(char: string, times= 3) {
+    for (const i of H.range(times)){
+      await this.printChar(' ');
+      await this.printChar(char);
+      await wait(200);
+    }
+    return await Promise.resolve(true);
+  }
+
   /* Prints a char on the LED matrix  */
   async printChar(char: string) {
     return await this.printCharColor(char, ...this.bolt.config.colors.matrix as TColor);
@@ -375,6 +389,12 @@ W 270 => 270
     });
   }
 
+  // this.drawCompressedFramePlayerLine = function (e, t, r, n, i, a, o) {l["0x1A"]["Draw Compressed Frame Player Line"].function.call (this, e, t, r, n, i, a, o, 18)},
+  // this.addCommand("0x1A", "Draw Compressed Frame Player Line", "0x1A", "0x3D", 18),
+
+  // this.drawCompressedFramePlayerFill = function (e, t, r, n, i, a, o) {l["0x1A"]["Draw Compressed Frame Player Fill"].function.call (this, e, t, r, n, i, a, o, 18)},
+  // this.addCommand("0x1A", "Draw Compressed Frame Player Fill", "0x1A", "0x3E", 18),
+
 
   async setLedsColor(fr: number, fg: number, fb: number, br?: number, bg?: number, bb?: number) {
     const hasBackColor = br !== undefined && bg !== undefined && bg !== undefined;
@@ -387,22 +407,9 @@ W 270 => 270
     });
   }
 
-  // - - - -  INFO
-
-  // https://sdk.sphero.com/docs/sdk_documentation/system_info/
-  async getInfo(what: number) {
-    return await this.bolt.queue.queueMessage({
-      name: 'getInfo-' + String(what),
-      device: C.Device.systeminfo,
-      // command:   C.CMD.systeminfo.mainApplicationVersion,
-      command: what,
-      target: 0x12,
-      data: []
-    });
-  }
 
 
-  // - - - -  CONFIGURE
+  // - - - -  ENABLE Notifiers
 
   // * @param  {number} xThreshold An 8-bit settable threshold for the X (left/right)
   // * and Y (front/back) axes of Sphero. A value of 00h disables the contribution of that axis.
@@ -415,102 +422,5 @@ W 270 => 270
   // * @param  {number} deadTime An 8-bit post-collision dead time to prevent retriggering; specified in 10ms increments.
   // * @param  {number=0x01} method Detection method type to use. Currently the only method
   // * supported is 01h. Use 00h to completely disable this service.
-
-  /* Enables collision detection */
-  async enableCollisionDetection(xThreshold = 100, yThreshold = 100, xSpeed = 100, ySpeed = 100, deadTime = 10, method = 0x01) {
-    return await this.bolt.queue.queueMessage({
-      name: 'configureCollisionDetection',
-      device: C.Device.sensor,
-      command: C.CMD.Sensor.configureCollision, // SensorCommandIds.configureCollision,
-      target: 0x12,
-      data: [method, xThreshold, xSpeed, yThreshold, ySpeed, deadTime]
-    });
-
-  }
-
-  /* Enables sensor data streaming */
-  async disableSensors() {
-    var mask = [C.SensorMaskValues.off];
-    this.bolt.status.rawMask = maskToRaw(mask);
-    await this.sensorMask(flatSensorMask(this.bolt.status.rawMask.aol), 0);
-    await this.sensorMaskExtended(flatSensorMask(this.bolt.status.rawMask.gyro));
-    return Promise.resolve(true);
-  }
-
-  async enableSensorsAll(interval = 2000) {
-    return await this.enableSensors(interval, [
-      C.SensorMaskValues.accelerometer,
-      C.SensorMaskValues.orientation,
-      C.SensorMaskValues.locator,
-      C.SensorMaskValues.gyro,
-    ]);
-  }
-  async enableSensorsLocation(interval = 1000) {
-    return await this.enableSensors(interval, [C.SensorMaskValues.locator]);
-  }
-  async enableSensors(interval: number, mask: number[]) {
-    this.bolt.status.rawMask = maskToRaw(mask);
-    await this.sensorMask(flatSensorMask(this.bolt.status.rawMask.aol), interval);
-    await this.sensorMaskExtended(flatSensorMask(this.bolt.status.rawMask.gyro));
-  }
-
-  /* Sends sensors mask to Sphero (acceleremoter, orientation and locator) */
-  // https://github.com/Tineyo/BoltAPP/blob/2662d790cbd66eea008af0484aa5a1bd5b720172/scripts/sphero/spheroBolt.js#L170
-  async sensorMask(rawValue: number, interval: number) {
-    return await this.bolt.queue.queueMessage({
-      name: 'sensorMask',
-      device: C.Device.sensor,
-      command: C.CMD.Sensor.sensorMask, // SensorCommandIds.sensorMask,
-      target: 0x12,
-      data: [(
-        interval >> 8) & 0xff,
-      interval & 0xff,
-        0,
-      (rawValue >> 24) & 0xff,
-      (rawValue >> 16) & 0xff,
-      (rawValue >> 8) & 0xff,
-      rawValue & 0xff,
-      ],
-    });
-  }
-
-  /* Sends sensors mask to Sphero (gyroscope) */
-  async sensorMaskExtended(rawValue: any) {
-    return await this.bolt.queue.queueMessage({
-      name: 'sensorMaskExtended',
-      device: C.Device.sensor,
-      command: C.CMD.Sensor.sensorMaskExtented, // SensorCommandIds.sensorMaskExtented,
-      target: 0x12,
-      data: [
-        (rawValue >> 24) & 0xff,
-        (rawValue >> 16) & 0xff,
-        (rawValue >> 8) & 0xff,
-        rawValue & 0xff,
-      ],
-    });
-  }
-
-
-  // def set_led_matrix_text_scrolling(self, string: str, color: Color, speed: int = 0x10, repeat: bool = True):
-  // """
-  // Print text on matrix
-
-  // :param str string: max length 6 symbols
-  // :param Color color:
-  // :param int speed: max value is 0x1e (30)
-  // :param bool repeat:
-  // :return:
-  // """
-  // self.request(
-  //     command_id=UserIOCommand.set_led_matrix_text_scrolling,
-  //     data=[
-  //         *color.to_list(),
-  //         speed % 0x1e,
-  //         int(repeat),
-  //         *[ord(c) for c in string[:7]],
-  //         0x00,  # end line
-  //     ],
-  //     target_id=0x12,
-  // )
 
 }

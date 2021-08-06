@@ -16,17 +16,15 @@ import { Bolts }  from '../../devices/bolt/bolts';
 const Header = Factory.create('Header', {
   view( {attrs: {route, params}}:any ) {
 
-    // const toggle = (e) => {e.redraw = false; System.fullscreen && screenfull.toggle();};
-    const reload = (e:any) => {e.redraw = false; window.location.reload();};
+    const reload = (e:any) => { window.location.reload(); };
 
-    return m('header.w-100',
-
-      m('div.w-100.bg-ccc.pa2',     [
-        m('div.f2.mr2.di', { onclick: m.redraw }, 'Home'),
-        m('button.mh1', { onclick: Bolts.pairBolt.bind(Bolts) }, 'Pair'),
-        m('button.mh1', { onclick: Bolts.disconnectall.bind(Bolts) }, 'DisConnect All'),
-        m('button.mh1', { onclick: reload }, 'Reload'),
-        m('button.mh1', { onclick: m.redraw }, 'Redraw'),
+    return m('header.w-100', {style: {backgroundColor: '#949494'} },
+      m('[',[
+        m('div.f2.di.mono.cfff.mh2', 'Bolts'),
+        m('button.cmd.br2.ml1', { onclick: Bolts.pairBolt.bind(Bolts) }, 'Pair'),
+        m('button.cmd.br2.ml1', { onclick: Bolts.disconnectall.bind(Bolts) }, 'DisConnect'),
+        m('button.cmd.br2.ml1', { onclick: reload },   'Reload'),
+        m('button.cmd.br2.ml1', { onclick: m.redraw }, 'Redraw'),
       ]),
     );
   },

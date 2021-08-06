@@ -48,7 +48,7 @@ const LayoutComponent = Factory.create('Layout', {
 
               return [
                 m(BoltCommands, { bolt }),
-                m('div.w-100.code.f7.pa2', { style }, bolt.queue.sort(sortQueue).map( (cmd: IAction) => {
+                m('div.w-100.code.f7', { style }, bolt.queue.sort(sortQueue).map( (cmd: IAction) => {
                   return m('div', [
                     m('span.ph1', cmd.bolt.name),
                     m('span.ph1', cmd.id),
@@ -61,18 +61,10 @@ const LayoutComponent = Factory.create('Layout', {
               ];
             })),
 
-            m('div.w-100.bg-eee.pa2.f6.flex.flex-row', {}, [
+            m('div.w-100.bg-eee.f6.flex.flex-row', {}, [
               m(Plotter, {size: 512} ),
-              m('div', {}, Bolts.map(( bolt: Bolt ) => {
-                return m(BoltStatus, { bolt });
-              }))
+              Bolts.map(( bolt: Bolt ) => m(BoltStatus, { bolt }) ),
             ]),
-
-            // m('div.w-100.bg-lightest-blue.pa2.f6', Bolts.map( (bolt: Bolt) => {
-            //   return m('div.w-100.code', {style: 'max-height: 128px'}, [
-            //     m('canvas', {width: 128, height: 128, style: 'background-color: #888'}),
-            //   ])
-            // })),
 
             m(Last, { msecs: Date.now() }),
         ]);

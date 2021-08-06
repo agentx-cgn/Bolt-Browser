@@ -55,13 +55,17 @@ const Flags = {
 const Device = {
   apiProcessor:                16,
   systeminfo:                  17,
-  powerInfo:                   19,
+  powerInfo:                   19, // 0x13
   driving:                     22,
   sensor:                      24,
   userIO:                      26,
 }
 
 const CMD = {
+
+  Api: {
+    ping:                    0x00,
+  },
 
   SystemInfo : {
     mainApplicationVersion:  0x00,
@@ -72,19 +76,6 @@ const CMD = {
     get_nordic_temperature:  0x0e, // ??
     get_mac_address:         0x06, // ??
   },
-
-  // class DrivingCommand(Enum):
-  //   raw_motor = 0x01
-  //   set_ackermann_steering_parameters = 0x02  // two axis stuff
-  //   drift = 0x03
-  //   absolute_yaw_steering = 0x04
-  //   enable_flip_drive = 0x05
-  //   reset_yaw = 0x06
-  //   drive_with_heading = 0x07
-  //   tank_drive = 0x08
-  //   rc_car_drive = 0x09
-  //   drive_to_position = 0x0a
-  //   set_stabilization = 0x0c
 
   Driving : {
     rawMotor:                   1,
@@ -100,29 +91,14 @@ const CMD = {
     deepSleep:                  0,
     sleep:                      1,
     batteryVoltage:             3,
+    batteryState:               4,
+    batteryChangeNotify:        5,
     wake:                      13,
     willSleepAsync:            25,
     sleepAsync:                26,
     batteryStateChange:        33,
     get_battery_percentage : 0x10, // ?? Bad command id
   },
-
-  // const UserIOCommandIds = {
-  //   playAudioFile : 7,
-  //   audioVolume : 8,
-  //   stopAudio : 10,
-  //   testSound : 24,
-  //   allLEDs : 28,
-  //   setUserProfile : 35,
-  //   matrixPixel :45,
-  //   matrixColor : 47,
-  //   clearMatrix : 56, 
-  //   matrixRotation : 58,
-  //   matrixScrollText : 59,
-  //   matrixScrollNotification: 60,
-  //   matrixLine : 61,
-  //   matrixFill : 62,
-  //   printChar : 66,
 
   IO : {
     playAudioFile:              7,
@@ -133,7 +109,7 @@ const CMD = {
     setUserProfile:            35,
     matrixPixel:               45,
     matrixColor:               47,
-    clearMatrix:               56, 
+    clearMatrix:               56,
     matrixRotation:            58,
     matrixScrollText:          59,
     matrixScrollNotification:  60,
@@ -142,36 +118,11 @@ const CMD = {
     printChar:                 66,
   },
 
-  // class SensorCommand(Enum):
-  //   set_sensor_streaming_mask = 0x00
-  //   get_sensor_streaming_mask = 0x01
-  //   sensor_streaming_data = 0x02
-  //   run_accel_gyro_self_test = 0x06
-  //   set_extended_sensor_streaming_mask = 0x0c
-  //   get_extended_sensor_streaming_mask = 0x0d
-  //   set_gyro_max_async = 0x0f
-  //   gyro_max_async = 0x10
-  //   configure_collision_detection = 0x11
-  //   collision_detected_async = 0x12
-  //   reset_locator = 0x13
-  //   enable_collision_detected_async = 0x14
-  //   subscribe_maneuver_async_notification = 0x15
-  //   maneuver_detection_async = 0x16
-  //   set_locator_flags = 0x17
-  //   enable_accelerometer_activity_notify = 0x19
-  //   accelerometer_activity_notify = 0x1a
-  //   magnetometer_calibrate_to_north = 0x25
-  //   magnetometer_north_yaw_notify = 0x26
-  //   get_ambient_light_sensor_value = 0x30
-
-  // class AmbientLight(_Sensor):
-  //   ambient_light = SensorParameter(0x40000, 0.0, 120000.0)
-
   Sensor : {
     sensorMask:                 0,
     sensorResponse:             2,
     sensorMaskExtented:        12,
-    sensor1:                   15,
+    gyroMax:                   15,
     configureCollision:        17,
     collisionDetectedAsync:    18,
     resetLocator:              19,
@@ -179,7 +130,7 @@ const CMD = {
     sensor2:                   23,
     calibrateToNorth:          37,
     compassNotify:             38,
-    ambientLight:              0x30,
+    ambientLight:              48, // 0x30
   }
 
 }
@@ -199,58 +150,6 @@ const StabilizationIndex = {
   yaw_control_system:           0x04,
   speed_and_yaw_control_system: 0x05,
 }
-
-// const DrivingCommandIds = {
-//     rawMotor: 1,
-//     driveAsRc: 2,
-//     driveAsSphero: 4,
-//     resetYaw: 6,
-//     driveWithHeading: 7,
-//     tankDrive: 8,
-//     stabilization: 12,
-// }
-
-// const PowerCommandIds = {
-//     deepSleep: 0,
-//     sleep: 1,
-//     batteryVoltage: 3,
-//     wake: 13,
-//     willSleepAsync: 25,
-//     sleepAsync: 26,
-//     batteryStateChange: 33,
-// }
-
-// const UserIOCommandIds = {
-//     playAudioFile: 7,
-//     audioVolume: 8,
-//     stopAudio: 10,
-//     testSound: 24,
-//     allLEDs: 28,
-//     setUserProfile: 35,
-//     matrixPixel:45,
-//     matrixColor: 47,
-//     clearMatrix: 56, 
-//     matrixRotation: 58,
-//     matrixScrollText: 59,
-//     matrixScrollNotification: 60,
-//     matrixLine: 61,
-//     matrixFill: 62,
-//     printChar: 66,
-// }
-
-// const SensorCommandIds = {
-//     sensorMask: 0,
-//     sensorResponse: 2,
-//     configureCollision: 17,
-//     collisionDetectedAsync: 18,
-//     resetLocator: 19,
-//     enableCollisionAsync: 20,
-//     sensor1: 15,
-//     sensor2: 23,
-//     sensorMaskExtented: 12,
-//     calibrateToNorth: 37,
-//     compassNotify: 38,
-// }
 
 const SensorMaskValues = {
   off: 0,
@@ -283,6 +182,7 @@ const SensorMask = {
   orientationFilteredAll:   458752,
   accelerometerFilteredAll:  57344,
   locatorFilteredAll:          120,
+
 }
 
 
@@ -297,10 +197,10 @@ export const CONSTANTS = {
   Battery,
   API,
   useTheForce,
-  
+
   StabilizationIndex,
   FrameRotation,
-  
+
   UUID_SPHERO_SERVICE,
   UUID_SPHERO_SERVICE_INITIALIZE,
   APIV2_CHARACTERISTIC,

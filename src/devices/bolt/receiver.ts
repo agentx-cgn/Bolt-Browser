@@ -274,9 +274,10 @@ export class Receiver {
       command.deviceId  === C.Device.powerInfo &&
       command.commandId === C.CMD.Sensor.configureCollision ) {
 
-      this.fire('unkown', { msg: command });
+      // this.fire('unkown', { msg: command });
       // console.log('EVENT.unknown', 'powerInfo', 'configureCollision', command.data);
-      console.log('EVENT.unknown', command);
+      const c = command;
+      console.log('EVENT.Unknown', 'src', c.sourceId, 'dev', c.deviceId, 'cmd', c.commandId);
 
     } else if (
       command.deviceId  === C.Device.sensor &&

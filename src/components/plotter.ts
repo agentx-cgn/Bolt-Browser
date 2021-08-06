@@ -13,6 +13,8 @@ const size = 512;
 
 const meta = { cx:0, cy: 0, max: 0, maxx: 0, maxy: 0, miny: +Infinity, minx: +Infinity, scale: 1, transsform: [0, 0] } ;
 
+
+let includes = [];
 const testData = ( function () {
 
   const amount = 100, max = 200, off = 80;
@@ -57,6 +59,33 @@ const Plotter = Factory.create('Plotter', {
       ctx = cvs.getContext('2d');
     },
 
+    includePoints (points:any) {
+      includes = points;
+    },
+
+    calculateStepSize(range: number, targetSteps: number){
+
+      // calculate an initial guess at step size
+        const tempStep = range/targetSteps;
+
+        // get the magnitude of the step size
+        const mag = Math.floor(Math.log10(tempStep));
+        const magPow = Math.pow(10, mag);
+
+        // calculate most significant digit of the new step size
+        let magMsd = ~~(tempStep/magPow + 0.5);
+
+        // promote the MSD to either 1, 2, or 5
+        if (magMsd > 5.0)
+            magMsd = 10.0;
+        else if (magMsd > 2.0)
+            magMsd = 5.0;
+        else if (magMsd > 1.0)
+            magMsd = 2.0;
+
+        return magMsd * magPow;
+    },
+
     plotCoords (ctx: CanvasRenderingContext2D, meta: any) {
 
       const imax     = parseInt(String(meta.max), 10);
@@ -74,6 +103,10 @@ const Plotter = Factory.create('Plotter', {
 
       // show min max
       const off = 1.05;
+      // const iminxoff = Math.floor(off * meta.minx);
+      // const iminyoff = ~~(off * meta.miny);
+      // const imaxxoff = ~~(off * meta.maxx);
+      // const imaxyoff = ~~(off * meta.maxy);
       ctx.strokeStyle = '#800'
       ctx.fillStyle = '#888';
       ctx.strokeRect(meta.minx * off, meta.miny * off, (meta.maxx - meta.minx) * off, (meta.maxy - meta.miny) * off);
@@ -140,18 +173,18 @@ const Plotter = Factory.create('Plotter', {
 
         cvs.width = cvs.width;
 
-        // Bolts.forEach ( (bolt: Bolt) => {
-        //   const data = bolt.receiver.logs.sensor.slice(-100);
-        //   // always keep origin
-        //   data.unshift({ locator: { positionX: 0, positionY: 0}});
-        //   Plotter.analyze(data);
-        //   series.push({ color: bolt.config.colors.plot, data });
-        // });
+        Bolts.forEach ( (bolt: Bolt) => {
+          const data = bolt.receiver.logs.sensor.slice(-100);
+          // always keep origin
+          data.unshift({ locator: { positionX: 0, positionY: 0}});
+          Plotter.analyze(data);
+          series.push({ color: bolt.config.colors.plot, data });
+        });
 
-        if (meta.max === 0) {
-          Plotter.analyze(testData);
-          series.push({ color: 'darkred', data: testData });
-        }
+        // if (meta.max === 0) {
+        //   Plotter.analyze(testData);
+        //   series.push({ color: 'darkred', data: testData });
+        // }
 
 
         ctx.save();

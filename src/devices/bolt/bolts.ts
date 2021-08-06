@@ -14,8 +14,8 @@ class bolts {
   public forEach;
 
   private configs = {
-    'SB-9129' : { colors: { console: '#FF0', plot: 'green', backcolor: 'rgb(104, 160, 150)', matrix: [30, 240, 30] } },
-    'SB-2B96' : { colors: { console: '#F0F', plot: 'blue',  backcolor: '#7b91c1', matrix: [30, 30, 240] } },
+    'SB-9129' : { colors: { console: '#FF0', plot: 'green', backcolor: '#5ec19d', matrix: [30, 240, 30] } },
+    'SB-2B96' : { colors: { console: '#F0F', plot: 'blue',  backcolor: '#5895d4', matrix: [30, 30, 240] } },
   } as any;
 
   private bluetooth: any;
@@ -70,7 +70,7 @@ class bolts {
           const listener = async (event: BluetoothAdvertisementEvent) => {
             if (!connecting){
               connecting = true;
-              console.log('advertisementreceived', 'connecting...', event)
+              // console.log('advertisementreceived', 'connecting...', event)
               m.redraw();
               await this.connectBolt(device);
               m.redraw();
@@ -82,7 +82,7 @@ class bolts {
                 bolt.status.txPower = event.txPower;
               }
               m.redraw();
-              console.log(device.name, 'advertisementreceived', {rssi: event.rssi, txPower: event.txPower});
+              // console.log(device.name, 'advertisementreceived', {rssi: event.rssi, txPower: event.txPower});
 
             }
           }

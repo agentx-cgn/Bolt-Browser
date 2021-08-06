@@ -13,7 +13,7 @@ const BoltStatus = Factory.create('Layout', {
   view( vnode: any ) {
 
     const bolt: Bolt = vnode.attrs.bolt;
-    const style = { background: bolt.config.colors.backcolor, flex: 1 };
+    const style = { background: bolt.config.colors.backcolor, flex: 1, maxWidth: '180px' };
 
     return  (
       m('pre.f7.mono.ceee.pa2', { style }, JSON.stringify(bolt.status, null, 2))
