@@ -82,9 +82,11 @@ export interface IAction {
   charac:       BluetoothRemoteGATTCharacteristic,
   acknowledged: boolean,
   executed:     boolean,
+  success:      boolean,
   onSuccess:    any,
   onError:      any,
   responseData?: number[],
+  timestamp:    number,
 }
 
 export interface ICmdMessage {

@@ -13,24 +13,25 @@ const BoltCommands = Factory.create('Layout', {
   view( vnode: any ) {
 
     const bolt: Bolt = vnode.attrs.bolt;
-    const style = { background: bolt.config.colors.backcolor, height: '34px' };
+    // const style = { background: bolt.config.colors.backcolor, height: '34px' };
+    const style = { background: bolt.config.colors.backcolor};
 
     // https://www.w3schools.com/charsets/ref_utf_arrows.asp
     // ⇧⇦⇨⇩
 
     return  ( !bolt.connected
-      ? m('div.w-100', { style }, m('[', [
-          m('span.ma3.f3.mono', bolt.name),
+      ? m('div.w-100.pa2', { style }, m('[', [
+          m('div.di.ma2.f3.mono', bolt.name),
           m('span.ml3.f5.mono', `Connecting: rssi: ${bolt.status.rssi}, txPOwer: ${bolt.status.txPower}`)
         ]))
-      : m('div.w-100', { style }, [
-          m('span.f3.ma3.mono', bolt.name),
+      : m('div.w-100.pa2', { style }, [
+          m('div.di.f3.ma2.mono', bolt.name),
           m('button.br2.mh1.cmd', { onclick: () => Bolts.disconnect(bolt) },                             'Disconnect'),
           m('button.br2.mh1.cmd', { onclick: bolt.actuators.sleep.bind(bolt.actuators) },                'Sleep'),
           m('button.br2.mh1.cmd', { onclick: bolt.actuators.wake.bind(bolt.actuators) },                 'Wake'),
           m('button.br2.mh1.cmd', { onclick: bolt.reset.bind(bolt) },                                    'Reset'),
           m('button.br2.mh1.cmd', { onclick: bolt.action.bind(bolt) },                                   'Action'),
-          m('button.br2.mh1.cmd', { onclick: bolt.configure.bind(bolt) },                                '⚙'),
+          m('button.br2.mh1.cmd', { onclick: bolt.activate.bind(bolt) },                                '⚙'),
           // m('button.br2.mh1.cmd', { onclick: bolt.sensors.info.bind(bolt.actuators) },                 'Info'),
 
           m('span.mono.pl2.cfff', 'Stab'),
@@ -46,7 +47,7 @@ const BoltCommands = Factory.create('Layout', {
           m('button.br2.mh1.cmd', { onclick: () => bolt.actuators.roll(25, 270) },                       '◀'),
           m('button.br2.mh1.cmd', { onclick: () => bolt.actuators.roll(25,  90) },                       '▶'),
           m('button.br2.mh1.cmd', { onclick: () => bolt.actuators.roll(25, 180) },                       '▼'),
-          m('button.br2.mh1.cmd', { onclick: () => bolt.actuators.roll(0,    0) },                       '◾'),
+          m('button.br2.mh1.cmd', { onclick: () => bolt.actuators.roll(0,    0) },                       '▣'),
 
           m('button.br2.mh1.cmd', { onclick: () => bolt.actuators.rotate(-30) },                         '↰'),
           m('button.br2.mh1.cmd', { onclick: bolt.actuators.piroutte.bind(bolt.actuators) },             '↻'),

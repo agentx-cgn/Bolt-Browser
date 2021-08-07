@@ -3,10 +3,7 @@
 import m from "mithril";
 
 import { CONSTANTS as C }  from '../constants';
-// import { BluetoothAdvertisingEvent }  from './interfaces';
-import { Bluetooth as BT }  from '../bluetooth.service';
 import { Bolt } from './bolt';
-
 class bolts {
 
   public map;
@@ -18,47 +15,64 @@ class bolts {
     'SB-2B96' : { colors: { console: '#F0F', plot: 'blue',  backcolor: '#5895d4', matrix: [30, 30, 240] } },
   } as any;
 
-  private bluetooth: any;
-  private bolts:     any = [];
+  private bolts: any = [];
 
-  constructor ( BT: any ) {
+  constructor ( ) {
 
-    // allows: await Bolts.get('SB-9129').actuators.roll(0, 90) in console
-    window.Bolts = this;
 
-    this.bluetooth = BT;
+    // this.bluetooth = BT;
     this.map     = Array.prototype.map.bind(this.bolts);
     this.find    = Array.prototype.find.bind(this.bolts);
     this.forEach = Array.prototype.forEach.bind(this.bolts);
 
-    this.get = (name: string) => this.find( (bolt: Bolt) => bolt.name === name);
+    // allows: await Bolts.get('SB-9129').actuators.roll(0, 90) in console
+    window.Bolts = this;
+    // this.get = (name: string) => this.find( (bolt: Bolt) => bolt.name === name);
 
-    this.findBolts();
-
-    window.addEventListener("unload",  async () => {
-
-			for (const bolt of this.bolts) {
-
-				console.log(bolt.name, bolt.device.gatt.connected ? 'Disconnecting...' : 'not connected');
-
-				if (bolt.device.gatt.connected) {
-          await bolt.actuators.sleep();
-          // bolt.device.gatt.disconnect();
-				}
-
-			}
-
-			console.log(' - - - BYE - - - ', '\n');
-
-		});
 	}
 
   get (name: string) { return this.find( (bolt: Bolt) => bolt.name === name); }
 
-  async findBolts () {
+  async isAvailable (): Promise<boolean> {
+    return navigator.bluetooth.getAvailability()
+      .then(availability => availability)
+    ;
+  }
+
+  activate () {
+
+    if ('onavailabilitychanged' in navigator.bluetooth) {
+			navigator.bluetooth.addEventListener('availabilitychanged', function (event: any) {
+				console.log(`> Bluetooth is ${event.value ? 'available' : 'unavailable'}`);
+			});
+		}
+
+    window.addEventListener("unload",  async () => {
+      for (const bolt of this.bolts) {
+        if (bolt.device.gatt.connected) {
+          await bolt.actuators.sleep();
+          console.log('Bolts.unload', bolt.name, 'sleeping');
+          // Don't disconnect here !!
+				}
+			}
+		});
+
+    this.searchBolts();
+
+  }
+
+  private remove (bolt:Bolt) {
+    const index = this.bolts.indexOf(bolt);
+    if (index > -1) {
+      this.bolts.splice(index, 1);
+    }
+  }
+
+  async searchBolts () {
 
     return navigator.bluetooth.getDevices()
       .then( (devices: BluetoothDevice[] ) => devices.filter( device => device.name.startsWith('SB-') ) )
+      .then( (devices: BluetoothDevice[] ) => { console.log('Bolts.searching...', devices.map( d => d.name)); return devices; })
       .then( (devices: BluetoothDevice[] ) => {
 
         const promises = [];
@@ -67,12 +81,14 @@ class bolts {
 
           let connecting = false;
 
-          const listener = async (event: BluetoothAdvertisementEvent) => {
+          const advertisementListener = async (event: BluetoothAdvertisementEvent) => {
             if (!connecting){
+
+              console.log(device.name, 'connecting...')
               connecting = true;
-              // console.log('advertisementreceived', 'connecting...', event)
-              m.redraw();
-              await this.connectBolt(device);
+              const bolt = new Bolt(device, this.configs[device.name]);
+              this.bolts.push(bolt);
+              await this.connectBolt(bolt, device);
               m.redraw();
 
             } else {
@@ -87,10 +103,9 @@ class bolts {
             }
           }
 
-          // needed for getDevices
-          device.addEventListener('advertisementreceived',  listener);
+          device.addEventListener('advertisementreceived',  advertisementListener);
 
-          promises.push(
+          promises.push (
             device.watchAdvertisements()
               .then( what => {
                 // console.log('watchAdvertisements 0', what)
@@ -104,6 +119,7 @@ class bolts {
 
       })
       .then( what => {
+        m.redraw();
         // console.log('watchAdvertisements 1', what)
       })
       .catch(error => {
@@ -114,9 +130,23 @@ class bolts {
 
   public async pairBolt () {
 
-    return this.bluetooth
-      .pair('SB-')
-      .then( (device: BluetoothDevice) => this.connectBolt(device) )
+    return navigator.bluetooth
+      .requestDevice({
+        filters: [{
+          namePrefix: 'SB-',
+          services: [C.UUID_SPHERO_SERVICE],
+        }],
+        optionalServices : [C.UUID_SPHERO_SERVICE_INITIALIZE],
+      })
+      // .then( (device: BluetoothDevice) => {
+      //   this.devices.push(device);
+      //   return device;
+      // })
+      .then( (device: BluetoothDevice) => {
+        const bolt = new Bolt(device, this.configs[device.name]);
+        this.bolts.push(bolt);
+        this.connectBolt(bolt, device)
+      } )
       .catch( ( err: any ) => {
         // DOMException: User cancelled the requestDevice() chooser.
         // console.log('Bolts.pairBolt', err);
@@ -126,19 +156,15 @@ class bolts {
 
   }
 
-  private async connectBolt(device: BluetoothDevice) {
-
-    const bolt = new Bolt(device, this.configs[device.name]);
-    this.bolts.push(bolt);
-    m.redraw();
+  private async connectBolt(bolt: Bolt, device: BluetoothDevice) {
 
     const success = await this.connectGATT(bolt, device);
     const onGattServerDisconnected = bolt.receiver.onGattServerDisconnected.bind(bolt.receiver);
-    const onAdvertisementreceived  = bolt.receiver.onAdvertisementReceived.bind(bolt.receiver);
+    const onAdvertisementReceived  = bolt.receiver.onAdvertisementReceived.bind(bolt.receiver);
 
     if (success) {
       device.addEventListener('gattserverdisconnected', onGattServerDisconnected);
-      device.addEventListener('advertisementreceived',  onAdvertisementreceived);
+      device.addEventListener('advertisementreceived',  onAdvertisementReceived);
       await bolt.reset();
       bolt.activate();
     }
@@ -167,12 +193,6 @@ class bolts {
 
   }
 
-  private remove (bolt:Bolt) {
-    const index = this.bolts.indexOf(bolt);
-    if (index > -1) {
-      this.bolts.splice(index, 1);
-    }
-  }
 
 	async connectGATT(bolt: Bolt, device: BluetoothDevice): Promise<boolean> {
 
@@ -234,7 +254,6 @@ class bolts {
 
   }
 
-
 }
 
-export const Bolts = new bolts(BT);
+export const Bolts = new bolts();

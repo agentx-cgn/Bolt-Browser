@@ -27,7 +27,7 @@ export class Queue {
     this.sort    = Array.prototype.sort.bind(this.queue);
     this.forEach = Array.prototype.forEach.bind(this.queue);
 
-    this.bolt.receiver.on('notification', this.onnotification.bind(this));
+    this.bolt.receiver.on('acknowledgement', this.onAcknowledgement.bind(this));
 
   }
 
@@ -47,10 +47,13 @@ export class Queue {
         charac:       this.bolt.characs.get(C.APIV2_CHARACTERISTIC),
         acknowledged: false,
         executed:     false,
+        success:      false,
+        timestamp:    NaN,
 
         onSuccess:    ( command: any ) => {
           // console.log('%c' + this.bolt.name, 'color: darkgreen', 'action.success', message.name);
           action.acknowledged = true;
+          action.success = true;
           resolve(action);
           m.redraw();
         },
@@ -72,7 +75,9 @@ export class Queue {
 
   execute (action: IAction) {
 
-    const findNextAction = () => this.find( (action: IAction) => !action.acknowledged && !action.executed );
+    if (!action) { return }
+
+    const findNextAction = () => this.find( (action: IAction) => !action.acknowledged && !action.executed ) as IAction;
 
     this.queue.push(action);
 
@@ -81,14 +86,12 @@ export class Queue {
       this.waiting = true;
 
       const nextAction = findNextAction();
+
       this.write( nextAction, (lastAction: IAction) => {
 
         this.waiting = false;
         lastAction.executed = true;
-        const nextAction = findNextAction();
-        if (nextAction) {
-          this.execute(nextAction);
-        }
+        this.execute(findNextAction());
         m.redraw();
 
       });
@@ -101,6 +104,7 @@ export class Queue {
   async write ( action: IAction, callback: any ) {
 
     try {
+      action.timestamp = Date.now();
       await action.charac.writeValue(new Uint8Array(action.command));
       // console.log('write.ok', action.bolt.name, action.name, action.id, action.command.join(' '));
 
@@ -115,7 +119,7 @@ export class Queue {
   }
 
   /** An action got acknowledged */
-  onnotification ( event: IEvent ) {
+  onAcknowledgement ( event: IEvent ) {
 
     const command: ICommand = event.msg;
     const action:  IAction  = this.find( (action: IAction) => action.id === command.seqNumber );

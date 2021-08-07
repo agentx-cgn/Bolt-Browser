@@ -1,8 +1,8 @@
 
 import { CONSTANTS as C } from '../constants';
 import { Bolt } from './bolt';
-import { ICmdMessage, ICommand, IEvent, ISensorData } from './interfaces';
-import { decodeFlags, logDataView, maskToRaw, parseSensorResponse, flatSensorMask, wait } from './utils';
+import { ICommand, IEvent } from './interfaces';
+import { decodeFlags, logDataView, parseSensorResponse } from './utils';
 import * as Mousetrap from 'Mousetrap';
 
 
@@ -94,9 +94,9 @@ export class Receiver {
 
     } else {
       // check error here
-      this.fire('notification', { msg: command });
+      this.fire('acknowledgement', { msg: command });
       // this.bolt.queue.notify(command);
-      this.printCommandStatus(command);
+      this.logOnError(command);
 
     }
 
@@ -137,12 +137,12 @@ export class Receiver {
             sum -= packet[packet.length - 1];
 
             if (packet.length < 6) {
-              console.log('Packet is too small');
+              console.log('Packet is too small', packet);
               init();
               break;
             }
             if (packet[packet.length - 1] !== (~(sum) & 0xff)) {
-              console.log('Bad checksum');
+              console.log('Bad checksum', packet);
               init();
               break;
             }
@@ -291,7 +291,8 @@ export class Receiver {
       command.commandId === C.CMD.Sensor.sensorResponse ) {
 
       const sensordata = parseSensorResponse(command.data, this.bolt.status.rawMask);
-      this.logs.sensor.push(sensordata);
+      // this.logs.sensor.push(sensordata);
+      this.bolt.log.push(sensordata);
       this.fire('sensordata', { sensordata });
       // this.handleSensorUpdate(command);
 
@@ -326,7 +327,7 @@ export class Receiver {
 -------------------------------------------------------------------------------*/
 
   /* Prints the status of a command */
-  printCommandStatus(command: any) {
+  logOnError(command: any) {
     switch (command.data[0]) {
       case C.Errors.success:
         // console.log(this.bolt.name, 'Success', command.seqNumber, command.data, command.flags);

@@ -160,8 +160,8 @@ async info() {
       data: [
         (rawValue >> 24) & 0xff,
         (rawValue >> 16) & 0xff,
-        (rawValue >> 8) & 0xff,
-        rawValue & 0xff,
+        (rawValue >>  8) & 0xff,
+        (rawValue >>  0) & 0xff,
       ],
     });
   }
@@ -192,7 +192,7 @@ async info() {
 
   async enableCollisionEvent(xThreshold = 100, yThreshold = 100, xSpeed = 100, ySpeed = 100, deadTime = 10, method = 0x01) {
     return await this.bolt.queue.queueMessage({
-      name:    'configureCollisionDetection',
+      name:    'enableCollisionEvent',
       device:  C.Device.sensor,
       command: C.CMD.Sensor.configureCollision, // SensorCommandIds.configureCollision,
       target:  0x12,

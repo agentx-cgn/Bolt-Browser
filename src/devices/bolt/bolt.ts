@@ -1,7 +1,7 @@
 import m from "mithril";
 
 import { CONSTANTS as C }  from '../constants';
-import { IStatus, TColor, IEvent } from "./interfaces";
+import { IStatus, TColor, IEvent, IAction } from "./interfaces";
 import { wait } from './utils'
 
 import { Aruco } from '../../services/aruco';
@@ -23,6 +23,8 @@ export class Bolt {
   public sensors:    Sensors;
   public receiver:   Receiver;
 
+  public log: (IAction|any)[] = [];
+
   public magic = {
     rollInterval: 1000,
 
@@ -31,10 +33,10 @@ export class Bolt {
   // simple
   private keymapSimpleCommands = {
     'key:esc':   (event: IEvent) => { console.log('key:esc');                                          },
-    'key:up':    (event: IEvent) => { console.log('key:up');     this.actuators.roll(25, this.heading) },
-    'key:down':  (event: IEvent) => { console.log('key:down');   this.actuators.roll(25, this.heading -180)},
-    'key:left':  (event: IEvent) => { console.log('key:left');   this.actuators.rotate(-30) },
-    'key:right': (event: IEvent) => { console.log('key:right');  this.actuators.rotate(+30) },
+    'key:up':    (event: IEvent) => { this.actuators.roll(25, this.heading) },
+    'key:down':  (event: IEvent) => { this.actuators.roll(25, this.heading -180)},
+    'key:left':  (event: IEvent) => { this.actuators.rotate(-30) },
+    'key:right': (event: IEvent) => { this.actuators.rotate(+30) },
   }
 
   public status: IStatus = {
@@ -93,7 +95,7 @@ export class Bolt {
   set heading ( value: number ) { this.status.heading = (value + 360) % 360; m.redraw() }
   get connected () { return this.device.gatt.connected }
 
-  activate () {
+  async activate () {
 
     // Simple Movement
     for (const [key, fn] of Object.entries(this.keymapSimpleCommands)) {
@@ -102,6 +104,7 @@ export class Bolt {
 
     // stop everything on SPACE
     this.receiver.on('key:space',    async (event: IEvent) => {
+      console.log(this.name, 'fullstop');
       this.receiver.fire('fullstop', {});
       await this.actuators.stop();
       await this.sensors.disableSensors();
@@ -127,6 +130,9 @@ export class Bolt {
 		this.receiver.on('sleep',       (event: IEvent) => console.log(this.name, 'sleep',       event.msg));
 		this.receiver.on('charging',    (event: IEvent) => console.log(this.name, 'charging',    event.msg));
 		this.receiver.on('notcharging', (event: IEvent) => console.log(this.name, 'notcharging', event.msg));
+
+    await this.sensors.enableCollisionEvent();
+    await this.sensors.enableLocationEvent();
 
   }
 
@@ -162,10 +168,10 @@ export class Bolt {
     await this.actuators.roll(1, this.status.heading);
   }
 
-  async configure () {
-    await this.sensors.enableCollisionEvent();
-    await this.sensors.enableLocationEvent();
-  }
+  // async enableEvents () {
+  //   await this.sensors.enableCollisionEvent();
+  //   await this.sensors.enableLocationEvent();
+  // }
 
   async action () {
     await this.actuators.printChar('0');

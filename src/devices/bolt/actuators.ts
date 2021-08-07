@@ -299,7 +299,7 @@ W 270 => 270
         this.bolt.heading = 0;
         await this.setMatrixImage(...black, ...color, Aruco.createImage(0));
 
-        console.log('calibrateNorth.event', e);
+        // console.log('calibrateNorth.event', e); // works last time checked
         resolve(e);
 
       };
