@@ -31,9 +31,9 @@ class bolts {
 
 	}
 
-  get (name: string) { return this.find( (bolt: Bolt) => bolt.name === name); }
+  public get (name: string) { return this.find( (bolt: Bolt) => bolt.name === name); }
 
-  async isAvailable (): Promise<boolean> {
+  public async isAvailable (): Promise<boolean> {
     return navigator.bluetooth.getAvailability()
       .then(availability => availability)
     ;
@@ -68,7 +68,7 @@ class bolts {
     }
   }
 
-  async searchBolts () {
+  private async searchBolts () {
 
     return navigator.bluetooth.getDevices()
       .then( (devices: BluetoothDevice[] ) => devices.filter( device => device.name.startsWith('SB-') ) )
@@ -166,7 +166,7 @@ class bolts {
       device.addEventListener('gattserverdisconnected', onGattServerDisconnected);
       device.addEventListener('advertisementreceived',  onAdvertisementReceived);
       await bolt.reset();
-      bolt.activate();
+      await bolt.activate();
     }
 
   }

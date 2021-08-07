@@ -4,7 +4,6 @@ import { maskToRaw, flatSensorMask } from './utils';
 import { Bolt } from './bolt';
 import { Receiver } from './receiver';
 import { TNum, IEvent, ISensorData } from './interfaces';
-import { Plotter } from '../../components/plotter';
 
 export class Sensors {
 
@@ -23,7 +22,7 @@ export class Sensors {
 	constructor (bolt: Bolt) {
 		this.bolt     = bolt;
 		this.receiver = this.bolt.receiver;
-		this.activate();
+		// this.activate();
 	}
 
 	async queue(name: string, overwrites: any = {}) {
@@ -39,32 +38,6 @@ export class Sensors {
 	 */
 
 	activate() {
-
-		this.receiver.on('sensordata', (event: IEvent) => {
-
-			const data: ISensorData = event.sensordata;
-
-			function precise(x: number) {
-				return Number.parseFloat(String(x)).toPrecision(3);
-			}
-
-			this.bolt.status.position.x = data.locator.positionX;
-			this.bolt.status.position.y = data.locator.positionY;
-			this.bolt.status.velocity.x = data.locator.velocityX;
-			this.bolt.status.velocity.y = data.locator.velocityY;
-
-			Plotter.render();
-
-			const loc = data.locator;
-			const  plog = {
-				px: precise(loc.positionX),
-				py: precise(loc.positionY),
-				vx: precise(loc.velocityX),
-				vy: precise(loc.velocityY),
-			}
-			// console.log(this.bolt.name, 'onSensorUpdate', loc.positionX, loc.positionY);
-
-		});
 
 	}
 
@@ -107,6 +80,8 @@ async info() {
 
 
   async disableSensors() {
+    console.log(this.bolt.name, 'sensor.off');
+    this.bolt.status.sensors = {};
     var mask = [C.SensorMaskValues.off];
     this.bolt.status.rawMask = maskToRaw(mask);
     await this.sensorMask(flatSensorMask(this.bolt.status.rawMask.aol), 0);
@@ -119,16 +94,21 @@ async info() {
     await this.sensorMaskExtended(flatSensorMask(this.bolt.status.rawMask.gyro));
   }
   async enableSensorsAll(interval = 2000) {
+    this.bolt.status.sensors = {
+      locator:     true,
+      orientation: true,
+    };
     return await this.enableSensors(interval, [
-      C.SensorMaskValues.accelerometer,
+      // C.SensorMaskValues.accelerometer,
       C.SensorMaskValues.orientation,
       C.SensorMaskValues.locator,
-      C.SensorMaskValues.gyro,
+      // C.SensorMaskValues.gyro,
     ]);
+
   }
-  async enableLocationEvent(interval = 1000) {
-    return await this.enableSensors(interval, [C.SensorMaskValues.locator]);
-  }
+  // async enableLocationEvent(interval = 1000) {
+  //   return await this.enableSensors(interval, [C.SensorMaskValues.locator]);
+  // }
 
   /* Sends sensors mask to Sphero (acceleremoter, orientation and locator) */
   // https://github.com/Tineyo/BoltAPP/blob/2662d790cbd66eea008af0484aa5a1bd5b720172/scripts/sphero/spheroBolt.js#L170

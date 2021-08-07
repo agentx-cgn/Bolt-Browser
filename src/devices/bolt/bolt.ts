@@ -1,7 +1,7 @@
 import m from "mithril";
 
 import { CONSTANTS as C }  from '../constants';
-import { IStatus, TColor, IEvent, IAction } from "./interfaces";
+import { IStatus, TColor, IEvent, IAction, ISensorData } from "./interfaces";
 import { wait } from './utils'
 
 import { Aruco } from '../../services/aruco';
@@ -10,6 +10,7 @@ import { Actuators } from './actuators';
 import { Sensors } from './sensors';
 import { Queue } from './queue';
 import { H } from "../../services/helper";
+import { Plotter } from "../../components/plotter";
 
 export class Bolt {
 
@@ -26,7 +27,8 @@ export class Bolt {
   public log: (IAction|any)[] = [];
 
   public magic = {
-    rollInterval: 1000,
+    rollInterval:   1000,
+    sensorInterval: 250,
 
   };
 
@@ -47,6 +49,8 @@ export class Bolt {
     rawMask:          0,
     stabilization:   NaN,
     ambient:         [],
+    sensors:         {},
+    angles:          {},
     position:        {},
     velocity:        {},
     voltage:         [],   // seen [0, 1, 124]
@@ -66,6 +70,8 @@ export class Bolt {
     this.queue     = new Queue(this);
     this.sensors   = new Sensors(this);
     this.actuators = new Actuators(this);
+
+    // Plotter.register(this);
 
     // bolt get activated from Bolts after connected
 
@@ -92,10 +98,14 @@ export class Bolt {
   }
 
   get heading () { return this.status.heading; }
+
+  // only in roll and calibrate
   set heading ( value: number ) { this.status.heading = (value + 360) % 360; m.redraw() }
   get connected () { return this.device.gatt.connected }
 
   async activate () {
+
+    this.sensors.activate();
 
     // Simple Movement
     for (const [key, fn] of Object.entries(this.keymapSimpleCommands)) {
@@ -113,26 +123,39 @@ export class Bolt {
 
     // keep awake
     this.receiver.on('willsleep', async (event: IEvent) => {
-			console.log(this.name, 'onWillSleepAsync', 'keepAwake', this.status.keepAwake, event.msg);
-			if (this.status.keepAwake) {
-				await this.actuators.wake();
-				await this.actuators.piroutte();
-			}
-		});
+      console.log(this.name, 'onWillSleepAsync', 'keepAwake', this.status.keepAwake, event.msg);
+      if (this.status.keepAwake) {
+        await this.actuators.wake();
+        await this.actuators.piroutte();
+      }
+    });
+
+    // sensordata
+    this.receiver.on('sensordata',  (event: IEvent) => {
+      const data: ISensorData     = event.sensordata;
+      this.status.angles     = data.angles;
+      this.status.position.x = data.locator.positionX;
+      this.status.position.y = data.locator.positionY;
+      this.status.velocity.x = data.locator.velocityX;
+      this.status.velocity.y = data.locator.velocityY;
+      Plotter.render(this, data.locator);
+      m.redraw();
+      // console.log(this.name, 'sensordata', event.sensordata);
+    }, false);
 
     // collision
-		this.receiver.on('collison',    (event: IEvent) => {
+    this.receiver.on('collison',    (event: IEvent) => {
       this.actuators.printChar('!');
-			console.log(this.name, 'onCollision.data', event.msg.data.join(' '));
-		});
+      console.log(this.name, 'onCollision.data', event);
+    });
 
     // just notify
-		this.receiver.on('sleep',       (event: IEvent) => console.log(this.name, 'sleep',       event.msg));
-		this.receiver.on('charging',    (event: IEvent) => console.log(this.name, 'charging',    event.msg));
-		this.receiver.on('notcharging', (event: IEvent) => console.log(this.name, 'notcharging', event.msg));
+    this.receiver.on('sleep',       (event: IEvent) => console.log(this.name, 'sleep',       event.msg));
+    this.receiver.on('charging',    (event: IEvent) => console.log(this.name, 'charging',    event.msg));
+    this.receiver.on('notcharging', (event: IEvent) => console.log(this.name, 'notcharging', event.msg));
 
-    await this.sensors.enableCollisionEvent();
-    await this.sensors.enableLocationEvent();
+    // await this.sensors.enableCollisionEvent();
+    // await this.sensors.enableLocationEvent();
 
   }
 
@@ -140,6 +163,8 @@ export class Bolt {
 
 
   async reset() {
+
+    await this.actuators.ping();
 
     this.receiver.logs = { sensor: [] };
 

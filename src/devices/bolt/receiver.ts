@@ -33,21 +33,44 @@ export class Receiver {
       Mousetrap.bind(key, fn);
     }
 
-
   }
 
-  on ( event: string, callback: any ) {
+  async on ( event: string, listener: any, activate=true ) {
+
     if(!this.listeners[event]) { this.listeners[event] = []; }
-    this.listeners[event].push(callback);
+
+    listener.activate = activate;
+    this.listeners[event].push(listener);
+
+    if (event === 'sensordata' && activate) {
+      const activeListener = this.listeners[event].filter( (li: any) => li.activate );
+      if (activeListener.length > 0) {
+        await this.bolt.sensors.enableSensorsAll(this.bolt.magic.sensorInterval);
+      }
+    }
+
+    return Promise.resolve(true);
+
   }
 
-  off ( event: string, callback: any ) {
+  async off ( event: string, listener: any ) {
+
     if (this.listeners[event]) {
-      const index = this.listeners[event].findIndex( (cb: any) => cb === callback);
+      const index = this.listeners[event].findIndex( (li: any) => li === listener);
       if ( index > -1 ) {
         this.listeners[event].splice(index, 1);
       }
     }
+
+    if (event === 'sensordata') {
+      const activeListener = this.listeners[event].filter( (li: any) => li.activate );
+      if (activeListener.length === 0) {
+        await this.bolt.sensors.disableSensors();
+      }
+    }
+
+    return Promise.resolve(true);
+
   }
 
   fire (event: string, msg: IEvent) {

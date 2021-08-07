@@ -36,8 +36,10 @@ export interface IStatus {
   heading:       number,
   stabilization: number,
   rawMask:       any, // {aol, gyro}
-  position:      any,
   ambient:       number[],
+  sensors:       any,
+  angles:        any,
+  position:      any,
   velocity:      any,
   voltage:       number[],
   percentage:    number[],

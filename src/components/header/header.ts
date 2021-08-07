@@ -3,6 +3,7 @@ import m from "mithril";
 
 import Factory     from '../factory';
 import { Bolts }  from '../../devices/bolt/bolts';
+import { Plotter } from '../plotter';
 
 // import { Bolt }   from '../../devices/bolt/bolt';
 // import { IAction } from "../../devices/bolt/interfaces";
@@ -25,6 +26,7 @@ const Header = Factory.create('Header', {
         m('button.cmd.br2.ml1', { onclick: Bolts.disconnectall.bind(Bolts) }, 'DisConnect'),
         m('button.cmd.br2.ml1', { onclick: reload },   'Reload'),
         m('button.cmd.br2.ml1', { onclick: m.redraw }, 'Redraw'),
+        m('button.cmd.br2.ml1', { onclick: Plotter.reset }, 'Plotter.reset'),
       ]),
     );
   },

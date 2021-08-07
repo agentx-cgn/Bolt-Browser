@@ -160,20 +160,21 @@ W 270 => 270
 
 */
 
-  async rollToPoint (target: IPoint, tolerance=20) {
+  async rollToPoint (target: IPoint, tolerance=5) {
 
-    const msecsInterval = this.bolt.magic.rollInterval;
-    let speed: number, x: number, y: number, distance: number, heading: number;
+    console.log('rollToPoint.in :', this.bolt.status.position, '=>', target);
 
     return new Promise( async (resolve, reject) => {
 
-      this.bolt.receiver.on('fullstop', async () => {
-        this.bolt.receiver.off('sensordata', sensorListener);
-        console.log('rollToPoint.fullstop');
+      const fullStopListener = async (event: IEvent) => {
+        await this.bolt.receiver.off('fullstop',   fullStopListener);
+        await this.bolt.receiver.off('sensordata', sensorListener);
         resolve('fullstop');
-      });
+      };
 
       const sensorListener = async (event: IEvent) => {
+
+        let speed: number, x: number, y: number, distance: number, heading: number;
 
         x        = event.sensordata.locator.positionX;
         y        = event.sensordata.locator.positionY;
@@ -184,16 +185,17 @@ W 270 => 270
         speed = (
           distance > 100 ? 100 :
           distance >  50 ?  50 :
-            20
+          distance >  30 ?  30 :
+          distance >  20 ?  20 :
+          10
         );
 
         if (distance < tolerance) {
-          await this.stop();
-          await this.bolt.sensors.disableSensors();
-          this.bolt.receiver.off('sensordata', sensorListener);
           console.log('rollToPoint.out:', this.bolt.status.position, '=>', target);
+          await this.stop();
+          await this.bolt.receiver.off('sensordata', sensorListener);
+          await this.bolt.receiver.off('fullstop',   fullStopListener);
           resolve(distance);
-          return;
 
         } else {
           await this.roll(speed, heading);
@@ -201,14 +203,10 @@ W 270 => 270
 
         }
 
-      }
+      };
 
-
-      console.log('rollToPoint.in :', this.bolt.status.position, '=>', target);
-
-      await this.bolt.sensors.enableLocationEvent(msecsInterval);
-
-      this.bolt.receiver.on('sensordata', sensorListener);
+      await this.bolt.receiver.on('sensordata', sensorListener);
+      await this.bolt.receiver.on('fullstop',   fullStopListener);
 
     });
 

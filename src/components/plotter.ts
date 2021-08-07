@@ -6,6 +6,8 @@ import { Bolt } from "../devices/bolt/bolt";
 
 import { ISensorData } from '../devices/bolt/interfaces';
 
+
+let series = [] as any;
 let cvs: any;
 let ctx: CanvasRenderingContext2D;
 
@@ -134,19 +136,17 @@ const Plotter = Factory.create('Plotter', {
     },
 
 
-    plotSeries (ctx: CanvasRenderingContext2D, meta: any, series: any) {
+    plotSeries (ctx: CanvasRenderingContext2D, meta: any, data: any) {
 
       // console.log('Plotter.scale.max', meta.scale, meta.max);
 
-      series.forEach( (serie:any) => {
+      data.forEach( (point:any) => {
 
         ctx.fillStyle   = '#F0F';
-        ctx.strokeStyle = serie.color;
-        serie.data.forEach( (entry: ISensorData) => {
-          const x = entry.locator.positionX;
-          const y = entry.locator.positionY;
-          plot.strokeRect(ctx, x, y, 2 / meta.scale);
-        });
+        ctx.strokeStyle = point.color;
+        const x = point.positionX;
+        const y = point.positionY;
+        plot.strokeRect(ctx, x, y, 2 / meta.scale);
 
         // console.log('plotted', serie.color, serie.data.length)
 
@@ -155,31 +155,52 @@ const Plotter = Factory.create('Plotter', {
     },
 
     analyze (data: any) {
-      meta.maxx  = Math.max.apply(Math, data.map( (e: any) => e.locator.positionX ));
-      meta.maxy  = Math.max.apply(Math, data.map( (e: any) => e.locator.positionY ));
-      meta.minx  = Math.min.apply(Math, data.map( (e: any) => e.locator.positionX ));
-      meta.miny  = Math.min.apply(Math, data.map( (e: any) => e.locator.positionY ));
+      meta.maxx  = Math.max.apply(Math, data.map( (loc: any) => loc.positionX ));
+      meta.maxy  = Math.max.apply(Math, data.map( (loc: any) => loc.positionY ));
+      meta.minx  = Math.min.apply(Math, data.map( (loc: any) => loc.positionX ));
+      meta.miny  = Math.min.apply(Math, data.map( (loc: any) => loc.positionY ));
       meta.max   = Math.max(Math.abs(meta.maxx), Math.abs(meta.maxy), Math.abs(meta.minx), Math.abs(meta.miny));
       meta.cx    = ( meta.maxx + meta.minx ) / 2;
       meta.cy    = ( meta.maxy + meta.miny ) / 2;
     },
 
-    render ( ) {
 
-      const series = [] as any;
-      meta.max = 0;
+    // register (bolt:Bolt) {
+    //   series[bolt.name] = [
+    //     { locatioX:  0, locatioY:  0 },
+    //     { locatioX: 50, locatioY:  0 },
+    //     { locatioX:  0, locatioY: 50 },
+    //     { locatioX: 50, locatioY: 50 },
+    //   ];
+    // },
+    reset () { this.series = [
+      { locationX:  0, locationY:  0, color: 'darkred' },
+      { locationX: 50, locationY:  0, color: 'darkred' },
+      { locationX:  0, locationY: 50, color: 'darkred' },
+      { locationX: 50, locationY: 50, color: 'darkred' },
+    ]; },
+    render ( bolt: Bolt, location: any ) {
+
+      // location.pos itionX
+
+      if (bolt && location) {
+        location.color = bolt.config.colors.plot;
+        series.push(location);
+      }
+
+
+      // meta.max = 0;
 
       if (cvs && ctx ) {
 
         cvs.width = cvs.width;
+        const data = series.slice(-100);
+        Plotter.analyze(data);
 
-        Bolts.forEach ( (bolt: Bolt) => {
-          const data = bolt.receiver.logs.sensor.slice(-100);
-          // always keep origin
-          data.unshift({ locator: { positionX: 0, positionY: 0}});
-          Plotter.analyze(data);
-          series.push({ color: bolt.config.colors.plot, data });
-        });
+        // Bolts.forEach ( (bolt: Bolt) => {
+        //   // always keep origin
+        //   series.push({ color: bolt.config.colors.plot, data });
+        // });
 
         // if (meta.max === 0) {
         //   Plotter.analyze(testData);
@@ -196,7 +217,7 @@ const Plotter = Factory.create('Plotter', {
         ctx.scale(meta.scale, meta.scale);  // toggle origin too
 
         Plotter.plotCoords (ctx, meta);
-        Plotter.plotSeries(ctx, meta, series);
+        Plotter.plotSeries(ctx, meta, data);
 
         ctx.restore();
 
