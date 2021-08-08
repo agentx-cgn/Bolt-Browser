@@ -266,18 +266,18 @@ export class Receiver {
       command.deviceId  === C.Device.powerInfo &&
       command.commandId === C.CMD.Power.batteryStateChange ) {
 
-      switch (command.data[0]) {
-        case C.Battery.charging:
-          this.fire('charging',    { msg: command });
-        break;
-        case C.Battery.notCharging:
-          this.fire('notcharging', { msg: command });
-        break;
-        case C.Battery.charged:
-          this.fire('charged',     { msg: command });
-        break;
-        default:
-          console.log('Unknown battery state');
+      const state = command.data[0];
+
+      if (state === C.Battery.charging    ||
+          state === C.Battery.notCharging ||
+          state === C.Battery.charged     ) {
+
+        // charging, not charging, charged
+        this.fire('battery', { sensordata: state });
+
+      } else {
+        console.log('Unknown battery state', command);
+
       }
 
     } else if (
@@ -291,7 +291,6 @@ export class Receiver {
       command.commandId === C.CMD.Power.sleepAsync ) {
 
       this.fire('sleep', { msg: command });
-      // this.handleSleepAsync(command);
 
     } else if (
       command.deviceId  === C.Device.powerInfo &&
@@ -307,17 +306,13 @@ export class Receiver {
       command.commandId === C.CMD.Sensor.collisionDetectedAsync ) {
 
       this.fire('collision', { msg: command });
-      // this.handleCollision(command);
 
     } else if (
       command.deviceId  === C.Device.sensor &&
       command.commandId === C.CMD.Sensor.sensorResponse ) {
 
       const sensordata = parseSensorResponse(command.data, this.bolt.status.rawMask);
-      // this.logs.sensor.push(sensordata);
-      // this.bolt.log.push(sensordata);
       this.fire('sensordata', { sensordata });
-      // this.handleSensorUpdate(command);
 
     } else if (
       command.deviceId  === C.Device.sensor &&
@@ -327,7 +322,6 @@ export class Receiver {
       angle    += command.data[1];
 
       this.fire('compass', { sensordata: angle });
-      // this.handleCompassNotify(command);
 
     } else {
       console.log('fireEvent', 'UNKNOWN EVENT ', command);
