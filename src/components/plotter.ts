@@ -5,6 +5,7 @@ import { Bolts } from '../devices/bolt/bolts';
 import { Bolt } from "../devices/bolt/bolt";
 
 import { ISensorData } from '../devices/bolt/interfaces';
+import { H } from "../services/helper";
 
 
 let series = [] as any;
@@ -43,7 +44,12 @@ const plot = {
 
   strokeRect (ctx:CanvasRenderingContext2D, cx: number, cy: number, size: number) {
     const s2 = size/2;
-    ctx.strokeRect(cx - s2, cy -s2, size, size)
+    ctx.strokeRect(cx - s2, cy -s2, size, size);
+  },
+
+  fillRect (ctx:CanvasRenderingContext2D, cx: number, cy: number, size: number) {
+    const s2 = size/2;
+    ctx.fillRect(cx - s2, cy -s2, size, size);
   },
 
   strokeLine (ctx: any, x1: number, y1: number, x2: number, y2: number) {
@@ -82,7 +88,7 @@ const Plotter = Factory.create('Plotter', {
     let x = (event.x - rect.left -  meta.transX ) / meta.scale ;
     let y = (event.y - rect.top  -  meta.transY ) / meta.scale ;
 
-    this.render({positionX: x, positionY: y, color: 'red'});
+    this.render({positionX: x, positionY: y, stroke: 'red', fill: 'red'});
 
     console.log('Plotter.click', x, y);
 
@@ -90,12 +96,19 @@ const Plotter = Factory.create('Plotter', {
 
 
   reset () {
-    series = [
-      { positionX: -50, positionY: -50, color: 'darkred' },
-      { positionX: +50, positionY: -50, color: 'darkred' },
-      { positionX: +50, positionY: +50, color: 'darkred' },
-      { positionX: -50, positionY: +50, color: 'darkred' },
-    ];
+
+    const max = 100;
+    series = [{ positionX: 0, positionY: 0, stroke: 'orange', fill: 'orange' }];
+
+    H.range(4).forEach( i => {
+      const x = ~~(Math.random() * max - max /2);
+      const y = ~~(Math.random() * max - max /2);
+      console.log(x, y);
+      series.push({ positionX: x, positionY: y, stroke: 'darkred', fill: 'darkred' })
+    })
+
+    // console.log(series);
+
     this.render();
   },
 
@@ -126,29 +139,52 @@ const Plotter = Factory.create('Plotter', {
 
     const imax     = parseInt(String(meta.max), 10);
     const imaxx     = parseInt(String(meta.max), 10);
+
     const scale    = meta.scale;
     const fontSize = parseInt(String(12 / scale), 10);
 
     ctx.font = `normal ${fontSize}px monospace`;
     ctx.lineWidth = 0.5 / scale;
 
-    // show origin
-    ctx.fillStyle = '#888';
-    ctx.textAlign = 'left';
-    ctx.fillText('0,0', 8 / scale, -8 / scale );
 
     // show min max
     const off = 1.05;
-    // const iminxoff = Math.floor(off * meta.minx);
-    // const iminyoff = ~~(off * meta.miny);
-    // const imaxxoff = ~~(off * meta.maxx);
-    // const imaxyoff = ~~(off * meta.maxy);
+
     ctx.strokeStyle = '#800'
     ctx.fillStyle = '#888';
     ctx.strokeRect(meta.minx * off, meta.miny * off, (meta.maxx - meta.minx) * off, (meta.maxy - meta.miny) * off);
     ctx.textAlign = 'right';
     ctx.fillText( `${imax},${imax}`, imax -4/scale, imax -4/scale );
 
+
+
+
+    // plot data min/max point
+    ctx.strokeStyle = '#0FF';
+    ctx.fillStyle   = '#0FF';
+    plot.fillRect(ctx, meta.minx, meta.miny, 6 / meta.scale);
+    plot.fillRect(ctx, meta.maxx, meta.maxy, 6 / meta.scale);
+
+    // plot data center
+    ctx.strokeStyle = '#00F'
+    ctx.fillStyle   = '#00F';
+    plot.fillRect(  ctx, meta.cx, meta.cy, 4 / meta.scale);
+    plot.strokeRect(ctx, meta.cx, meta.cy, 4 / meta.scale);
+
+    // annotate origin
+    ctx.fillStyle = '#888';
+    ctx.textAlign = 'left';
+    ctx.fillText('0,0', 8 / scale, -8 / scale );
+
+    // plot axis
+    ctx.strokeStyle = '#888'
+    const axismax = Math.hypot()
+    plot.strokeLine(ctx, 0, 0,  axismax, 0);
+    plot.strokeLine(ctx, 0, 0, 0,  axismax);
+    plot.strokeLine(ctx, 0, 0, -axismax, 0);
+    plot.strokeLine(ctx, 0, 0, 0, -axismax);
+
+    // strike light square around origin
     ctx.strokeStyle = '#ddd'
     plot.strokeRect(ctx, 0, 0, 512);
     plot.strokeRect(ctx, 0, 0, 256);
@@ -160,13 +196,6 @@ const Plotter = Factory.create('Plotter', {
     plot.strokeRect(ctx, 0, 0, 0.5);
     plot.strokeRect(ctx, 0, 0, 0.1);
 
-    ctx.strokeStyle = '#888'
-    plot.strokeLine(ctx, 0, 0, meta.maxx, 0);
-    plot.strokeLine(ctx, 0, 0, 0, meta.maxy);
-    plot.strokeLine(ctx, 0, 0, -meta.maxx, 0);
-    plot.strokeLine(ctx, 0, 0, 0, -meta.maxy);
-
-
 
   },
 
@@ -175,9 +204,11 @@ const Plotter = Factory.create('Plotter', {
 
     data.forEach( (point:any) => {
 
-      ctx.strokeStyle = point.color;
+      ctx.strokeStyle = point.stroke;
+      ctx.fillStyle   = point.fill;
       const x = point.positionX;
       const y = point.positionY;
+      plot.fillRect(ctx, x, y, 2 / meta.scale);
       plot.strokeRect(ctx, x, y, 2 / meta.scale);
 
     });
@@ -187,25 +218,29 @@ const Plotter = Factory.create('Plotter', {
   analyzeData (data: any) {
 
     meta.length = data.length;
+
     meta.maxx  = Math.max.apply(Math, data.map( (loc: any) => loc.positionX ));
     meta.maxy  = Math.max.apply(Math, data.map( (loc: any) => loc.positionY ));
     meta.minx  = Math.min.apply(Math, data.map( (loc: any) => loc.positionX ));
     meta.miny  = Math.min.apply(Math, data.map( (loc: any) => loc.positionY ));
-    meta.max   = Math.max(meta.maxx, meta.maxy);
-    meta.min   = Math.min(meta.minx, meta.miny);
-    meta.cx    = ( meta.maxx + meta.minx ) / 2;
-    meta.cy    = ( meta.maxy + meta.miny ) / 2;
 
-    meta.scale = size / meta.max / 1.05 / 2;
-    meta.transX = size/2 - meta.cx;
-    meta.transY = size/2 - meta.cy;
+    meta.cx = (meta.maxx + meta.minx) / 2;
+    meta.cy = (meta.maxy + meta.miny) / 2;
+
+    meta.max   = Math.max(meta.maxx, meta.maxy, meta.miny, meta.miny);
+    meta.min   = Math.min(meta.maxx, meta.maxy, meta.miny, meta.miny);
+
+    meta.scale  = size / (meta.max - meta.min) / 1.05 / 2;
+    meta.transX = (size/2 - meta.cx * meta.scale ); // / meta.scale;
+    meta.transY = (size/2 - meta.cy * meta.scale ); // / meta.scale;
 
   },
 
-  render ( location: any, color: string ) {
+  render ( location: any, stroke: string, fill: string ) {
 
     if (location) {
-      location.color = location.color || color || 'pink';
+      location.stroke = location.stroke || stroke || 'pink';
+      location.fill   = location.fill   || fill   || 'white';
       series.push(location);
     }
 
@@ -218,6 +253,15 @@ const Plotter = Factory.create('Plotter', {
 
       cvs.width = cvs.width;
       ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+      ctx.beginPath();
+      ctx.arc(size/2, size/2, 4, 0, 2 * Math.PI, false);
+      // ctx.fillStyle = 'green';
+      // ctx.fill();
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = 'darkorange';
+      ctx.stroke();
+
       ctx.translate(meta.transX, meta.transY);
       ctx.scale(meta.scale, meta.scale);
 
