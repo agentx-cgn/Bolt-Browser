@@ -17,12 +17,27 @@ declare global {
   }
 }
 
-
 export type TColor = [number, number, number];
 export type TNum   = number[];
 export interface IUuid {
   uuid:    string,
 }
+
+export interface IConfigColors {
+  console: string,
+  plot: string,
+  backcolor: string,
+  matrix: TColor,
+}
+export interface IMagic {
+  rollInterval: number,
+  sensorInterval: number,
+}
+export interface IConfig {
+  colors: IConfigColors,
+  magic:  IMagic,
+}
+
 
 export interface IMatrix {
   rotation: number,

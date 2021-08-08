@@ -26,7 +26,7 @@ const Header = Factory.create('Header', {
         m('button.cmd.br2.ml1', { onclick: Bolts.disconnectall.bind(Bolts) }, 'DisConnect'),
         m('button.cmd.br2.ml1', { onclick: reload },   'Reload'),
         m('button.cmd.br2.ml1', { onclick: m.redraw }, 'Redraw'),
-        m('button.cmd.br2.ml1', { onclick: Plotter.reset }, 'Plotter.reset'),
+        m('button.cmd.br2.ml1', { onclick: Plotter.reset.bind(Plotter) }, 'Plotter.reset'),
       ]),
     );
   },

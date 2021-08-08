@@ -34,6 +34,8 @@ export class Queue {
   /* Put a command message on the queue, might execute */
   async queueMessage( message: ICmdMessage ): Promise<any> {
 
+    const prefix = ['%c' + this.bolt.name, 'color: ' + this.bolt.config.colors.console];
+
     return new Promise( (resolve, reject) => {
 
       this.incrementer = (this.incrementer +1) % 255;
@@ -59,7 +61,7 @@ export class Queue {
         },
 
         onError:      ( error: string ) => {
-          console.log('%c' + this.bolt.name, 'color: darkorange', 'error', message, error);
+          console.warn(...prefix, 'error', message, error);
           action.acknowledged = true;
           reject(error);
           m.redraw();
@@ -73,11 +75,15 @@ export class Queue {
 
   }
 
+  findNextAction (): IAction {
+    return this.find( (action: IAction) => !action.acknowledged && !action.executed );
+  }
+
   execute (action: IAction) {
 
     if (!action) { return }
 
-    const findNextAction = () => this.find( (action: IAction) => !action.acknowledged && !action.executed ) as IAction;
+    // const findNextAction = () => this.find( (action: IAction) => !action.acknowledged && !action.executed ) as IAction;
 
     this.queue.push(action);
 
@@ -85,13 +91,13 @@ export class Queue {
 
       this.waiting = true;
 
-      const nextAction = findNextAction();
+      const nextAction = this.findNextAction();
 
       this.write( nextAction, (lastAction: IAction) => {
 
         this.waiting = false;
         lastAction.executed = true;
-        this.execute(findNextAction());
+        this.execute(this.findNextAction());
         m.redraw();
 
       });

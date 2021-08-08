@@ -1,7 +1,7 @@
 import m from "mithril";
 
 import { CONSTANTS as C }  from '../constants';
-import { IStatus, TColor, IEvent, IAction, ISensorData } from "./interfaces";
+import { IStatus, IMagic, TColor, IEvent, IAction, ISensorData, IConfig } from "./interfaces";
 import { wait } from './utils'
 
 import { Aruco } from '../../services/aruco';
@@ -15,7 +15,7 @@ import { Plotter } from "../../components/plotter";
 export class Bolt {
 
   public name:       string;
-  public config:     any;
+  public config:     IConfig;
 
   public characs = new Map();
   public device:     BluetoothDevice;
@@ -26,11 +26,7 @@ export class Bolt {
 
   public log: (IAction|any)[] = [];
 
-  public magic = {
-    rollInterval:   1000,
-    sensorInterval: 250,
-
-  };
+  public magic: IMagic;
 
   // simple
   private keymapSimpleCommands = {
@@ -61,9 +57,10 @@ export class Bolt {
     }
   };
 
-  constructor (device: BluetoothDevice, config: any) {
+  constructor (device: BluetoothDevice, config: IConfig) {
 
     this.config    = config;
+    this.magic     = config.magic;
     this.name      = device.name;
     this.device    = device;
     this.receiver  = new Receiver(this);
@@ -138,8 +135,8 @@ export class Bolt {
       this.status.position.y = data.locator.positionY;
       this.status.velocity.x = data.locator.velocityX;
       this.status.velocity.y = data.locator.velocityY;
-      Plotter.render(this, data.locator);
-      m.redraw();
+      Plotter.render(data.locator, this.config.colors.plot);
+      // m.redraw();
       // console.log(this.name, 'sensordata', event.sensordata);
     }, false);
 
@@ -199,16 +196,22 @@ export class Bolt {
   // }
 
   async action () {
+
+    // await this.actuators.circleAround(20, 40);
+    // await this.actuators.rollToPoint({x:0,y:0});
+
     await this.actuators.printChar('0');
-    await this.actuators.rollToPoint({x:   0, y:  40});
+    await this.actuators.rollToPoint({x:   -25, y:  -25});
     await this.actuators.printChar('1');
-    await this.actuators.rollToPoint({x:  40, y:  40});
+    await this.actuators.rollToPoint({x:   -25, y:  +25});
     await this.actuators.printChar('2');
-    await this.actuators.rollToPoint({x:  40, y:   0});
+    await this.actuators.rollToPoint({x:   +25, y:  +25});
     await this.actuators.printChar('3');
-    await this.actuators.rollToPoint({x:   0, y:   0});
+    await this.actuators.rollToPoint({x:   +25, y:  -25});
     await this.actuators.printChar('4');
-    await this.actuators.roll(0, 0);
+    await this.actuators.rollToPoint({x:     0, y:    0});
+    await this.actuators.printChar('0');
+
   }
 
   async ActionRollUntil () {

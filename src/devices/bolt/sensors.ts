@@ -97,6 +97,7 @@ async info() {
     this.bolt.status.sensors = {
       locator:     true,
       orientation: true,
+      interval,
     };
     return await this.enableSensors(interval, [
       // C.SensorMaskValues.accelerometer,

@@ -160,6 +160,25 @@ W 270 => 270
 
 */
 
+  async circleAround(times: number, radius: number) {
+
+    for (const i of H.range(times)) {
+
+      const angle = Math.random() * Math.PI * 2;
+      const point: IPoint = {
+        x: Math.cos(angle) * radius,
+        y: Math.sin(angle) * radius,
+      }
+
+      await this.rollToPoint(point);
+
+    }
+
+    return Promise.resolve(true);
+
+  }
+
+
   async rollToPoint (target: IPoint, tolerance=5) {
 
     console.log('rollToPoint.in :', this.bolt.status.position, '=>', target);
@@ -187,7 +206,7 @@ W 270 => 270
           distance >  50 ?  50 :
           distance >  30 ?  30 :
           distance >  20 ?  20 :
-          10
+          15
         );
 
         if (distance < tolerance) {

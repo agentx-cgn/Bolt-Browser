@@ -4,30 +4,38 @@ import m from "mithril";
 
 import { CONSTANTS as C }  from '../constants';
 import { Bolt } from './bolt';
+import { IConfig } from './interfaces';
+
 class bolts {
 
   public map;
   public find;
   public forEach;
 
-  private configs = {
-    'SB-9129' : { colors: { console: '#FF0', plot: 'green', backcolor: '#5ec19d', matrix: [30, 240, 30] } },
-    'SB-2B96' : { colors: { console: '#F0F', plot: 'blue',  backcolor: '#5895d4', matrix: [30, 30, 240] } },
-  } as any;
+  private configs: { [key: string]: IConfig } = {
 
-  private bolts: any = [];
+    'SB-9129' : {
+      magic:  { rollInterval: 1000, sensorInterval: 400,},
+      colors: { console: '#FF0', plot: 'green', backcolor: '#5ec19d', matrix: [30, 240, 30] },
+    } as IConfig,
+
+    'SB-2B96' : {
+      magic:  { rollInterval: 1000, sensorInterval: 400,},
+      colors: { console: '#F0F', plot: 'blue',  backcolor: '#5895d4', matrix: [30, 30, 240] }
+    },
+
+  };
+
+  private bolts = [] as Bolt[];
 
   constructor ( ) {
 
-
-    // this.bluetooth = BT;
     this.map     = Array.prototype.map.bind(this.bolts);
     this.find    = Array.prototype.find.bind(this.bolts);
     this.forEach = Array.prototype.forEach.bind(this.bolts);
 
     // allows: await Bolts.get('SB-9129').actuators.roll(0, 90) in console
     window.Bolts = this;
-    // this.get = (name: string) => this.find( (bolt: Bolt) => bolt.name === name);
 
 	}
 
@@ -57,8 +65,6 @@ class bolts {
 			}
 		});
 
-    this.searchBolts();
-
   }
 
   private remove (bolt:Bolt) {
@@ -68,7 +74,37 @@ class bolts {
     }
   }
 
-  private async searchBolts () {
+  getAdvertisementListener (device: BluetoothDevice) {
+
+    let connecting = false;
+
+    return async (event: BluetoothAdvertisementEvent) => {
+
+      if (!connecting) {
+
+        console.log(device.name, 'connecting...')
+        connecting = true;
+        const bolt = new Bolt(device, this.configs[device.name]);
+        this.bolts.push(bolt);
+        await this.connectBolt(bolt, device);
+        m.redraw();
+
+      } else {
+        const bolt: Bolt = this.find( (bolt: Bolt) => bolt.name === device.name );
+        if (bolt) {
+          bolt.status.rssi    = event.rssi;
+          bolt.status.txPower = event.txPower;
+        }
+        m.redraw();
+        // console.log(device.name, 'advertisementreceived', {rssi: event.rssi, txPower: event.txPower});
+
+      }
+
+    };
+
+  }
+
+  public async searchBolts () {
 
     return navigator.bluetooth.getDevices()
       .then( (devices: BluetoothDevice[] ) => devices.filter( device => device.name.startsWith('SB-') ) )
@@ -79,29 +115,31 @@ class bolts {
 
         for (const device of devices) {
 
-          let connecting = false;
+          const advertisementListener = this.getAdvertisementListener(device);
 
-          const advertisementListener = async (event: BluetoothAdvertisementEvent) => {
-            if (!connecting){
+          // let connecting = false;
 
-              console.log(device.name, 'connecting...')
-              connecting = true;
-              const bolt = new Bolt(device, this.configs[device.name]);
-              this.bolts.push(bolt);
-              await this.connectBolt(bolt, device);
-              m.redraw();
+          // const advertisementListener = async (event: BluetoothAdvertisementEvent) => {
+          //   if (!connecting){
 
-            } else {
-              const bolt: Bolt = this.find( (bolt: Bolt) => bolt.name === device.name );
-              if (bolt) {
-                bolt.status.rssi    = event.rssi;
-                bolt.status.txPower = event.txPower;
-              }
-              m.redraw();
-              // console.log(device.name, 'advertisementreceived', {rssi: event.rssi, txPower: event.txPower});
+          //     console.log(device.name, 'connecting...')
+          //     connecting = true;
+          //     const bolt = new Bolt(device, this.configs[device.name]);
+          //     this.bolts.push(bolt);
+          //     await this.connectBolt(bolt, device);
+          //     m.redraw();
 
-            }
-          }
+          //   } else {
+          //     const bolt: Bolt = this.find( (bolt: Bolt) => bolt.name === device.name );
+          //     if (bolt) {
+          //       bolt.status.rssi    = event.rssi;
+          //       bolt.status.txPower = event.txPower;
+          //     }
+          //     m.redraw();
+          //     // console.log(device.name, 'advertisementreceived', {rssi: event.rssi, txPower: event.txPower});
+
+          //   }
+          // }
 
           device.addEventListener('advertisementreceived',  advertisementListener);
 
@@ -143,7 +181,7 @@ class bolts {
       //   return device;
       // })
       .then( (device: BluetoothDevice) => {
-        const bolt = new Bolt(device, this.configs[device.name]);
+        const bolt = new Bolt(device, this.configs[device.name] as IConfig);
         this.bolts.push(bolt);
         this.connectBolt(bolt, device)
       } )

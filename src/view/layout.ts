@@ -16,12 +16,17 @@ import { BoltLogger } from './logger';
 import { BoltStatus } from './status';
 
 Bolts.activate();
+Bolts.searchBolts();
+Plotter.reset();
 
 const LayoutComponent = Factory.create('Layout', {
 
   view( vnode: any ) {
 
     const { route, params } = vnode.attrs;
+
+    const style = { background: '#ddd', flex: 1, maxWidth: '180px', overflow: 'hidden' };
+
 
     return m('div.layout', [
 
@@ -38,6 +43,7 @@ const LayoutComponent = Factory.create('Layout', {
       m('div.w-100.bg-eee.f6.flex.flex-row', {}, [
         m(Plotter, {size: 512} ),
         Bolts.map(( bolt: Bolt ) => m(BoltStatus, { bolt }) ),
+        m('pre.f7.mono.c333.pa2', { style }, JSON.stringify(Plotter.meta(), null, 2))
       ]),
 
       m(Last, { msecs: Date.now() }),
