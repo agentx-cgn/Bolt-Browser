@@ -25,7 +25,7 @@ export class Actuators {
     resetYaw:           { device: C.Device.driving,       command: C.CMD.Driving.resetYaw,          target: 0x12,   data: [] as TNum },
     roll:               { device: C.Device.driving,       command: C.CMD.Driving.driveWithHeading,  target: 0x12,   data: [ /* speed, (heading >> 8) & 0xff, heading & 0xff, flags */] as TNum },
     rotateMatrix:       { device: C.Device.userIO,        command: C.CMD.IO.matrixRotation,         target: 0x12,   data: [ /* 0|1|2|3 */] as TNum },
-    setMatrixColor:     { device: C.Device.userIO,        command: C.CMD.IO.matrixColor,            target: 0x12,   data: [ /* r, g, b */] as TNum },
+    matrixColor:     { device: C.Device.userIO,        command: C.CMD.IO.matrixColor,            target: 0x12,   data: [ /* r, g, b */] as TNum },
 
     // batteryPercentage: { device: C.Device.powerInfo, command: C.CMD.Power.get_battery_percentage,     target: 0x11, data: [] as TNum },
 
@@ -339,15 +339,15 @@ W 270 => 270
     return await this.queue('rotateMatrix', { data: [rotation] });
   }
 
-  async setMatrixColor(r: number, g: number, b: number) {
+  async matrixColor(r: number, g: number, b: number) {
     // destroys image
-    return await this.queue('setMatrixColor', { data: [r, g, b] });
+    return await this.queue('matrixColor', { data: [r, g, b] });
   }
 
   /* Set the color of the LEd matrix and front and back LED */
   async setAllLeds(r: number, g: number, b: number) {
     await this.setLedsColor(r, g, b);
-    await this.setMatrixColor(r, g, b);
+    await this.matrixColor(r, g, b);
     return Promise.resolve(true);
   }
 
@@ -355,11 +355,11 @@ W 270 => 270
   async setMatrixRandomColor() {
     const color = Math.round(0xffffff * Math.random());
     const r = color >> 16, g = color >> 8 & 255, b = color & 255;
-    return await this.setMatrixColor(r, g, b);
+    return await this.matrixColor(r, g, b);
   }
 
   async setMatrixImage(br: number, bg: number, bb: number, r: number, g: number, b: number, image: number[][]) {
-    await this.setMatrixColor(br, bg, bb);
+    await this.matrixColor(br, bg, bb);
     let x: number, y: number;
     for (x = 0; x < 8; x++) {
       for (y = 0; y < 8; y++) {
@@ -375,22 +375,22 @@ W 270 => 270
   /* Blinks as char  */
   async blinkChar(char: string, times= 3) {
     for (const i of H.range(times)){
-      await this.printChar(' ');
-      await this.printChar(char);
+      await this.matrixChar(' ');
+      await this.matrixChar(char);
       await wait(200);
     }
     return await Promise.resolve(true);
   }
 
   /* Prints a char on the LED matrix  */
-  async printChar(char: string) {
-    return await this.printCharColor(char, ...this.bolt.config.colors.matrix as TColor);
+  async matrixChar(char: string) {
+    return await this.matrixCharColor(char, ...this.bolt.config.colors.matrix as TColor);
   }
-  async printCharColor(char: string, r: number, g: number, b: number) {
+  async matrixCharColor(char: string, r: number, g: number, b: number) {
     return await this.bolt.queue.queueMessage({
-      name: 'printChar',
+      name: 'matrixChar',
       device: C.Device.userIO,
-      command: C.CMD.IO.printChar, //UserIOCommandIds.printChar,
+      command: C.CMD.IO.matrixChar, //UserIOCommandIds.matrixChar,
       target: 0x12,
       data: [r, g, b, char.charCodeAt(0)]
     });
@@ -400,9 +400,19 @@ W 270 => 270
     return await this.bolt.queue.queueMessage({
       name: 'setMatrixPixel',
       device: C.Device.userIO,
-      command: C.CMD.IO.matrixPixel, //UserIOCommandIds.printChar,
+      command: C.CMD.IO.matrixPixel, //UserIOCommandIds.matrixChar,
       target: 0x12,
       data: [x, y, r, g, b]
+    });
+  }
+
+  async matrixFill(x0: number, y0: number, x1: number, y1: number, r: number, g: number, b: number) {
+    return await this.bolt.queue.queueMessage({
+      name:    'matrixFill',
+      device:  C.Device.userIO,
+      command: C.CMD.IO.matrixFill,
+      target:  0x12,
+      data: [x0, y0, x1, y1, r, g, b]
     });
   }
 

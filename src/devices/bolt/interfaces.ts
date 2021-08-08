@@ -24,10 +24,13 @@ export interface IUuid {
 }
 
 export interface IConfigColors {
-  console: string,
-  plot: string,
+  console:   string, // CSS Colors
+  plot:      string,
   backcolor: string,
-  matrix: TColor,
+  matrix:    TColor, // Bots Color on matrix
+  black:     TColor,
+  front:     TColor,
+  back:      TColor,
 }
 export interface IMagic {
   rollInterval: number,

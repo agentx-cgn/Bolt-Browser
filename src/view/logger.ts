@@ -8,7 +8,7 @@ import { Bolt } from './../devices/bolt/bolt';
 import { IAction } from "./../devices/bolt/interfaces";
 
 function sortQueue (a: IAction, b: IAction) {
-  return b.id - a.id;
+  return b.timestamp - a.timestamp;
 }
 
 const BoltLogger = Factory.create('Logger', {

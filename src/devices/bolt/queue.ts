@@ -86,6 +86,8 @@ export class Queue {
     // const findNextAction = () => this.find( (action: IAction) => !action.acknowledged && !action.executed ) as IAction;
 
     this.queue.push(action);
+    // TODO RingBuffer
+    this.queue.length > 200 && this.queue.shift();
 
     if ( !this.waiting ) {
 
@@ -109,12 +111,14 @@ export class Queue {
   /**  Write a command on a action characteristic */
   async write ( action: IAction, callback: any ) {
 
+    action.timestamp = Date.now();
+
     try {
-      action.timestamp = Date.now();
       await action.charac.writeValue(new Uint8Array(action.command));
       // console.log('write.ok', action.bolt.name, action.name, action.id, action.command.join(' '));
 
     } catch(error) {
+      action.executed = true;
       console.log('Queue.write.error', error.message);
 
     } finally {

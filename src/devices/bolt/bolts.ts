@@ -12,21 +12,30 @@ class bolts {
   public find;
   public forEach;
 
+  public hasBluetooth: boolean;
+
+  private bolts = [] as Bolt[];
+
   private configs: { [key: string]: IConfig } = {
 
     'SB-9129' : {
       magic:  { rollInterval: 1000, sensorInterval: 400,},
-      colors: { console: '#FF0', plot: 'green', backcolor: '#5ec19d', matrix: [30, 240, 30] },
+      colors: {
+        console: '#FF0', plot: 'green', backcolor: '#5ec19d',
+        front: [10, 0, 0], back: [ 5, 5, 5], black: [0, 0, 0], matrix: [30, 240, 30]
+      },
     } as IConfig,
 
     'SB-2B96' : {
       magic:  { rollInterval: 1000, sensorInterval: 400,},
-      colors: { console: '#F0F', plot: 'blue',  backcolor: '#5895d4', matrix: [30, 30, 240] }
+      colors: {
+        console: '#F0F', plot: 'blue',  backcolor: '#5895d4',
+        front: [10, 0, 0], back: [ 5, 5, 5], black: [0, 0, 0], matrix: [30, 30, 240]
+       }
     },
 
   };
 
-  private bolts = [] as Bolt[];
 
   constructor ( ) {
 
@@ -39,21 +48,28 @@ class bolts {
 
 	}
 
+  public count () {return this.bolts.length;}
   public get (name: string) { return this.find( (bolt: Bolt) => bolt.name === name); }
 
-  public async isAvailable (): Promise<boolean> {
+  public async isBlueToothAvailable (): Promise<boolean> {
     return navigator.bluetooth.getAvailability()
-      .then(availability => availability)
+      .then(availability => {
+        this.hasBluetooth = availability;
+        m.redraw();
+        return availability;
+      })
     ;
   }
 
   activate () {
 
-    if ('onavailabilitychanged' in navigator.bluetooth) {
-			navigator.bluetooth.addEventListener('availabilitychanged', function (event: any) {
+    // if ('onavailabilitychanged' in navigator.bluetooth) {
+			navigator.bluetooth.addEventListener('availabilitychanged', (event: any) => {
+        this.hasBluetooth = !!event.value;
+        m.redraw();
 				console.log(`> Bluetooth is ${event.value ? 'available' : 'unavailable'}`);
 			});
-		}
+		// }
 
     window.addEventListener("unload",  async () => {
       for (const bolt of this.bolts) {
@@ -87,7 +103,6 @@ class bolts {
         const bolt = new Bolt(device, this.configs[device.name]);
         this.bolts.push(bolt);
         await this.connectBolt(bolt, device);
-        m.redraw();
 
       } else {
         const bolt: Bolt = this.find( (bolt: Bolt) => bolt.name === device.name );
@@ -95,10 +110,11 @@ class bolts {
           bolt.status.rssi    = event.rssi;
           bolt.status.txPower = event.txPower;
         }
-        m.redraw();
         // console.log(device.name, 'advertisementreceived', {rssi: event.rssi, txPower: event.txPower});
 
       }
+
+      m.redraw();
 
     };
 
@@ -106,7 +122,9 @@ class bolts {
 
   public async searchBolts () {
 
-    return navigator.bluetooth.getDevices()
+    // return navigator.bluetooth.getAvailability()
+    return this.isBlueToothAvailable()
+      .then( (availability: boolean) => availability ? navigator.bluetooth.getDevices() : Promise.reject())
       .then( (devices: BluetoothDevice[] ) => devices.filter( device => device.name.startsWith('SB-') ) )
       .then( (devices: BluetoothDevice[] ) => { console.log('Bolts.searching...', devices.map( d => d.name)); return devices; })
       .then( (devices: BluetoothDevice[] ) => {
@@ -117,30 +135,6 @@ class bolts {
 
           const advertisementListener = this.getAdvertisementListener(device);
 
-          // let connecting = false;
-
-          // const advertisementListener = async (event: BluetoothAdvertisementEvent) => {
-          //   if (!connecting){
-
-          //     console.log(device.name, 'connecting...')
-          //     connecting = true;
-          //     const bolt = new Bolt(device, this.configs[device.name]);
-          //     this.bolts.push(bolt);
-          //     await this.connectBolt(bolt, device);
-          //     m.redraw();
-
-          //   } else {
-          //     const bolt: Bolt = this.find( (bolt: Bolt) => bolt.name === device.name );
-          //     if (bolt) {
-          //       bolt.status.rssi    = event.rssi;
-          //       bolt.status.txPower = event.txPower;
-          //     }
-          //     m.redraw();
-          //     // console.log(device.name, 'advertisementreceived', {rssi: event.rssi, txPower: event.txPower});
-
-          //   }
-          // }
-
           device.addEventListener('advertisementreceived',  advertisementListener);
 
           promises.push (
@@ -149,7 +143,10 @@ class bolts {
                 // console.log('watchAdvertisements 0', what)
                 // return this.connectBolt(device);
               })
-              .catch( err => console.log('watchAdvertisements.error', err))
+              .catch( err => {
+                this.hasBluetooth = false;
+                console.log('watchAdvertisements.error', err)
+              })
           );
         }
 

@@ -101,21 +101,22 @@ const CMD = {
   },
 
   IO : {
-    playAudioFile:              7,
-    audioVolume:                8,
-    stopAudio:                 10,
-    testSound:                 24,
+    // playAudioFile:              7,
+    // audioVolume:                8,
+    // stopAudio:                 10,
+    // testSound:                 24,
+    // setUserProfile:            35,
     allLEDs:                   28,
-    setUserProfile:            35,
+
+    matrixClear:               56,
     matrixPixel:               45,
     matrixColor:               47,
-    clearMatrix:               56,
     matrixRotation:            58,
     matrixScrollText:          59,
     matrixScrollNotification:  60,
     matrixLine:                61,
     matrixFill:                62,
-    printChar:                 66,
+    matrixChar:                66,
   },
 
   Sensor : {

@@ -315,7 +315,7 @@ export class Receiver {
 
       const sensordata = parseSensorResponse(command.data, this.bolt.status.rawMask);
       // this.logs.sensor.push(sensordata);
-      this.bolt.log.push(sensordata);
+      // this.bolt.log.push(sensordata);
       this.fire('sensordata', { sensordata });
       // this.handleSensorUpdate(command);
 

@@ -80,18 +80,20 @@ async info() {
 
 
   async disableSensors() {
-    console.log(this.bolt.name, 'sensor.off');
     this.bolt.status.sensors = {};
     var mask = [C.SensorMaskValues.off];
     this.bolt.status.rawMask = maskToRaw(mask);
     await this.sensorMask(flatSensorMask(this.bolt.status.rawMask.aol), 0);
     await this.sensorMaskExtended(flatSensorMask(this.bolt.status.rawMask.gyro));
+    console.log(this.bolt.name, 'sensor.off');
     return Promise.resolve(true);
   }
   async enableSensors(interval: number, mask: number[]) {
     this.bolt.status.rawMask = maskToRaw(mask);
     await this.sensorMask(flatSensorMask(this.bolt.status.rawMask.aol), interval);
     await this.sensorMaskExtended(flatSensorMask(this.bolt.status.rawMask.gyro));
+    console.log(this.bolt.name, 'sensor.on');
+    return Promise.resolve(true);
   }
   async enableSensorsAll(interval = 2000) {
     this.bolt.status.sensors = {

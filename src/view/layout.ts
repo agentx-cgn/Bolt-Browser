@@ -18,6 +18,7 @@ import { BoltStatus } from './status';
 Bolts.activate();
 Bolts.searchBolts();
 Plotter.reset();
+// document.hasFocus()
 
 const LayoutComponent = Factory.create('Layout', {
 

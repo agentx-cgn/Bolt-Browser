@@ -129,20 +129,21 @@ export class Bolt {
 
     // sensordata
     this.receiver.on('sensordata',  (event: IEvent) => {
-      const data: ISensorData     = event.sensordata;
-      this.status.angles     = data.angles;
-      this.status.position.x = data.locator.positionX;
-      this.status.position.y = data.locator.positionY;
-      this.status.velocity.x = data.locator.velocityX;
-      this.status.velocity.y = data.locator.velocityY;
-      Plotter.render(data.locator, this.config.colors.plot);
-      // m.redraw();
-      // console.log(this.name, 'sensordata', event.sensordata);
+      const data: ISensorData = event.sensordata;
+      if (data.angles && data.locator) {
+        this.status.angles       = data.angles;
+        this.status.position.x   = data.locator.positionX;
+        this.status.position.y   = data.locator.positionY;
+        this.status.velocity.x   = data.locator.velocityX;
+        this.status.velocity.y   = data.locator.velocityY;
+        Plotter.render(data.locator, this.config.colors.plot);
+        m.redraw();
+      } else console.log(this.name, 'sensordata.broken', event.sensordata);
     }, false);
 
     // collision
     this.receiver.on('collison',    (event: IEvent) => {
-      this.actuators.printChar('!');
+      this.actuators.matrixChar('!');
       console.log(this.name, 'onCollision.data', event);
     });
 
@@ -161,28 +162,47 @@ export class Bolt {
 
   async reset() {
 
+    // try {
+
+    await this.characs.get(C.ANTIDOS_CHARACTERISTIC).writeValue(C.useTheForce);
     await this.actuators.ping();
 
     this.receiver.logs = { sensor: [] };
 
-    const colorBolt:  TColor = this.config.colors.matrix;
-    const colorFront: TColor = [10, 0, 0];
-    const colorBack:  TColor = [ 5, 5, 5];
+    const colorBolt  = this.config.colors.matrix;
+    const colorBlack = this.config.colors.black;
+    const colorFront = this.config.colors.front;
+    const colorBack  = this.config.colors.back;
 
-    await this.characs.get(C.ANTIDOS_CHARACTERISTIC).writeValue(C.useTheForce);
 
     await this.actuators.wake();
     await this.actuators.stop();
     await this.sensors.disableSensors();
     await this.actuators.stabilizeFull();
     await this.actuators.setLedsColor(...colorFront, ...colorBack); // red = north
-    await this.actuators.setMatrixColor(...colorBolt);
+    // await this.actuators.matrixColor(...colorBolt);
+    await this.actuators.matrixFill(1, 1, 6, 6, ...colorBolt);
+    await wait(500);
+    await this.actuators.matrixColor(...colorBlack);
+    await this.actuators.matrixFill(2, 2, 5, 5, ...colorBolt);
+    await wait(500);
+    await this.actuators.matrixColor(...colorBlack);
+    await this.actuators.matrixFill(3, 3, 4, 4, ...colorBolt);
+    await wait(500);
+    await this.actuators.matrixColor(...colorBlack);
+    await this.actuators.matrixFill(2, 2, 5, 5, ...colorBolt);
+    await wait(500);
+    await this.actuators.matrixColor(...colorBlack);
+    await this.actuators.matrixFill(1, 1, 6, 6, ...colorBolt);
+    await wait(500);
     // await this.actuators.info();
     await this.actuators.calibrateNorth();
     await wait(4000);
 
     await this.actuators.resetLocator();
     await wait(1000);
+
+    // } catch(e){ console.warn(this.name, e)}
 
   };
 
@@ -197,29 +217,29 @@ export class Bolt {
 
   async action () {
 
-    // await this.actuators.circleAround(20, 40);
-    // await this.actuators.rollToPoint({x:0,y:0});
+    await this.actuators.circleAround(20, 50);
+    await this.actuators.rollToPoint({x:0,y:0});
 
-    await this.actuators.printChar('0');
-    await this.actuators.rollToPoint({x:   -25, y:  -25});
-    await this.actuators.printChar('1');
-    await this.actuators.rollToPoint({x:   -25, y:  +25});
-    await this.actuators.printChar('2');
-    await this.actuators.rollToPoint({x:   +25, y:  +25});
-    await this.actuators.printChar('3');
-    await this.actuators.rollToPoint({x:   +25, y:  -25});
-    await this.actuators.printChar('4');
-    await this.actuators.rollToPoint({x:     0, y:    0});
-    await this.actuators.printChar('0');
+    // await this.actuators.matrixChar('0');
+    // await this.actuators.rollToPoint({x:   -25, y:  -25});
+    // await this.actuators.matrixChar('1');
+    // await this.actuators.rollToPoint({x:   -25, y:  +25});
+    // await this.actuators.matrixChar('2');
+    // await this.actuators.rollToPoint({x:   +25, y:  +25});
+    // await this.actuators.matrixChar('3');
+    // await this.actuators.rollToPoint({x:   +25, y:  -25});
+    // await this.actuators.matrixChar('4');
+    // await this.actuators.rollToPoint({x:     0, y:    0});
+    // await this.actuators.matrixChar('0');
 
   }
 
   async ActionRollUntil () {
-    await this.actuators.printChar('1');
+    await this.actuators.matrixChar('1');
     await this.actuators.rollUntil(25, this.status.heading,      this.actuators.timeDelimiter(8000));
-    await this.actuators.printChar('2');
+    await this.actuators.matrixChar('2');
     await this.actuators.rollUntil(25, this.status.heading -180, this.actuators.timeDelimiter(8000));
-    await this.actuators.printChar('3');
+    await this.actuators.matrixChar('3');
   }
 
   /**         STUFF          */
@@ -228,8 +248,8 @@ export class Bolt {
     await this.actuators.rotateMatrix(C.FrameRotation.deg180);
     await this.actuators.setMatrixImage(0, 0, 0, 200, 200, 200, Aruco.createImage(0));
     await this.actuators.rotate(90);
-    await this.actuators.setMatrixColor(100, 100, 100);
-    await this.actuators.printChar('#');
+    await this.actuators.matrixColor(100, 100, 100);
+    await this.actuators.matrixChar('#');
     await this.actuators.batteryVoltage();
     await this.actuators.resetLocator();
     await this.actuators.calibrateCompass();

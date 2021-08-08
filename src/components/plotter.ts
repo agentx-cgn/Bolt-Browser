@@ -20,7 +20,8 @@ const meta = {
   max:      0,         min:    +Infinity,
   maxx:     0,         maxy:    0,
   miny:    +Infinity,  minx:   +Infinity,
-  scale:    1,         transX:  0,          transY: 0
+  scale:    1,         transX:  0,          transY: 0,
+  axismax:  0,
 } ;
 
 
@@ -58,28 +59,34 @@ const plot = {
     ctx.lineTo(x2, y2);
     ctx.stroke();
   }
-
+      // ctx.beginPath();
+      // ctx.arc(size/2, size/2, 4, 0, 2 * Math.PI, false);
+      // ctx.fillStyle = 'green';
+      // ctx.fill();
+      // ctx.lineWidth = 1;
+      // ctx.strokeStyle = 'darkorange';
+      // ctx.stroke();
 }
 
 
 const Plotter = Factory.create('Plotter', {
 
-    meta () { return meta },
+  meta () { return meta },
 
-    oncreate ( vnode: any ) {
-      cvs = cvs || vnode.dom ;
-      ctx = cvs.getContext('2d');
-    },
+  oncreate ( vnode: any ) {
+    cvs = cvs || vnode.dom ;
+    ctx = cvs.getContext('2d');
+  },
 
-    onupdate ( vnode: any ) {
-      cvs = cvs || vnode.dom ;
-      ctx = cvs.getContext('2d');
-    },
+  onupdate ( vnode: any ) {
+    cvs = cvs || vnode.dom ;
+    ctx = cvs.getContext('2d');
+  },
 
-    view () {
-      this.render();
-      return m('canvas.bg-white', {width: size, height: size, onclick: this.onClick.bind(this) });
-    },
+  view () {
+    this.render();
+    return m('canvas.bg-white', {width: size, height: size, onclick: this.onClick.bind(this) });
+  },
 
   onClick (event: MouseEvent) {
 
@@ -103,8 +110,8 @@ const Plotter = Factory.create('Plotter', {
     H.range(4).forEach( i => {
       const x = ~~(Math.random() * max - max /2);
       const y = ~~(Math.random() * max - max /2);
-      console.log(x, y);
-      series.push({ positionX: x, positionY: y, stroke: 'darkred', fill: 'darkred' })
+      // console.log(x, y);
+      // series.push({ positionX: x, positionY: y, stroke: 'darkred', fill: 'darkred' });
     })
 
     // console.log(series);
@@ -137,26 +144,33 @@ const Plotter = Factory.create('Plotter', {
 
   plotDecoration (ctx: CanvasRenderingContext2D, meta: any) {
 
-    const imax     = parseInt(String(meta.max), 10);
-    const imaxx     = parseInt(String(meta.max), 10);
-
     const scale    = meta.scale;
     const fontSize = parseInt(String(12 / scale), 10);
+    ctx.font       = `normal ${fontSize}px monospace`;
 
-    ctx.font = `normal ${fontSize}px monospace`;
-    ctx.lineWidth = 0.5 / scale;
-
-
-    // show min max
+    // plot data enclosing
     const off = 1.05;
 
+    ctx.lineWidth = 0.5 / scale;
+    ctx.setLineDash([5 / scale, 5 / scale]);
+
+    // as rect
     ctx.strokeStyle = '#800'
-    ctx.fillStyle = '#888';
-    ctx.strokeRect(meta.minx * off, meta.miny * off, (meta.maxx - meta.minx) * off, (meta.maxy - meta.miny) * off);
-    ctx.textAlign = 'right';
-    ctx.fillText( `${imax},${imax}`, imax -4/scale, imax -4/scale );
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(meta.minx * off, meta.miny * off, (meta.maxx - meta.minx) * off, (meta.maxy - meta.miny) * off);
+    // ctx.strokeRect(meta.minx * off, meta.miny * off, (meta.maxx - meta.minx) * off, (meta.maxy - meta.miny) * off);
 
 
+    // as circle from origin
+    ctx.lineWidth = 0.2 / scale;
+    ctx.beginPath();
+    ctx.arc(0, 0, meta.axismax, 0, 2 * Math.PI, false);
+    ctx.strokeStyle = '#800';
+    ctx.stroke();
+
+    // ctx.fillStyle = '#888';
+    // ctx.textAlign = 'right';
+    // ctx.fillText( `${imax},${imax}`, imax -4/scale, imax -4/scale );
 
 
     // plot data min/max point
@@ -166,10 +180,13 @@ const Plotter = Factory.create('Plotter', {
     plot.fillRect(ctx, meta.maxx, meta.maxy, 6 / meta.scale);
 
     // plot data center
-    ctx.strokeStyle = '#00F'
-    ctx.fillStyle   = '#00F';
-    plot.fillRect(  ctx, meta.cx, meta.cy, 4 / meta.scale);
-    plot.strokeRect(ctx, meta.cx, meta.cy, 4 / meta.scale);
+    // ctx.strokeStyle = '#00F'
+    // ctx.fillStyle   = '#00F';
+    // plot.fillRect(  ctx, meta.cx, meta.cy, 4 / meta.scale);
+    // plot.strokeRect(ctx, meta.cx, meta.cy, 4 / meta.scale);
+
+
+    ctx.setLineDash([]);
 
     // annotate origin
     ctx.fillStyle = '#888';
@@ -178,11 +195,11 @@ const Plotter = Factory.create('Plotter', {
 
     // plot axis
     ctx.strokeStyle = '#888'
-    const axismax = Math.hypot()
-    plot.strokeLine(ctx, 0, 0,  axismax, 0);
-    plot.strokeLine(ctx, 0, 0, 0,  axismax);
-    plot.strokeLine(ctx, 0, 0, -axismax, 0);
-    plot.strokeLine(ctx, 0, 0, 0, -axismax);
+    ctx.lineWidth = 0.8 / scale;
+    plot.strokeLine(ctx, 0, 0,  meta.axismax, 0);
+    plot.strokeLine(ctx, 0, 0, 0,  meta.axismax);
+    plot.strokeLine(ctx, 0, 0, -meta.axismax, 0);
+    plot.strokeLine(ctx, 0, 0, 0, -meta.axismax);
 
     // strike light square around origin
     ctx.strokeStyle = '#ddd'
@@ -198,7 +215,6 @@ const Plotter = Factory.create('Plotter', {
 
 
   },
-
 
   plotData (ctx: CanvasRenderingContext2D, meta: any, data: any) {
 
@@ -230,9 +246,11 @@ const Plotter = Factory.create('Plotter', {
     meta.max   = Math.max(meta.maxx, meta.maxy, meta.miny, meta.miny);
     meta.min   = Math.min(meta.maxx, meta.maxy, meta.miny, meta.miny);
 
+    meta.axismax = Math.max(Math.hypot(meta.minx, meta.miny), Math.hypot(meta.maxx, meta.maxy));
+
     meta.scale  = size / (meta.max - meta.min) / 1.05 / 2;
-    meta.transX = (size/2 - meta.cx * meta.scale ); // / meta.scale;
-    meta.transY = (size/2 - meta.cy * meta.scale ); // / meta.scale;
+    meta.transX = (size/2 - meta.cx * meta.scale );
+    meta.transY = (size/2 - meta.cy * meta.scale );
 
   },
 
@@ -251,16 +269,10 @@ const Plotter = Factory.create('Plotter', {
 
       const t0 = Date.now();
 
-      cvs.width = cvs.width;
+      // cvs.width = cvs.width;
       ctx.setTransform(1, 0, 0, 1, 0, 0);
-
-      ctx.beginPath();
-      ctx.arc(size/2, size/2, 4, 0, 2 * Math.PI, false);
-      // ctx.fillStyle = 'green';
-      // ctx.fill();
-      ctx.lineWidth = 1;
-      ctx.strokeStyle = 'darkorange';
-      ctx.stroke();
+      ctx.fillStyle = '#f8f8f8';
+      ctx.fillRect(0, 0, size, size);
 
       ctx.translate(meta.transX, meta.transY);
       ctx.scale(meta.scale, meta.scale);
@@ -268,7 +280,7 @@ const Plotter = Factory.create('Plotter', {
       Plotter.plotDecoration (ctx, meta);
       Plotter.plotData(ctx, meta, data);
 
-      console.log('Plotter.render', series.length, 'points', 'msecs', Date.now() - t0 );
+      Date.now() - t0 > 10 && console.log('Plotter.render', series.length, 'points', 'msecs', Date.now() - t0 );
 
     }
 
