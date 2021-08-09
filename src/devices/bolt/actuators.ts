@@ -201,6 +201,8 @@ W 270 => 270
         heading  = Math.atan2(y - target.y, x - target.x) * -180 / Math.PI +270;
         heading  = (heading + 360) % 360;
 
+        console.log('rollToPoint', heading, this.bolt.heading, heading - this.bolt.heading);
+
         speed = (
           distance > 100 ? 100 :
           distance >  50 ?  50 :
@@ -298,6 +300,53 @@ W 270 => 270
 
   }
 
+  async calibrateHeading() {
+
+    const p1 = {x:  0, y: 40} as IPoint;  // straight north
+    const p2 = {x:  0, y:  0} as IPoint;
+
+    let heading, target: IPoint, posX, posY, velX, velY;
+
+    return new Promise(async (resolve /*, reject */) => {
+
+      const fullStopListener = async (event: IEvent) => {
+        await this.bolt.receiver.off('fullstop',   fullStopListener);
+        await this.bolt.receiver.off('sensordata', sensorListener);
+        resolve('fullstop');
+      };
+
+      const sensorListener = async (event: IEvent) => {
+
+        posX   = event.sensordata.locator.positionX;
+        posY   = event.sensordata.locator.positionY;
+        velX   = event.sensordata.locator.velocityX;
+        velY   = event.sensordata.locator.velocityY;
+
+        heading  = Math.atan2(posY - target.y, posX - target.x) * -180 / Math.PI +270;
+        heading  = (heading + 360) % 360;
+
+        // console.log(this.bolt.name, 'calibrate', this.bolt.heading, heading);
+
+      };
+
+      target = p1;
+
+      await this.bolt.receiver.on('sensordata', sensorListener);
+      await this.bolt.receiver.on('fullstop',   fullStopListener);
+
+      await this.rollToPoint(target, 5);
+      this.piroutte();
+
+      target = p2;
+      await this.rollToPoint(target, 5);
+
+      await this.bolt.receiver.off('sensordata', sensorListener);
+      await this.bolt.receiver.off('fullstop',   fullStopListener);
+      await this.roll(0, 0);
+
+    });
+
+  }
   async calibrateNorth() {
 
     return new Promise(async (resolve /*, reject */) => {
@@ -309,14 +358,16 @@ W 270 => 270
         const angle = e.sensordata;
         const color: TColor = this.bolt.config.colors.matrix;
         const black: TColor = [0, 0, 0];
-        await wait(1500); // time for calibration pirouette
+        await wait(1000); // time for calibration pirouette ws 1500
         await this.rotate(angle);
-        await wait(500);
+        await wait(200);
         await this.resetYaw();
         this.bolt.heading = 0;
+        await this.roll(0, 0);
         await this.setMatrixImage(...black, ...color, Aruco.createImage(0));
+        await wait(200);
 
-        // console.log('calibrateNorth.event', e); // works last time checked
+        console.log('calibrateNorth.heading', this.bolt.heading, 'angle', angle); // works last time checked
         resolve(e);
 
       };

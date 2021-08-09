@@ -20,7 +20,7 @@ import iconGreyBluetooth from './../../assets/bluetooth.icon.grey.256.png';
 const Header = Factory.create('Header', {
   view( {attrs: {route, params}}:any ) {
 
-    const reload = (e:any) => { window.location.reload(); };
+    // const reload = (e:any) => { window.location.reload(); };
 
     return m('header.w-100.pa2', {style: {backgroundColor: '#949494'} },
       !Bolts.count()
@@ -30,12 +30,13 @@ const Header = Factory.create('Header', {
               ? m('img', {src: iconBluetooth, width: 24 })
               : m('img', {src: iconGreyBluetooth, width: 24  }),
             m('button.cmd.br2.ml1', { onclick: Bolts.pairBolt.bind(Bolts) }, 'Pair'),
+            m('button.cmd.br2.ml1', { onclick: () => location.reload() },                     'Reload'),
           ])
         : m('[',[
             m('div.f3.di.mono.cfff.ma2', 'Bolts  '),
-            m('button.cmd.br2.ml1', { onclick: Bolts.pairBolt.bind(Bolts) }, 'Pair'),
-            m('button.cmd.br2.ml1', { onclick: Bolts.disconnectall.bind(Bolts) }, 'DisConnect'),
-            m('button.cmd.br2.ml1', { onclick: reload },   'Reload'),
+            m('button.cmd.br2.ml1', { onclick: Bolts.pairBolt.bind(Bolts) },           'Pair'),
+            m('button.cmd.br2.ml1', { onclick: Bolts.disconnectall.bind(Bolts) },      'DisConnect'),
+            m('button.cmd.br2.ml1', { onclick: () => location.reload() },              'Reload'),
             m('button.cmd.br2.ml1', { onclick: m.redraw }, 'Redraw'),
             m('button.cmd.br2.ml1', { onclick: Plotter.reset.bind(Plotter) }, 'Plotter.reset'),
             m('button.cmd.br2.ml1', { onclick: () => Bolts.forEach( (bolt: Bolt) => bolt.reset() ) },           'reset'),

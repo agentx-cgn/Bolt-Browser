@@ -9,6 +9,8 @@ import { H } from "../services/helper";
 
 
 let series = [] as any;
+let bolts  = {} as any;
+
 let cvs: HTMLCanvasElement;
 let ctx: CanvasRenderingContext2D;
 
@@ -20,8 +22,8 @@ const meta = {
   max:      0,         min:    +Infinity,
   maxx:     0,         maxy:    0,
   miny:    +Infinity,  minx:   +Infinity,
-  scale:    1,         transX:  0,          transY: 0,
-  axismax:  0,
+  scale:    1,         transX:  size/2,          transY: size/2,
+  axismax:  200,
 } ;
 
 
@@ -58,14 +60,18 @@ const plot = {
     ctx.moveTo(x1, y1);
     ctx.lineTo(x2, y2);
     ctx.stroke();
-  }
-      // ctx.beginPath();
-      // ctx.arc(size/2, size/2, 4, 0, 2 * Math.PI, false);
-      // ctx.fillStyle = 'green';
-      // ctx.fill();
-      // ctx.lineWidth = 1;
-      // ctx.strokeStyle = 'darkorange';
-      // ctx.stroke();
+  },
+
+  circle(ctx: any, x: number, y: number, radius: number, fill: string, stroke?: string) {
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
+    ctx.fillStyle = fill;
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = stroke;
+    fill && ctx.fill();
+    stroke && ctx.stroke();
+  },
+
 }
 
 
@@ -104,15 +110,19 @@ const Plotter = Factory.create('Plotter', {
 
   reset () {
 
-    const max = 100;
-    series = [{ positionX: 0, positionY: 0, stroke: 'orange', fill: 'orange' }];
+    // debugger
 
-    H.range(4).forEach( i => {
-      const x = ~~(Math.random() * max - max /2);
-      const y = ~~(Math.random() * max - max /2);
-      // console.log(x, y);
-      // series.push({ positionX: x, positionY: y, stroke: 'darkred', fill: 'darkred' });
-    })
+    const max = 100;
+
+    series = [];
+    // series = [{ positionX: 0, positionY: 0, stroke: 'orange', fill: 'orange' }];
+
+    // H.range(4).forEach( i => {
+    //   const x = ~~(Math.random() * max - max /2);
+    //   const y = ~~(Math.random() * max - max /2);
+    //   // console.log(x, y);
+    //   // series.push({ positionX: x, positionY: y, stroke: 'darkred', fill: 'darkred' });
+    // })
 
     // console.log(series);
 
@@ -148,17 +158,19 @@ const Plotter = Factory.create('Plotter', {
     const fontSize = parseInt(String(12 / scale), 10);
     ctx.font       = `normal ${fontSize}px monospace`;
 
+    const offset = 1.05;
+    const offmax = (n: number) => n > 0 ? n * offset : n / offset;
+    const offmin = (n: number) => n > 0 ? n / offset : n * offset;
+
     // plot data enclosing
-    const off = 1.05;
 
     ctx.lineWidth = 0.5 / scale;
     ctx.setLineDash([5 / scale, 5 / scale]);
 
     // as rect
-    ctx.strokeStyle = '#800'
+    ctx.strokeStyle = '#ddd'
     ctx.fillStyle = '#fff';
-    ctx.fillRect(meta.minx * off, meta.miny * off, (meta.maxx - meta.minx) * off, (meta.maxy - meta.miny) * off);
-    // ctx.strokeRect(meta.minx * off, meta.miny * off, (meta.maxx - meta.minx) * off, (meta.maxy - meta.miny) * off);
+    ctx.fillRect(offmin(meta.minx), offmin(meta.miny), offmax(meta.maxx) - offmin(meta.minx), offmax(meta.maxy) - offmin(meta.miny));
 
 
     // as circle from origin
@@ -231,27 +243,45 @@ const Plotter = Factory.create('Plotter', {
 
   },
 
+  plotBolts (ctx: CanvasRenderingContext2D, meta: any) {
+
+    Object.keys(bolts).forEach( key => {
+      const loc = bolts[key].locator;
+      const col = bolts[key].color;
+      plot.circle(ctx, loc.positionX, loc.positionY, 8 / meta.scale, col);
+    })
+
+  },
+
   analyzeData (data: any) {
 
     meta.length = data.length;
 
-    meta.maxx  = Math.max.apply(Math, data.map( (loc: any) => loc.positionX ));
-    meta.maxy  = Math.max.apply(Math, data.map( (loc: any) => loc.positionY ));
-    meta.minx  = Math.min.apply(Math, data.map( (loc: any) => loc.positionX ));
-    meta.miny  = Math.min.apply(Math, data.map( (loc: any) => loc.positionY ));
+    if (meta.length > 1) {
 
-    meta.cx = (meta.maxx + meta.minx) / 2;
-    meta.cy = (meta.maxy + meta.miny) / 2;
+      meta.maxx  = Math.max.apply(Math, data.map( (loc: any) => loc.positionX ));
+      meta.maxy  = Math.max.apply(Math, data.map( (loc: any) => loc.positionY ));
+      meta.minx  = Math.min.apply(Math, data.map( (loc: any) => loc.positionX ));
+      meta.miny  = Math.min.apply(Math, data.map( (loc: any) => loc.positionY ));
 
-    meta.max   = Math.max(meta.maxx, meta.maxy, meta.miny, meta.miny);
-    meta.min   = Math.min(meta.maxx, meta.maxy, meta.miny, meta.miny);
+      meta.cx = (meta.maxx + meta.minx) / 2;
+      meta.cy = (meta.maxy + meta.miny) / 2;
 
-    meta.axismax = Math.max(Math.hypot(meta.minx, meta.miny), Math.hypot(meta.maxx, meta.maxy));
+      meta.max   = Math.max(meta.maxx, meta.maxy, meta.miny, meta.miny);
+      meta.min   = Math.min(meta.maxx, meta.maxy, meta.miny, meta.miny);
 
-    meta.scale  = size / (meta.max - meta.min) / 1.05 / 2;
-    meta.transX = (size/2 - meta.cx * meta.scale );
-    meta.transY = (size/2 - meta.cy * meta.scale );
+      meta.axismax = Math.max(Math.hypot(meta.minx, meta.miny), Math.hypot(meta.maxx, meta.maxy));
 
+      meta.scale  = size / (meta.max - meta.min) / 1.05 / 2;
+      meta.transX = (size/2 - meta.cx * meta.scale );
+      meta.transY = (size/2 - meta.cy * meta.scale );
+
+    }
+
+  },
+
+  placeBolt (name: string, locator: any, color: string) {
+    bolts[name] = { locator, color };
   },
 
   render ( location: any, stroke: string, fill: string ) {
@@ -262,10 +292,10 @@ const Plotter = Factory.create('Plotter', {
       series.push(location);
     }
 
-    const data = series.slice(-100);
+    const data = series.slice(-1000);
     Plotter.analyzeData(data);
 
-    if (cvs && ctx && data.length) {
+    if (cvs && ctx) {
 
       const t0 = Date.now();
 
@@ -279,6 +309,7 @@ const Plotter = Factory.create('Plotter', {
 
       Plotter.plotDecoration (ctx, meta);
       Plotter.plotData(ctx, meta, data);
+      Plotter.plotBolts(ctx, meta);
 
       Date.now() - t0 > 10 && console.log('Plotter.render', series.length, 'points', 'msecs', Date.now() - t0 );
 

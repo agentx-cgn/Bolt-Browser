@@ -136,7 +136,9 @@ export class Bolt {
         this.status.position.y   = data.locator.positionY;
         this.status.velocity.x   = data.locator.velocityX;
         this.status.velocity.y   = data.locator.velocityY;
+        Plotter.placeBolt(this.name, data.locator, this.config.colors.plot)
         Plotter.render(data.locator, this.config.colors.plot);
+
         m.redraw();
       } else console.log(this.name, 'sensordata.broken', event.sensordata);
     }, false);
@@ -160,6 +162,18 @@ export class Bolt {
   async fullstop() {  }
 
 
+  async calibrate() {
+
+    await wait(500);
+    await this.actuators.calibrateNorth();
+    await this.actuators.resetLocator();
+    await wait(500);
+
+    await this.actuators.calibrateHeading();
+
+
+
+  }
   async reset() {
 
     // try {
@@ -179,25 +193,28 @@ export class Bolt {
     await this.actuators.stop();
     await this.sensors.disableSensors();
     await this.actuators.stabilizeFull();
+
     await this.actuators.setLedsColor(...colorFront, ...colorBack); // red = north
-    // await this.actuators.matrixColor(...colorBolt);
+
+    await this.actuators.matrixColor(...colorBolt);
     await this.actuators.matrixFill(1, 1, 6, 6, ...colorBolt);
-    await wait(500);
-    await this.actuators.matrixColor(...colorBlack);
-    await this.actuators.matrixFill(2, 2, 5, 5, ...colorBolt);
-    await wait(500);
+    await wait(100);
+    // await this.actuators.matrixColor(...colorBlack);
+    // await this.actuators.matrixFill(2, 2, 5, 5, ...colorBolt);
+    // await wait(100);
     await this.actuators.matrixColor(...colorBlack);
     await this.actuators.matrixFill(3, 3, 4, 4, ...colorBolt);
-    await wait(500);
-    await this.actuators.matrixColor(...colorBlack);
-    await this.actuators.matrixFill(2, 2, 5, 5, ...colorBolt);
-    await wait(500);
+    await wait(100);
+    // await this.actuators.matrixColor(...colorBlack);
+    // await this.actuators.matrixFill(2, 2, 5, 5, ...colorBolt);
+    // await wait(100);
     await this.actuators.matrixColor(...colorBlack);
     await this.actuators.matrixFill(1, 1, 6, 6, ...colorBolt);
-    await wait(500);
+    await wait(100);
+
     // await this.actuators.info();
-    await this.actuators.calibrateNorth();
-    await wait(4000);
+    // await this.actuators.calibrateNorth();
+    // await wait(4000);
 
     await this.actuators.resetLocator();
     await wait(1000);
@@ -217,7 +234,7 @@ export class Bolt {
 
   async action () {
 
-    await this.actuators.circleAround(20, 50);
+    await this.actuators.circleAround(20, 35);
     await this.actuators.rollToPoint({x:0,y:0});
 
     // await this.actuators.matrixChar('0');

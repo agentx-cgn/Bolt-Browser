@@ -134,6 +134,8 @@ export class Queue {
     const command: ICommand = event.msg;
     const action:  IAction  = this.find( (action: IAction) => action.id === command.seqNumber );
 
+    if (!action) debugger;
+
     switch ( command.data[0] ) {
 
       case C.Errors.success:
