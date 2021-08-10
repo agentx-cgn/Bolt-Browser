@@ -60,15 +60,15 @@ class bolts {
 
   async autoaction () {
 
-    this.runScript
+    return await this.execute
       .step1(1000)
       .step2(2000)
       .step2(3000)
-      .execute
+      .end
     ;
 
   }
-  get runScript () { return this.scripter.script(); }
+  get execute () { return this.scripter.execute(); }
 
   public count () {return this.bolts.length;}
   public get (name: string) { return this.find( (bolt: Bolt) => bolt.name === name); }

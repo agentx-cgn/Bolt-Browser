@@ -29,8 +29,8 @@ export class Scripter {
 
   private corpus = H.deepFreezeCreate({
     verbs: {
-      async step1 (...args: any) { console.log('step1', args); return await wait.apply(this.host, args); },
-      async step2 (...args: any) { console.log('step1', args); return await wait.apply(this.host, args); },
+      async step1 (...args: any) { console.log('now step1', args); return await wait.apply(this.host, args); },
+      async step2 (...args: any) { console.log('now step2', args); return await wait.apply(this.host, args); },
 
     },
     nouns: {},
@@ -43,7 +43,7 @@ export class Scripter {
     this.parent = parent;
   }
 
-  script () {
+  execute () {
 
     const self = this;
     const stack = [] as any;
@@ -53,7 +53,7 @@ export class Scripter {
 
         const instruction = self.findInCorpus(name);
 
-        if ( name === 'execute') {
+        if ( name === 'end') {
           // debugger;
           (async () => {
             for ( const instruction of stack ){

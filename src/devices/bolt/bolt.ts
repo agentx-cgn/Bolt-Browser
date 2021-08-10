@@ -99,7 +99,7 @@ export class Bolt {
   get heading () { return this.status.heading; }
   set heading ( value: number ) { this.status.heading = (value + 360) % 360; m.redraw() }
 
-  get runScript () { return this.scripter.script(); }
+  get execute () { return this.scripter.execute(); }
 
   // only in roll and calibrate
   get connected () { return this.device.gatt.connected }
@@ -215,8 +215,9 @@ export class Bolt {
 
   async autoaction () {
 
-    this.runScript
+    this.execute
       .roll(10, 10)
+      .end
     ;
 
 
