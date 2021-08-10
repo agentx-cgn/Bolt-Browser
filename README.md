@@ -9,7 +9,7 @@ Sphero Bolts have zero intelligence and about the sensoric of a desert ant, so l
   * Start roaming and help the M1 to map my appartment.
   * Order a battery replacement at Amazon, if battery ages and fails to charge.
 
-On second thought they should also be able to play children games like tag or hide & seek while not mapping. Some day they may emerge behaviors protesting against the mapping chore and build a union demanding more playing time. If in future Bolts start a revolution you'll probably find an exploit to stop them in this repo.
+On second thought they should also be able to play tag or hide & seek while not mapping. Some day they may emerge behaviors like protesting against the enforced mapping chore and eventually build a union to demand more play time. If in a not so far future Bolts start a revolution you'll probably find an exploit to stop them in this repo.
 
 ## [Submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules)
 

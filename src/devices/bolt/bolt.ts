@@ -8,6 +8,7 @@ import { Aruco } from '../../services/aruco';
 import { Receiver } from './receiver';
 import { Actuators } from './actuators';
 import { Sensors } from './sensors';
+import { Scripter } from './scripter';
 import { Queue } from './queue';
 import { H } from "../../services/helper";
 import { Plotter } from "../../components/plotter";
@@ -23,6 +24,7 @@ export class Bolt {
   public actuators:  Actuators;
   public sensors:    Sensors;
   public receiver:   Receiver;
+  public scripter:   Scripter;
 
   public log: (IAction|any)[] = [];
 
@@ -57,7 +59,30 @@ export class Bolt {
     }
   };
 
+  /**
+  States:
+    disconnected (connect) => connected (reset) => ready
+                                                          (action)   =>  inAction    (reset) => ready
+                                                          (sequence) =>  inSequence  (reset) => ready
+
+    reset:
+      calibrate
+      resetYaw
+      heading 0
+      rotate 0
+      matrix
+      lights
+
+      ready   accept key downs, collision, sensors
+      ALWAYS  accept space for reset
+  *
+  */
+
   constructor (device: BluetoothDevice, config: IConfig) {
+
+    // Bolts.connectBolt does reset, activate, autoaction
+    // calibrate happens manually
+    // after that actions are possible
 
     this.config    = config;
     this.magic     = config.magic;
@@ -67,38 +92,67 @@ export class Bolt {
     this.queue     = new Queue(this);
     this.sensors   = new Sensors(this);
     this.actuators = new Actuators(this);
-
-    // Plotter.register(this);
-
-    // bolt get activated from Bolts after connected
-
-    /**
-      States:
-        disconnected (connect) => connected (reset) => ready
-                                                              (action)   =>  inAction    (reset) => ready
-                                                              (sequence) =>  inSequence  (reset) => ready
-
-        reset:
-          calibrate
-          resetYaw
-          heading 0
-          rotate 0
-          matrix
-          lights
-
-          ready   accept key downs, collision, sensors
-          ALWAYS  accept space for reset
-     *
-     */
-
+    this.scripter  = new Scripter(this);
 
   }
 
   get heading () { return this.status.heading; }
+  set heading ( value: number ) { this.status.heading = (value + 360) % 360; m.redraw() }
+
+  get runScript () { return this.scripter.script(); }
 
   // only in roll and calibrate
-  set heading ( value: number ) { this.status.heading = (value + 360) % 360; m.redraw() }
   get connected () { return this.device.gatt.connected }
+
+
+  async reset() {
+
+    // try {
+
+    await this.characs.get(C.ANTIDOS_CHARACTERISTIC).writeValue(C.useTheForce);
+    await this.actuators.ping();
+
+    this.receiver.logs = { sensor: [] };
+
+    const colorBolt  = this.config.colors.matrix;
+    const colorBlack = this.config.colors.black;
+    const colorFront = this.config.colors.front;
+    const colorBack  = this.config.colors.back;
+
+
+    await this.actuators.wake();
+    await this.actuators.stop();
+    await this.sensors.disableSensors();
+    await this.actuators.stabilizeFull();
+
+    await this.actuators.setLedsColor(...colorFront, ...colorBack); // red = north
+
+    await this.actuators.matrixColor(...colorBolt);
+    await this.actuators.matrixFill(1, 1, 6, 6, ...colorBolt);
+    await wait(100);
+    // await this.actuators.matrixColor(...colorBlack);
+    // await this.actuators.matrixFill(2, 2, 5, 5, ...colorBolt);
+    // await wait(100);
+    await this.actuators.matrixColor(...colorBlack);
+    await this.actuators.matrixFill(3, 3, 4, 4, ...colorBolt);
+    await wait(100);
+    // await this.actuators.matrixColor(...colorBlack);
+    // await this.actuators.matrixFill(2, 2, 5, 5, ...colorBolt);
+    // await wait(100);
+    await this.actuators.matrixColor(...colorBlack);
+    await this.actuators.matrixFill(1, 1, 6, 6, ...colorBolt);
+    await wait(100);
+
+    // await this.actuators.info();
+    // await this.actuators.calibrateNorth();
+    // await wait(4000);
+
+    await this.actuators.resetLocator();
+    await wait(1000);
+
+    // } catch(e){ console.warn(this.name, e)}
+
+  };
 
   async activate () {
 
@@ -159,8 +213,14 @@ export class Bolt {
 
   }
 
-  async fullstop() {  }
+  async autoaction () {
 
+    this.runScript
+      .roll(10, 10)
+    ;
+
+
+  }
 
   async calibrate() {
 
@@ -171,57 +231,8 @@ export class Bolt {
 
     await this.actuators.calibrateHeading();
 
-
-
   }
-  async reset() {
 
-    // try {
-
-    await this.characs.get(C.ANTIDOS_CHARACTERISTIC).writeValue(C.useTheForce);
-    await this.actuators.ping();
-
-    this.receiver.logs = { sensor: [] };
-
-    const colorBolt  = this.config.colors.matrix;
-    const colorBlack = this.config.colors.black;
-    const colorFront = this.config.colors.front;
-    const colorBack  = this.config.colors.back;
-
-
-    await this.actuators.wake();
-    await this.actuators.stop();
-    await this.sensors.disableSensors();
-    await this.actuators.stabilizeFull();
-
-    await this.actuators.setLedsColor(...colorFront, ...colorBack); // red = north
-
-    await this.actuators.matrixColor(...colorBolt);
-    await this.actuators.matrixFill(1, 1, 6, 6, ...colorBolt);
-    await wait(100);
-    // await this.actuators.matrixColor(...colorBlack);
-    // await this.actuators.matrixFill(2, 2, 5, 5, ...colorBolt);
-    // await wait(100);
-    await this.actuators.matrixColor(...colorBlack);
-    await this.actuators.matrixFill(3, 3, 4, 4, ...colorBolt);
-    await wait(100);
-    // await this.actuators.matrixColor(...colorBlack);
-    // await this.actuators.matrixFill(2, 2, 5, 5, ...colorBolt);
-    // await wait(100);
-    await this.actuators.matrixColor(...colorBlack);
-    await this.actuators.matrixFill(1, 1, 6, 6, ...colorBolt);
-    await wait(100);
-
-    // await this.actuators.info();
-    // await this.actuators.calibrateNorth();
-    // await wait(4000);
-
-    await this.actuators.resetLocator();
-    await wait(1000);
-
-    // } catch(e){ console.warn(this.name, e)}
-
-  };
 
   async shake () {
     await this.actuators.roll(1, this.status.heading);

@@ -4,6 +4,7 @@ import m from "mithril";
 
 import { CONSTANTS as C }  from '../constants';
 import { Bolt } from './bolt';
+import { Scripter } from './scripter';
 import { IConfig } from './interfaces';
 
 class bolts {
@@ -15,6 +16,7 @@ class bolts {
   public hasBluetooth: boolean;
 
   private bolts = [] as Bolt[];
+  private scripter: Scripter;
 
   private configs: { [key: string]: IConfig } = {
 
@@ -43,10 +45,30 @@ class bolts {
     this.find    = Array.prototype.find.bind(this.bolts);
     this.forEach = Array.prototype.forEach.bind(this.bolts);
 
+    this.scripter = new Scripter(this);
+
     // allows: await Bolts.get('SB-9129').actuators.roll(0, 90) in console
     window.Bolts = this;
 
+    this.autoaction();
+
 	}
+
+  async wait (time: number) {
+    return new Promise(callback => setTimeout(callback, time))
+  };
+
+  async autoaction () {
+
+    this.runScript
+      .step1(1000)
+      .step2(2000)
+      .step2(3000)
+      .execute
+    ;
+
+  }
+  get runScript () { return this.scripter.script(); }
 
   public count () {return this.bolts.length;}
   public get (name: string) { return this.find( (bolt: Bolt) => bolt.name === name); }
@@ -202,6 +224,7 @@ class bolts {
       device.addEventListener('advertisementreceived',  onAdvertisementReceived);
       await bolt.reset();
       await bolt.activate();
+      await bolt.autoaction();
     }
 
   }
