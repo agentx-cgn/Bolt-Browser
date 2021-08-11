@@ -55,18 +55,18 @@ class bolts {
 	}
 
   async wait (time: number) {
-    return new Promise(callback => setTimeout(callback, time))
+    return new Promise(callback => setTimeout(callback, time));
   };
 
   async autoaction () {
 
-    return await this.execute
-      .step1(500)
-      .step2(1000)
-      .step2(1000)
-      .step3(2000)
-      .end
-    ;
+    // return await this.execute
+    //   .step1(500)
+    //   .step2(1000)
+    //   .step2(1000)
+    //   .step3(2000)
+    //   .end
+    // ;
 
   }
   get execute () { return this.scripter.execute(); }

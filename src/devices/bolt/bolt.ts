@@ -30,6 +30,9 @@ export class Bolt {
 
   public magic: IMagic;
 
+  private corpus = {} as any;
+
+
   // simple
   private keymapSimpleCommands = {
     'key:esc':   (event: IEvent) => { console.log('key:esc');                                          },
@@ -84,6 +87,15 @@ export class Bolt {
     // calibrate happens manually
     // after that actions are possible
 
+    this.corpus = {
+      wait:  { category: 'verb', host: () => this,           method: 'wait'  },
+      sleep: { category: 'verb', host: () => this.actuators, method: 'sleep' },
+      wake:  { category: 'verb', host: () => this.actuators, method: 'wake'  },
+      ping:  { category: 'verb', host: () => this.actuators, method: 'ping'  },
+      roll:  { category: 'verb', host: () => this.actuators, method: 'roll'  },
+
+    };
+
     this.config    = config;
     this.magic     = config.magic;
     this.name      = device.name;
@@ -92,7 +104,7 @@ export class Bolt {
     this.queue     = new Queue(this);
     this.sensors   = new Sensors(this);
     this.actuators = new Actuators(this);
-    this.scripter  = new Scripter(this);
+    this.scripter  = new Scripter(this, this.corpus);
 
   }
 
@@ -104,6 +116,7 @@ export class Bolt {
   // only in roll and calibrate
   get connected () { return this.device.gatt.connected }
 
+  async wait (msecs: number) { return await wait(msecs); }
 
   async reset() {
 
@@ -216,7 +229,9 @@ export class Bolt {
   async autoaction () {
 
     this.execute
-      .roll(10, 10)
+      .roll(30, 0)
+      .wait(1000)
+      .roll(30, 90)
       .end
     ;
 
@@ -244,23 +259,18 @@ export class Bolt {
   //   await this.sensors.enableLocationEvent();
   // }
 
+
+
   async action () {
 
     await this.actuators.circleAround(20, 35);
     await this.actuators.rollToPoint({x:0,y:0});
+  }
 
-    // await this.actuators.matrixChar('0');
-    // await this.actuators.rollToPoint({x:   -25, y:  -25});
-    // await this.actuators.matrixChar('1');
-    // await this.actuators.rollToPoint({x:   -25, y:  +25});
-    // await this.actuators.matrixChar('2');
-    // await this.actuators.rollToPoint({x:   +25, y:  +25});
-    // await this.actuators.matrixChar('3');
-    // await this.actuators.rollToPoint({x:   +25, y:  -25});
-    // await this.actuators.matrixChar('4');
-    // await this.actuators.rollToPoint({x:     0, y:    0});
-    // await this.actuators.matrixChar('0');
-
+  async stress () {
+    await this.actuators.rollToPoint({x:0,y:0});
+    await this.actuators.circleAround(20, 35);
+    await this.actuators.rollToPoint({x:0,y:0});
   }
 
   async ActionRollUntil () {

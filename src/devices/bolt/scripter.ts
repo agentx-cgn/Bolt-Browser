@@ -1,15 +1,9 @@
 import m from "mithril";
 
-import { CONSTANTS as C }  from '../constants';
-import { IStatus, TColor, IEvent } from "./interfaces";
+// import { CONSTANTS as C }  from '../constants';
+// import { IStatus, TColor, IEvent } from "./interfaces";
 import { wait } from './utils'
-
-import { Aruco } from '../../services/aruco';
-import { Receiver } from './receiver';
 import { Bolt } from './bolt';
-import { Actuators } from './actuators';
-import { Sensors } from './sensors';
-import { Queue } from './queue';
 import { H } from "../../services/helper";
 
 /**
@@ -32,8 +26,9 @@ export class Scripter {
       step3: { category: 'verb', host: null, method: async function step3 (...args: any) { console.log('now step3', args); return await wait.apply(this, args); }},
   }) as any;
 
-  constructor (bolt: Bolt | any) {
-    this.bolt = bolt;
+  constructor (bolt: Bolt | any, corpus?: any) {
+    this.bolt   = bolt;
+    this.corpus = corpus || this.corpus;
   }
 
   findInCorpus (lemma: string) {
@@ -47,7 +42,7 @@ export class Scripter {
 
   }
 
-  execute () {
+  execute (): any {
 
     const self  = this;
     const world = {};
@@ -64,7 +59,9 @@ export class Scripter {
 
         } else if ( instruction ) {
           return (...args: any) => {
-            self.stack.push(instruction.method.bind(instruction.host, ...args));
+            const host   = instruction.host();
+            const method = host[instruction.method];
+            self.stack.push(method.bind(host, ...args));
             return proxy;
           };
 
@@ -80,7 +77,7 @@ export class Scripter {
 
   }
 
-  finish () {
+  finish (): Promise<boolean> {
     return new Promise( async (resolve, reject) => {
 
       try {
@@ -88,10 +85,11 @@ export class Scripter {
           await instruction();
         }
         resolve(true);
-        console.log('Done');
+        console.log('Done', this.stack.length);
 
       } catch (err) {
-        reject(err);
+        console.log('Scripter.finish', err)
+        reject(false);
 
       }
 

@@ -30,8 +30,9 @@ const BoltCommands = Factory.create('Layout', {
           m('button.br2.mh1.cmd', { onclick: bolt.actuators.sleep.bind(bolt.actuators) },                'Sleep'),
           m('button.br2.mh1.cmd', { onclick: bolt.actuators.wake.bind(bolt.actuators) },                 'Wake'),
           m('button.br2.mh1.cmd', { onclick: bolt.reset.bind(bolt) },                                    'Reset'),
-          m('button.br2.mh1.cmd', { onclick: bolt.calibrate.bind(bolt) },                                    'Calibrate'),
+          m('button.br2.mh1.cmd', { onclick: bolt.calibrate.bind(bolt) },                                 'Calibrate'),
           m('button.br2.mh1.cmd', { onclick: bolt.action.bind(bolt) },                                   'Action'),
+          m('button.br2.mh1.cmd', { onclick: bolt.stress.bind(bolt) },                                   'Stress'),
           // m('button.br2.mh1.cmd', { onclick: bolt.activate.bind(bolt) },                                '⚙'),
           // m('button.br2.mh1.cmd', { onclick: bolt.sensors.info.bind(bolt.actuators) },                 'Info'),
 

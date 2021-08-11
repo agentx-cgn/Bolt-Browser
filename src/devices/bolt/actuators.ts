@@ -6,6 +6,7 @@ import { IEvent, TColor, TNum, IPoint, ISensorData } from './interfaces';
 import { maskToRaw, flatSensorMask, wait } from './utils';
 import { Aruco } from '../../services/aruco';
 import { H } from "../../services/helper";
+import { M } from "../../services/m";
 
 export class Actuators {
 
@@ -305,7 +306,7 @@ W 270 => 270
     const p1 = {x:  0, y: 40} as IPoint;  // straight north
     const p2 = {x:  0, y:  0} as IPoint;
 
-    let heading, target: IPoint, posX, posY, velX, velY;
+    let heading, delta, target: IPoint, posX, posY, velX, velY;
 
     return new Promise(async (resolve /*, reject */) => {
 
@@ -325,7 +326,9 @@ W 270 => 270
         heading  = Math.atan2(posY - target.y, posX - target.x) * -180 / Math.PI +270;
         heading  = (heading + 360) % 360;
 
-        // console.log(this.bolt.name, 'calibrate', this.bolt.heading, heading);
+        delta    = M.angleDistance(heading, this.bolt.heading);
+
+        console.log(this.bolt.name, 'calibrate', this.bolt.heading, heading, delta);
 
       };
 
