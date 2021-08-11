@@ -23,53 +23,53 @@ import { H } from "../../services/helper";
 
 export class Scripter {
 
-  private name:       string;
-  private config:     any;
-  private parent:     any;
+  private bolt: Bolt | any;
+  private stack: any[];
 
   private corpus = H.deepFreezeCreate({
-    verbs: {
-      async step1 (...args: any) { console.log('now step1', args); return await wait.apply(this.host, args); },
-      async step2 (...args: any) { console.log('now step2', args); return await wait.apply(this.host, args); },
-
-    },
-    nouns: {},
-    props: {
-      heading: async () => {},
-    },
+      step1: { category: 'verb', host: null, method: async function step1 (...args: any) { console.log('now step1', args); return await wait.apply(this, args); }},
+      step2: { category: 'verb', host: null, method: async function step2 (...args: any) { console.log('now step2', args); return await wait.apply(this, args); }},
+      step3: { category: 'verb', host: null, method: async function step3 (...args: any) { console.log('now step3', args); return await wait.apply(this, args); }},
   }) as any;
 
-  constructor (parent: any) {
-    this.parent = parent;
+  constructor (bolt: Bolt | any) {
+    this.bolt = bolt;
+  }
+
+  findInCorpus (lemma: string) {
+
+    const instruction =  this.corpus[lemma];
+
+    return instruction
+      ? { category: instruction.category, instruction }
+      : { category: null, instruction: null }
+    ;
+
   }
 
   execute () {
 
-    const self = this;
-    const stack = [] as any;
+    const self  = this;
+    const world = {};
 
-    const proxy = new Proxy({}, {
-      get (target: any, name: string ) {
+    this.stack = [] as any;
 
-        const instruction = self.findInCorpus(name);
+    const proxy = new Proxy(world, {
+      get (world: any, lemma: string ) {
 
-        if ( name === 'end') {
-          // debugger;
-          (async () => {
-            for ( const instruction of stack ){
-              await instruction();
-            }
-          })();
+        const { category, instruction } = self.findInCorpus(lemma);
+
+        if ( lemma === 'end') {
+          return self.finish();
 
         } else if ( instruction ) {
-          console.log('found: ', target, name);
           return (...args: any) => {
-            stack.push(instruction.bind(this, ...args))
+            self.stack.push(instruction.method.bind(instruction.host, ...args));
             return proxy;
           };
 
         } else {
-          throw "Scripter: Instruction '" + name + "' is not a valid script instruction";
+          throw "Scripter: Instruction '" + lemma + "' is not a valid script instruction";
 
         }
 
@@ -80,38 +80,23 @@ export class Scripter {
 
   }
 
-  findInCorpus (word: string) {
+  finish () {
+    return new Promise( async (resolve, reject) => {
 
-    for (const wordclass of Object.keys(this.corpus)) {
-      const candidate = this.corpus[wordclass][word];
-      if ( candidate ) {
-        return candidate
+      try {
+        for ( const instruction of this.stack ){
+          await instruction();
+        }
+        resolve(true);
+        console.log('Done');
+
+      } catch (err) {
+        reject(err);
+
       }
-    }
-    return null;
+
+    });
 
   }
-
-  // proxyHandler () {
-
-  //   const self = this;
-
-  //   return {
-  //     async get (target: any, name: string ) {
-
-  //       const candidate = self.findInCorpus(name);
-
-  //       if ( candidate ) {
-  //         console.log('found: ', target, name);
-  //         return await candidate;
-
-  //       }
-  //     },
-  //   }
-
-  // }
-
-
-  wrap () {}
 
 }

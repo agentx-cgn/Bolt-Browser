@@ -61,9 +61,10 @@ class bolts {
   async autoaction () {
 
     return await this.execute
-      .step1(1000)
-      .step2(2000)
-      .step2(3000)
+      .step1(500)
+      .step2(1000)
+      .step2(1000)
+      .step3(2000)
       .end
     ;
 
