@@ -6,7 +6,7 @@ import { IEvent, TColor, TNum, IPoint, ISensorData } from './interfaces';
 import { maskToRaw, flatSensorMask, wait } from './utils';
 import { Aruco } from '../../services/aruco';
 import { H } from "../../services/helper";
-import { M } from "../../services/m";
+import { math as M } from "../../services/math";
 
 export class Actuators {
 
@@ -59,7 +59,7 @@ export class Actuators {
     return await this
       .queue('resetLocator')
       .then(() => { this.bolt.status.position = { x: 0, y: 0 }; })
-      ;
+    ;
   }
 
 
@@ -137,113 +137,6 @@ export class Actuators {
 
   }
 
-/*
-function angle (L, x0, y0, x1, y1) {console.log(L, x0, y0, '|', x1, y1, '=>', ~~(Math.atan2(y0 - y1, x0 - x1) * 180 / Math.PI) -270) }
-angle('N', 0, 0,   0,  10)
-angle('E', 0, 0,  10,   0)
-angle('S', 0, 0,   0, -10)
-angle('N', 0, 0, -10,   0)
-
-N 0 0 | 0 10 => -360
-VM1231:1 E 0 0 | 10 0 => -90
-VM1231:1 S 0 0 | 0 -10 => -180
-VM1231:1 N 0 0 | -10 0 => -270
-
-function angle (L, soll, x0, y0, x1, y1) {console.log(L, soll, '=>', +(~~(Math.atan2(y0 - y1, x0 - x1) * -180 / Math.PI) +270) ) }
-angle('N',   0, 0,   0,   0,  10)
-angle('E',  90, 0,   0,  10,   0)
-angle('S', 180, 0,   0,   0, -10)
-angle('W', 270, 0,   0, -10,   0)
-N 0 => 360
-E 90 => 90
-S 180 => 180
-W 270 => 270
-
-*/
-
-  async circleAround(times: number, radius: number) {
-
-    for (const i of H.range(times)) {
-
-      const angle = Math.random() * Math.PI * 2;
-      const point: IPoint = {
-        x: Math.cos(angle) * radius,
-        y: Math.sin(angle) * radius,
-      }
-
-      await this.rollToPoint(point);
-
-    }
-
-    return Promise.resolve(true);
-
-  }
-
-
-  async rollToPoint (target: IPoint, tolerance=5) {
-
-    console.log('rollToPoint.in :', this.bolt.status.position, '=>', target);
-
-    return new Promise( async (resolve, reject) => {
-
-      const fullStopListener = async (event: IEvent) => {
-        await this.bolt.receiver.off('fullstop',   fullStopListener);
-        await this.bolt.receiver.off('sensordata', sensorListener);
-        resolve('fullstop');
-      };
-
-      const sensorListener = async (event: IEvent) => {
-
-        let speed: number, x: number, y: number, distance: number, heading: number;
-
-        x        = event.sensordata.locator.positionX;
-        y        = event.sensordata.locator.positionY;
-        distance = Math.hypot(target.x - x, target.y - y);
-        heading  = Math.atan2(y - target.y, x - target.x) * -180 / Math.PI +270;
-        heading  = (heading + 360) % 360;
-
-        console.log('rollToPoint', heading, this.bolt.heading, heading - this.bolt.heading);
-
-        speed = (
-          distance > 100 ? 100 :
-          distance >  50 ?  50 :
-          distance >  30 ?  30 :
-          distance >  20 ?  20 :
-          15
-        );
-
-        if (distance < tolerance) {
-          console.log('rollToPoint.out:', this.bolt.status.position, '=>', target);
-          await this.stop();
-          await this.bolt.receiver.off('sensordata', sensorListener);
-          await this.bolt.receiver.off('fullstop',   fullStopListener);
-          resolve(distance);
-
-        } else {
-          await this.roll(speed, heading);
-          // console.log('rollToPoint.tck:', this.bolt.status.position, '=>', target, 'd', ~~distance, 'h', ~~heading);
-
-        }
-
-      };
-
-      await this.bolt.receiver.on('sensordata', sensorListener);
-      await this.bolt.receiver.on('fullstop',   fullStopListener);
-
-    });
-
-  }
-
-  async rollUntil(speed: number, heading: number, delimiter: any) {
-
-    const action = async () => await this.roll(speed, heading);
-
-    return delimiter
-      .do(action)
-      .then(async () => await this.stop())
-    ;
-
-  }
 
 
   async stop() {
@@ -261,13 +154,6 @@ W 270 => 270
 
   async rotate(degrees = 0) {
     return await this.roll(0, this.bolt.heading + degrees);
-  }
-
-  async rollEight(times: number) {
-
-
-
-
   }
 
   async circle(speed: number) {
@@ -291,13 +177,98 @@ W 270 => 270
     const start = (this.bolt.heading + delta) % 360, end = start + 360;
     const range = H.range(start, end, delta) as number[];
 
-    // console.log(range);
-
     for (const heading of range) {
       await this.roll(0, heading);
     }
 
     return Promise.resolve(true);
+
+  }
+
+  async rollUntil(speed: number, heading: number, delimiter: any) {
+
+    const action = async () => await this.roll(speed, heading);
+
+    return delimiter
+      .do(action)
+      .then(async () => await this.stop())
+    ;
+
+  }
+
+  async circleAround(times: number, radius: number) {
+
+    for (const i of H.range(times)) {
+
+      const angle = Math.random() * Math.PI * 2;
+      const point: IPoint = {
+        x: Math.cos(angle) * radius,
+        y: Math.sin(angle) * radius,
+      }
+
+      await this.rollToPoint(point);
+
+    }
+
+    return Promise.resolve(true);
+
+  }
+
+  async rollToPoint (target: IPoint, tolerance=5) {
+
+    console.log(this.bolt.name, 'rollToPoint.in :', this.bolt.status.position, '=>', target);
+
+    return new Promise( async (resolve, reject) => {
+
+      const fullStopListener = async (event: IEvent) => {
+        await this.bolt.receiver.off('fullstop',   fullStopListener);
+        await this.bolt.receiver.off('sensordata', sensorListener);
+        resolve('fullstop');
+      };
+
+      const sensorListener = async (event: IEvent) => {
+
+        let speed: number, x: number, y: number, distance: number, heading: number;
+
+        const location = {
+          x: event.sensordata.locator.positionX,
+          y: event.sensordata.locator.positionY,
+        }
+                                                  // x        = event.sensordata.locator.positionX;
+                                                  // y        = event.sensordata.locator.positionY;
+        distance = M.distance(target, location);  // Math.hypot(target.x - x, target.y - y);
+        heading  = M.heading(location, target);   // Math.atan2(y - target.y, x - target.x) * -180 / Math.PI +270;
+        heading  = M.mod(heading);                //(heading + 360) % 360;
+
+        speed = (
+          distance > 100 ? 100 :
+          distance >  50 ?  50 :
+          distance >  30 ?  30 :
+          distance >  20 ?  20 :
+          15
+        );
+
+        console.log(this.bolt.name, 'rollToPoint', 'speed', speed, 'distance', distance);
+
+        if (distance < tolerance) {
+          console.log('rollToPoint.out:', this.bolt.status.position, '=>', target);
+          await this.stop();
+          await this.bolt.receiver.off('sensordata', sensorListener);
+          await this.bolt.receiver.off('fullstop',   fullStopListener);
+          resolve(distance);
+
+        } else {
+          await this.roll(speed, heading);
+          // console.log('rollToPoint.tck:', this.bolt.status.position, '=>', target, 'd', ~~distance, 'h', ~~heading);
+
+        }
+
+      };
+
+      await this.bolt.receiver.on('sensordata', sensorListener);
+      await this.bolt.receiver.on('fullstop',   fullStopListener);
+
+    });
 
   }
 
@@ -318,13 +289,24 @@ W 270 => 270
 
       const sensorListener = async (event: IEvent) => {
 
-        posX   = event.sensordata.locator.positionX;
-        posY   = event.sensordata.locator.positionY;
-        velX   = event.sensordata.locator.velocityX;
-        velY   = event.sensordata.locator.velocityY;
+        const location = {
+          x: event.sensordata.locator.positionX,
+          y: event.sensordata.locator.positionY,
+        }
+        const velocity = {
+          x: event.sensordata.locator.velocityX,
+          y: event.sensordata.locator.velocityY,
+        }
 
-        heading  = Math.atan2(posY - target.y, posX - target.x) * -180 / Math.PI +270;
-        heading  = (heading + 360) % 360;
+        // posX   = event.sensordata.locator.positionX;
+        // posY   = event.sensordata.locator.positionY;
+        // velX   = event.sensordata.locator.velocityX;
+        // velY   = event.sensordata.locator.velocityY;
+
+        heading = M.mod(M.heading(location, target));
+
+        // heading  = Math.atan2(posY - target.y, posX - target.x) * -180 / Math.PI +270;
+        // heading  = (heading + 360) % 360;
 
         delta    = M.angleDistance(heading, this.bolt.heading);
 
@@ -332,13 +314,13 @@ W 270 => 270
 
       };
 
-      target = p1;
 
       await this.bolt.receiver.on('sensordata', sensorListener);
       await this.bolt.receiver.on('fullstop',   fullStopListener);
 
+      target = p1;
       await this.rollToPoint(target, 5);
-      this.piroutte();
+      await this.piroutte();
 
       target = p2;
       await this.rollToPoint(target, 5);
@@ -350,6 +332,7 @@ W 270 => 270
     });
 
   }
+
   async calibrateNorth() {
 
     return new Promise(async (resolve /*, reject */) => {

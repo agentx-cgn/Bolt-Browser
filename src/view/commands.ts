@@ -20,11 +20,11 @@ const BoltCommands = Factory.create('Layout', {
     // ⇧⇦⇨⇩
 
     return  ( !bolt.connected
-      ? m('div.w-100.pa2', { style }, m('[', [
+      ? m('div.commands.w-100.pa2', { style }, m('[', [
           m('div.di.ma2.f3.mono', bolt.name),
           m('span.ml3.f5.mono', `Connecting: rssi: ${bolt.status.rssi}, txPOwer: ${bolt.status.txPower}`)
         ]))
-      : m('div.w-100.pa2', { style }, [
+      : m('div.commands.w-100.pa2', { style }, [
           m('div.di.f3.ma2.mono', bolt.name),
           m('button.br2.mh1.cmd', { onclick: () => Bolts.disconnect(bolt) },                             'Disconnect'),
           m('button.br2.mh1.cmd', { onclick: bolt.actuators.sleep.bind(bolt.actuators) },                'Sleep'),

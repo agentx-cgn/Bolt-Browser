@@ -15,10 +15,18 @@ class bolts {
 
   public hasBluetooth: boolean;
 
-  private bolts = [] as Bolt[];
+  private bolts = [] as Bolt[] | any[];
   private scripter: Scripter;
 
   private configs: { [key: string]: IConfig } = {
+
+    'SB-FAKE' : {
+      magic:  { rollInterval: 1000, sensorInterval: 400,},
+      colors: {
+        console: '#FF0', plot: 'brown', backcolor: '#bfbf85',
+        front: [10, 0, 0], back: [ 5, 5, 5], black: [0, 0, 0], matrix: [30, 240, 30]
+      },
+    } as IConfig,
 
     'SB-9129' : {
       magic:  { rollInterval: 1000, sensorInterval: 400,},
@@ -38,8 +46,32 @@ class bolts {
 
   };
 
+  fakeBolt () {
+    const noop = () => {};
+    return {
+      name: 'SB-FAKE',
+      config: this.configs['SB-FAKE'],
+      status: {
+        rssi: 0,
+        txPower: 0,
+      },
+      queue: [] as any,
+      connected: true,
+      actuators: new Proxy({}, { get (w: any, l: string ) { return noop} }),
+      reset: noop,
+      calibrate: noop,
+      action: noop,
+      stress: noop,
+
+    };
+
+  }
+
 
   constructor ( ) {
+
+    // if debug, no bolts though
+    this.bolts = [this.fakeBolt()];
 
     this.map     = Array.prototype.map.bind(this.bolts);
     this.find    = Array.prototype.find.bind(this.bolts);

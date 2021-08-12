@@ -30,8 +30,13 @@ export class Bolt {
 
   public magic: IMagic;
 
-  private corpus = {} as any;
-
+  private corpus = {
+    wait:  { category: 'verb', host: () => this,           method: 'wait'  },
+    sleep: { category: 'verb', host: () => this.actuators, method: 'sleep' },
+    wake:  { category: 'verb', host: () => this.actuators, method: 'wake'  },
+    ping:  { category: 'verb', host: () => this.actuators, method: 'ping'  },
+    roll:  { category: 'verb', host: () => this.actuators, method: 'roll'  },
+  };
 
   // simple
   private keymapSimpleCommands = {
@@ -87,14 +92,7 @@ export class Bolt {
     // calibrate happens manually
     // after that actions are possible
 
-    this.corpus = {
-      wait:  { category: 'verb', host: () => this,           method: 'wait'  },
-      sleep: { category: 'verb', host: () => this.actuators, method: 'sleep' },
-      wake:  { category: 'verb', host: () => this.actuators, method: 'wake'  },
-      ping:  { category: 'verb', host: () => this.actuators, method: 'ping'  },
-      roll:  { category: 'verb', host: () => this.actuators, method: 'roll'  },
 
-    };
 
     this.config    = config;
     this.magic     = config.magic;
@@ -227,15 +225,12 @@ export class Bolt {
   }
 
   async autoaction () {
-
-    this.execute
-      .roll(30, 0)
-      .wait(1000)
-      .roll(30, 90)
-      .end
-    ;
-
-
+    // return await this.execute
+    //   .roll(30, 0)
+    //   .wait(1000)
+    //   .roll(30, 90)
+    //   .end
+    // ;
   }
 
   async calibrate() {

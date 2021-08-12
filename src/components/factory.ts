@@ -37,6 +37,7 @@ const Factory = {
 
         let vnode: any          = null;
         let preventUpdates: boolean = false;
+        const status = {};
 
         // before first view
         (typeof comp.onregister === 'function') && comp.onregister(Dispatcher(name));
@@ -64,8 +65,11 @@ const Factory = {
             },
         }, comp);
 
+        ice.status = function status () {
+            return status;
+        }
+
         // monkeypatching
-        // if (ice.oncreate){
         ice.oncreate = function (orgvnode: any) {
             vnode = orgvnode;
             comp.oncreate && comp.oncreate(vnode);

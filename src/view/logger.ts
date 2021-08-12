@@ -18,7 +18,7 @@ const BoltLogger = Factory.create('Logger', {
     const bolt: Bolt = vnode.attrs.bolt;
     const style = { background: bolt.config.colors.backcolor + '88', height: '60px', overflowY: 'scroll' };
 
-    return m('div.w-100.code.f7.pa1.pl3', { style }, bolt.queue.sort(sortQueue).map( (cmd: IAction) => {
+    return m('div.logger.w-100.code.f7.pa1.pl3', { style }, bolt.queue.sort(sortQueue).map( (cmd: IAction) => {
       return m('div', [
         m('span.ph1', cmd.bolt.name),
         m('span.ph1', cmd.id),

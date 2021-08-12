@@ -91,7 +91,7 @@ const Plotter = Factory.create('Plotter', {
 
   view () {
     this.render();
-    return m('canvas.bg-white', {width: size, height: size, onclick: this.onClick.bind(this) });
+    return m('canvas.plotter.bg-white', {width: size, height: size, onclick: this.onClick.bind(this) });
   },
 
   onClick (event: MouseEvent) {
