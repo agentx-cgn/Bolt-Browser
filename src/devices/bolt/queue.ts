@@ -44,17 +44,17 @@ export class Queue {
       const action: IAction = {
 
         id:           this.incrementer,
-        name:         message.name,
         bolt:         this.bolt,
+        name:         message.name,
         payload:      message.data,
         device:       message.device,
+        command:      message.command,
         target:       message.target || NaN,
-        command:      this.createCommand(this.incrementer, message),
+        bytes:        this.createCommand(this.incrementer, message),
         charac:       this.bolt.characs.get(C.APIV2_CHARACTERISTIC),
         acknowledged: false,
         executed:     false,
         success:      false,
-        timestamp:    NaN,
 
         onSuccess:    ( command: any ) => {
           // console.log('%c' + this.bolt.name, 'color: darkgreen', 'action.success', message.name);
@@ -116,12 +116,9 @@ export class Queue {
   /**  Write a command on a action characteristic */
   async write ( action: IAction, callback: any ) {
 
-    action.timestamp = Date.now();
-
     try {
       Logger.action(this.bolt, action);
       await action.charac.writeValue(new Uint8Array(action.command));
-      // console.log('write.ok', action.bolt.name, action.name, action.id, action.command.join(' '));
 
     } catch(error) {
       action.executed = true;
@@ -146,7 +143,7 @@ export class Queue {
 
       case C.Errors.success:
 
-        action.responseData = command.data.slice(1); //, -1 ??
+        action.response = command.data.slice(1); //, -1 ??
         action.onSuccess();
 
         // don't log if only success

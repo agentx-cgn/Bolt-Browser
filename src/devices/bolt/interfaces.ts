@@ -102,23 +102,23 @@ export interface IAction {
   payload:      number[],
   device:       number,
   target:       number,
-  command:      number[],
+  command:      number,
+  bytes:        number[],
   charac:       BluetoothRemoteGATTCharacteristic,
   acknowledged: boolean,
   executed:     boolean,
   success:      boolean,
   onSuccess:    any,
   onError:      any,
-  responseData?: number[],
-  timestamp:    number,
+  response?:    number[],
 }
 
 export interface ICmdMessage {
   name:         string,
   device:       number,
   command:      number,
-  data:         any[],
   target?:      number,
+  data:         any[],
 }
 
 export interface IFlags {

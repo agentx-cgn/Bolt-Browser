@@ -56,7 +56,7 @@ const HomeComponent = class {
             m('span.ph1', cmd.executed     ? 'I' : 'O'),
             m('span.ph1', cmd.acknowledged ? 'I' : 'O'),
             m('span.ph1', cmd.name),
-            m('span.ph1.washed-blue', cmd.command.join(' ')),
+            m('span.ph1.washed-blue', cmd.bytes.join(' ')),
           ]);
         }));
       })),

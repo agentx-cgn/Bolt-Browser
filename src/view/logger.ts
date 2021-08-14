@@ -9,10 +9,6 @@ import Factory from '../components/factory';
 import { Bolt } from './../devices/bolt/bolt';
 import { IAction, IEvent } from "./../devices/bolt/interfaces";
 
-function sortQueue (a: IAction, b: IAction) {
-  return b.timestamp - a.timestamp;
-}
-
 const log = [] as ILogline[];
 
 function time(timestamp: number) {
@@ -30,21 +26,23 @@ const formatter = {
   'action': function ({timestamp, bolt, type, subtype, data}: ILogline) {
     return m('tr', {style: {backgroundColor: bolt.config.colors.log}}, [
       m('td.timestamp', time(timestamp)), m('td.bolt', bolt.name),
-      m('td.type',  'Action'), m('td.subtype', subtype),
-      m('td.id',     data.id),
-      m('td.device', data.device),
-      m('td.target', data.target || ' '),
-      m('td.data',   data.payload.join(' ')),
+      m('td.type',    'Action'), m('td.subtype', subtype),
+      m('td.id',      data.id),
+      m('td.device',  data.device),
+      m('td.command', data.command),
+      m('td.target',  data.target || ' '),
+      m('td.data',    data.payload.join(' ')),
     ]);
   },
   'event':   function ({timestamp, bolt, type, subtype, data}: ILogline) {
     return m('tr', {style: {backgroundColor: bolt.config.colors.log}}, [
       m('td.timestamp', time(timestamp)), m('td.bolt', bolt.name),
-      m('td.type',   'Event'), m('td.subtype', subtype),
-      m('td.id',     data.msg?.seqNumber || ' '),
-      m('td.device', data.msg?.deviceId  || ' '),
-      m('td.target', data.msg?.targetId  || ' '),
-      m('td.data',   data.msg?.packet.join(' ')),
+      m('td.type',    'Event'), m('td.subtype', subtype),
+      m('td.id',      data.msg?.seqNumber || ' '),
+      m('td.device',  data.msg?.deviceId  || ' '),
+      m('td.command', data.msg.command    || ' '),
+      m('td.target',  data.msg?.targetId  || ' '),
+      m('td.data',    data.msg?.packet.join(' ')),
     ]);
   },
   'key':   function ({timestamp, bolt, type, subtype, data}: ILogline) {
@@ -56,11 +54,12 @@ const formatter = {
   'sensor':   function ({timestamp, bolt, type, subtype, data}: ILogline) {
     return m('tr', {style: {backgroundColor: bolt.config.colors.log}}, [
       m('td.timestamp', time(timestamp)), m('td.bolt', bolt.name),
-      m('td.type',   'Sensor'), m('td.subtype', subtype),
-      m('td.id',     ' '),
-      m('td.device', ' '),
-      m('td.target', ' '),
-      m('td.target', JSON.stringify(data.sensordata).slice(0, 50)),
+      m('td.type',    'Sensor'), m('td.subtype', subtype),
+      m('td.id',      ' '),
+      m('td.device',  ' '),
+      m('td.command', ' '),
+      m('td.target',  ' '),
+      m('td.target',  JSON.stringify(data.sensordata).slice(0, 50)),
     ]);
   },
   'info':   function ({timestamp, bolt, type, subtype, data}: ILogline) {
@@ -118,6 +117,7 @@ const Logger = Factory.create('Logger', {
           m('td', 'Name'),
           m('td', 'ID'),
           m('td', 'Dev'),
+          m('td', 'Cmd'),
           m('td', 'Tgt'),
           m('td', 'DATA'),
         ])),
