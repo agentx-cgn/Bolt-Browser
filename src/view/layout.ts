@@ -5,6 +5,7 @@ import m from "mithril";
 import { Header }       from '../components/header/header';
 import { Backdrop }     from '../components/backdrop';
 import { Plotter }     from '../components/plotter';
+import { Panel }     from './panel';
 // import { Nothing }  from './components/misc';
 import { Last }         from '../components/last';
 import Factory      from '../components/factory';
@@ -12,43 +13,13 @@ import Factory      from '../components/factory';
 import { Bolts }  from './../devices/bolt/bolts';
 import { Bolt }   from './../devices/bolt/bolt';
 import { BoltCommands } from './commands';
-import { BoltLogger } from './logger';
+import { Logger } from './logger';
 import { BoltStatus } from './status';
 
 Bolts.activate();
 Bolts.searchBolts();
 Plotter.reset();
 // document.hasFocus()
-
-const Panel = Factory.create('Panel', {
-
-  view( vnode: any ) {
-
-    let { title, width } = vnode.attrs;
-    const childs = vnode.children;
-
-    width = vnode.state.width ? vnode.state.width : width
-
-    function toggleWidth () {
-      if (!vnode.state.width || vnode.state.width === vnode.attrs.width) {
-        width = vnode.state.width = '24px';
-      } else {
-        width = vnode.state.width = vnode.attrs.width;
-      }
-    }
-
-    return m('div.panel', { style: { width, overflowX: 'hidden' } }, [
-      m('div.bg-999.pa1.ceee.sans-serif.pointer',
-        { style: { }, onclick: toggleWidth  },
-        title
-      ),
-      ...childs
-    ])
-
-  }
-
-});
-
 
 const LayoutComponent = Factory.create('Layout', {
 
@@ -64,18 +35,13 @@ const LayoutComponent = Factory.create('Layout', {
       m(Backdrop),
       m(Header, { route, params }),
 
-      m('div.w-100', Bolts.map( (bolt: Bolt) => {
-        return [
-          m(BoltCommands, { bolt }),
-          // m(BoltLogger,   { bolt }),
-        ];
-      })),
+      m('div.bolts.w-100', Bolts.map( (bolt: Bolt) => m(BoltCommands, { bolt }) )),
 
-      m('div.w-100.bg-eee.f6.flex.flex-row', {}, [
+      m('div.panels.w-100.bg-eee.f6.flex.flex-row', {}, [
 
         m(Panel, {title: 'Plotter', width: '512px'}, [ m(Plotter, {size: 512} )]),
 
-        m(Panel, {title: 'Logger', width: '800px' }, [ m(BoltLogger,   {bolt: Bolts.get('SB-FAKE') }) ]),
+        m(Panel, {title: 'Logger', width: '800px' }, [ m(Logger,   {bolt: Bolts.get('SB-FAKE') }) ]),
 
         Bolts.map(( bolt: Bolt ) => {
           return m(Panel, {title: bolt.name + ' - Status', width: '128px'}, [ m(BoltStatus, { bolt }) ])

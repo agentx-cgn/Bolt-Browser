@@ -9,6 +9,7 @@ import { Receiver } from './receiver';
 import { Actuators } from './actuators';
 import { Sensors } from './sensors';
 import { Scripter } from './scripter';
+import { Logger } from '../../view/logger';
 import { Queue } from './queue';
 import { H } from "../../services/helper";
 import { Plotter } from "../../components/plotter";
@@ -235,12 +236,16 @@ export class Bolt {
 
   async calibrate() {
 
+    Logger.info(this, 'calibrating.in');
+
     await wait(500);
     await this.actuators.calibrateNorth();
     await this.actuators.resetLocator();
     await wait(500);
 
     await this.actuators.calibrateHeading();
+
+    Logger.info(this, 'calibrating.out');
 
   }
 

@@ -4,6 +4,7 @@ import m from "mithril";
 
 import { CONSTANTS as C }  from '../constants';
 import { Bolt } from './bolt';
+import { Logger } from '../../view/logger';
 import { Scripter } from './scripter';
 import { IConfig } from './interfaces';
 
@@ -15,7 +16,7 @@ class bolts {
 
   public hasBluetooth: boolean;
 
-  private bolts = [] as Bolt[] | any[];
+  private bolts = [] as Bolt[];
   private scripter: Scripter;
 
   private configs: { [key: string]: IConfig } = {
@@ -23,7 +24,7 @@ class bolts {
     'SB-FAKE' : {
       magic:  { rollInterval: 1000, sensorInterval: 400,},
       colors: {
-        console: '#FF0', plot: 'brown', backcolor: '#bfbf85',
+        console: '#FF0', plot: 'brown', backcolor: '#bfbf85', log: '#bfbf8544',
         front: [10, 0, 0], back: [ 5, 5, 5], black: [0, 0, 0], matrix: [30, 240, 30]
       },
     } as IConfig,
@@ -31,7 +32,7 @@ class bolts {
     'SB-9129' : {
       magic:  { rollInterval: 1000, sensorInterval: 400,},
       colors: {
-        console: '#FF0', plot: 'green', backcolor: '#5ec19d',
+        console: '#FF0', plot: 'green', backcolor: '#5ec19d', log: '#5ec19d44',
         front: [10, 0, 0], back: [ 5, 5, 5], black: [0, 0, 0], matrix: [30, 240, 30]
       },
     } as IConfig,
@@ -39,7 +40,7 @@ class bolts {
     'SB-2B96' : {
       magic:  { rollInterval: 1000, sensorInterval: 400,},
       colors: {
-        console: '#F0F', plot: 'blue',  backcolor: '#5895d4',
+        console: '#F0F', plot: 'blue',  backcolor: '#5895d4', log: '#5895d444',
         front: [10, 0, 0], back: [ 5, 5, 5], black: [0, 0, 0], matrix: [30, 30, 240]
        }
     },
@@ -63,7 +64,7 @@ class bolts {
       action: noop,
       stress: noop,
 
-    };
+    } as Bolt;
 
   }
 
@@ -71,7 +72,7 @@ class bolts {
   constructor ( ) {
 
     // if debug, no bolts though
-    this.bolts = [this.fakeBolt()];
+    // this.bolts = [this.fakeBolt()];
 
     this.map     = Array.prototype.map.bind(this.bolts);
     this.find    = Array.prototype.find.bind(this.bolts);
@@ -255,6 +256,7 @@ class bolts {
     if (success) {
       device.addEventListener('gattserverdisconnected', onGattServerDisconnected);
       device.addEventListener('advertisementreceived',  onAdvertisementReceived);
+      Logger.info(bolt, 'connected');
       await bolt.reset();
       await bolt.activate();
       await bolt.autoaction();

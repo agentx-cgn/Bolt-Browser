@@ -4,6 +4,7 @@ import { IAction, ICommand, IEvent, ICmdMessage } from './interfaces';
 import { CONSTANTS as C } from '../constants';
 import { Bolt } from './bolt';
 import { pushByte } from './utils';
+import { Logger } from "../../view/logger";
 
 export class Queue {
 
@@ -81,6 +82,7 @@ export class Queue {
 
   execute (action: IAction) {
 
+    // happens if queue empty
     if (!action) { return }
 
     // const findNextAction = () => this.find( (action: IAction) => !action.acknowledged && !action.executed ) as IAction;
@@ -114,6 +116,7 @@ export class Queue {
     action.timestamp = Date.now();
 
     try {
+      Logger.action(this.bolt, action);
       await action.charac.writeValue(new Uint8Array(action.command));
       // console.log('write.ok', action.bolt.name, action.name, action.id, action.command.join(' '));
 

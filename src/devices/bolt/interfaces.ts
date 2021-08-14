@@ -26,6 +26,7 @@ export interface IUuid {
 export interface IConfigColors {
   console:   string, // CSS Colors
   plot:      string,
+  log:       string,
   backcolor: string,
   matrix:    TColor, // Bots Color on matrix
   black:     TColor,
