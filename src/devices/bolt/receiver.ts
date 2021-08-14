@@ -4,6 +4,7 @@ import { Bolt } from './bolt';
 import { ICommand, IEvent } from './interfaces';
 import { decodeFlags, logDataView, parseSensorResponse } from './utils';
 import * as Mousetrap from 'Mousetrap';
+import { Logger } from '../../view/logger';
 
 
 export class Receiver {
@@ -13,12 +14,12 @@ export class Receiver {
 
   // register keys
   private keymap = {
-    'space' : () => { this.fire('key:space', {}); return false; },
-    'esc'   : () => { this.fire('key:esc',   {}); return false; },
-    'left'  : () => { this.fire('key:left',  {}); return false; },
-    'right' : () => { this.fire('key:right', {}); return false; },
-    'up'    : () => { this.fire('key:up',    {}); return false; },
-    'down'  : () => { this.fire('key:down',  {}); return false; },
+    'space' : () => { this.fire('key:space'); return false; },
+    'esc'   : () => { this.fire('key:esc');   return false; },
+    'left'  : () => { this.fire('key:left');  return false; },
+    'right' : () => { this.fire('key:right'); return false; },
+    'up'    : () => { this.fire('key:up');    return false; },
+    'down'  : () => { this.fire('key:down');  return false; },
   };
 
   public logs = {
@@ -73,10 +74,11 @@ export class Receiver {
 
   }
 
-  fire (event: string, msg: IEvent) {
+  fire (event: string, payload={} as IEvent) {
+    Logger.event(this.bolt, event, payload);
     const listeners = this.listeners[event];
     if (listeners) {
-      listeners.forEach(( callback: any ) => callback(msg));
+      listeners.forEach(( callback: any ) => callback(payload));
     }
   }
 
@@ -117,7 +119,7 @@ export class Receiver {
 
     } else {
       // check error here
-      this.fire('acknowledgement', { msg: command });
+      this.fire('ack', { msg: command });
       // this.bolt.queue.notify(command);
       this.logOnError(command);
 

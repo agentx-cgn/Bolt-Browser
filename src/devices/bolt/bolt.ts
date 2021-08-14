@@ -119,7 +119,7 @@ export class Bolt {
 
   async reset() {
 
-    // try {
+    Logger.info(this, 'reset');
 
     await this.characs.get(C.ANTIDOS_CHARACTERISTIC).writeValue(C.useTheForce);
     await this.actuators.ping();
@@ -162,8 +162,6 @@ export class Bolt {
     await this.actuators.resetLocator();
     await wait(1000);
 
-    // } catch(e){ console.warn(this.name, e)}
-
   };
 
   async activate () {
@@ -178,7 +176,7 @@ export class Bolt {
     // stop everything on SPACE
     this.receiver.on('key:space',    async (event: IEvent) => {
       console.log(this.name, 'fullstop');
-      this.receiver.fire('fullstop', {});
+      this.receiver.fire('fullstop');
       await this.actuators.stop();
       await this.sensors.disableSensors();
       await this.actuators.blinkChar('S', 5);
@@ -268,9 +266,11 @@ export class Bolt {
   }
 
   async stress () {
+    Logger.info(this, 'stress.in');
     await this.actuators.rollToPoint({x:0,y:0});
     await this.actuators.circleAround(20, 35);
     await this.actuators.rollToPoint({x:0,y:0});
+    Logger.info(this, 'stress.out');
   }
 
   async ActionRollUntil () {

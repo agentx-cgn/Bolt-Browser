@@ -20,39 +20,53 @@ function time(timestamp: number) {
 }
 
 const formatter = {
-  'sensor':  function ({timestamp, bolt, type, subtype, data}: ILogline) {
-    return m('tr', {style: {backgroundColor: bolt.config.colors.log}}, [
-      m('td.timestamp', time(timestamp)), m('td.bolt', bolt.name),
-      m('td.type', type), m('td.subtype', subtype),
-      m('td.id', data.id),
-    ]);
-  },
-  'message': function ({timestamp, bolt, type, subtype, data}: ILogline) {
-    return m('tr', {style: {backgroundColor: bolt.config.colors.log}}, [
-      m('td.timestamp', time(timestamp)), m('td.bolt', bolt.name),
-      m('td.type', type), m('td.subtype', subtype),
-      m('td.id', data.id),
-    ]);
-  },
+  // 'message': function ({timestamp, bolt, type, subtype, data}: ILogline) {
+  //   return m('tr', {style: {backgroundColor: bolt.config.colors.log}}, [
+  //     m('td.timestamp', time(timestamp)), m('td.bolt', bolt.name),
+  //     m('td.type', type), m('td.subtype', subtype),
+  //     m('td.id', data.id),
+  //   ]);
+  // },
   'action': function ({timestamp, bolt, type, subtype, data}: ILogline) {
     return m('tr', {style: {backgroundColor: bolt.config.colors.log}}, [
       m('td.timestamp', time(timestamp)), m('td.bolt', bolt.name),
-      m('td.type', type), m('td.subtype', subtype),
-      m('td.id', data.id),
+      m('td.type',  'Action'), m('td.subtype', subtype),
+      m('td.id',     data.id),
+      m('td.device', data.device),
+      m('td.target', data.target || ' '),
+      m('td.data',   data.payload.join(' ')),
     ]);
   },
   'event':   function ({timestamp, bolt, type, subtype, data}: ILogline) {
     return m('tr', {style: {backgroundColor: bolt.config.colors.log}}, [
       m('td.timestamp', time(timestamp)), m('td.bolt', bolt.name),
-      m('td.type', type), m('td.subtype', subtype),
-      m('td.id', ' '),
+      m('td.type',   'Event'), m('td.subtype', subtype),
+      m('td.id',     data.msg?.seqNumber || ' '),
+      m('td.device', data.msg?.deviceId  || ' '),
+      m('td.target', data.msg?.targetId  || ' '),
+      m('td.data',   data.msg?.packet.join(' ')),
+    ]);
+  },
+  'key':   function ({timestamp, bolt, type, subtype, data}: ILogline) {
+    return m('tr', {style: {backgroundColor: bolt.config.colors.log}}, [
+      m('td.timestamp', time(timestamp)), m('td.bolt', bolt.name),
+      m('td.type',   'Event'), m('td.subtype', subtype),
+    ]);
+  },
+  'sensor':   function ({timestamp, bolt, type, subtype, data}: ILogline) {
+    return m('tr', {style: {backgroundColor: bolt.config.colors.log}}, [
+      m('td.timestamp', time(timestamp)), m('td.bolt', bolt.name),
+      m('td.type',   'Sensor'), m('td.subtype', subtype),
+      m('td.id',     ' '),
+      m('td.device', ' '),
+      m('td.target', ' '),
+      m('td.target', JSON.stringify(data.sensordata).slice(0, 50)),
     ]);
   },
   'info':   function ({timestamp, bolt, type, subtype, data}: ILogline) {
-    return m('tr', {style: {backgroundColor: bolt.config.colors.log}}, [
+    return m('tr.info', {style: {backgroundColor: bolt.config.colors.log}}, [
       m('td.timestamp', time(timestamp)), m('td.bolt', bolt.name),
-      m('td.type', type), m('td.subtype', subtype),
-      m('td.id', ' '),
+      m('td.type', 'Info'), m('td.subtype', subtype),
     ]);
   },
 } as { [key: string]: any; }
@@ -81,15 +95,21 @@ const Logger = Factory.create('Logger', {
     Logger.append(bolt, 'info', info );
   },
   action: function (bolt: Bolt, action: IAction) {
-    Logger.append(bolt, 'action', action.name, action, );
+    Logger.append(bolt, 'action', action.name, action);
   },
   event: function (bolt: Bolt, eventname: string, event: IEvent) {
-    Logger.append(bolt, 'event', eventname , event);
+    eventname.startsWith('key') ?
+      Logger.append(bolt, 'key', eventname) :
+    event.sensordata            ?
+      Logger.append(bolt, 'sensor', eventname , event) :
+      Logger.append(bolt, 'event',  eventname , event)
+    ;
   },
 
 
   view( vnode: any ) {
-    return m('div.logger', {},
+    const style = {height: '512px', overflowY: 'scroll'};
+    return m('div.logger', { style },
       m('table', {}, [
         m('thead', {}, m('tr', {}, [
           m('td', 'TS'),
@@ -97,34 +117,17 @@ const Logger = Factory.create('Logger', {
           m('td', 'Type'),
           m('td', 'Name'),
           m('td', 'ID'),
-          m('td', 'X'),
-          m('td', 'A'),
+          m('td', 'Dev'),
+          m('td', 'Tgt'),
           m('td', 'DATA'),
         ])),
-        m('tbody', {}, log.slice(-10).map( (line: ILogline) => {
+        m('tbody', {}, log.slice(-500).map( (line: ILogline) => {
           return formatter[line.type](line);
         })),
       ])
     );
 
   },
-  // viewX( vnode: any ) {
-
-  //   const bolt: Bolt = vnode.attrs.bolt;
-  //   const style = { background: bolt.config.colors.backcolor + '88', height: '60px', overflowY: 'scroll' };
-
-  //   return m('div.logger.w-100.code.f7.pa1.pl3', { style }, bolt.queue.sort(sortQueue).map( (cmd: IAction) => {
-  //     return m('div', [
-  //       m('span.ph1', cmd.bolt.name),
-  //       m('span.ph1', cmd.id),
-  //       m('span.ph1', cmd.executed     ? 'I' : 'O'),
-  //       m('span.ph1', cmd.acknowledged ? 'I' : 'O'),
-  //       m('span.ph1', cmd.name),
-  //       m('span.ph1', cmd.command.join(' ')),
-  //     ]);
-  //   }));
-
-  // }
 
 });
 

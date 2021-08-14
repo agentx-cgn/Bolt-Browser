@@ -28,7 +28,7 @@ export class Queue {
     this.sort    = Array.prototype.sort.bind(this.queue);
     this.forEach = Array.prototype.forEach.bind(this.queue);
 
-    this.bolt.receiver.on('acknowledgement', this.onAcknowledgement.bind(this));
+    this.bolt.receiver.on('ack', this.onAcknowledgement.bind(this));
 
   }
 
@@ -46,6 +46,9 @@ export class Queue {
         id:           this.incrementer,
         name:         message.name,
         bolt:         this.bolt,
+        payload:      message.data,
+        device:       message.device,
+        target:       message.target || NaN,
         command:      this.createCommand(this.incrementer, message),
         charac:       this.bolt.characs.get(C.APIV2_CHARACTERISTIC),
         acknowledged: false,
