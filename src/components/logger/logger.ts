@@ -7,12 +7,29 @@ import './logger.scss';
 
 import Factory from '../factory';
 import { Bolt } from '../../devices/bolt/bolt';
-import { IAction, IEvent } from "../../devices/bolt/interfaces";
+import { IAction, IEvent, ISensorData } from "../../devices/bolt/interfaces";
 
 const log = [] as ILogline[];
 
 function time(timestamp: number) {
   return (new Date(timestamp)).toISOString().slice(-12, -1)
+}
+
+function reduceSensorDate(data: ISensorData): string {
+  const loc = data.locator;
+  if(!loc){return JSON.parse(data as any);}
+  return JSON.stringify({
+    x:  loc.positionX.toPrecision(3),
+    y:  loc.positionY.toPrecision(3),
+    vx: loc.velocityX.toPrecision(3),
+    vy: loc.velocityY.toPrecision(3),
+  })
+  .replace(/"/g, '')
+  .replace(/\{/g, '')
+  .replace(/\}/g, '')
+  .replace(/\,/g, ', ')
+  .slice(0, 70)
+
 }
 
 const formatter = {
@@ -44,19 +61,16 @@ const formatter = {
     const className = [bolt.name, type, subtype].join(' ');
     return m('tr', {  className }, [
       m('td.timestamp', time(timestamp)), m('td.bolt', bolt.name),
-      m('td.type',   'Event'), m('td.subtype', subtype),
+      m('td.type',   'Key'), m('td.subtype', subtype),
     ]);
   },
   'sensor':   function ({timestamp, bolt, type, subtype, data}: ILogline) {
     const className = [bolt.name, type, subtype].join(' ');
     return m('tr', { className }, [
-      m('td.timestamp', time(timestamp)), m('td.bolt', bolt.name),
-      m('td.type',    'Sensor'), m('td.subtype', subtype),
-      m('td.id',      ' '),
-      m('td.device',  ' '),
-      m('td.command', ' '),
-      m('td.target',  ' '),
-      m('td.target',  JSON.stringify(data.sensordata).slice(0, 50)),
+      m('td.timestamp', time(timestamp)),
+      m('td.bolt', bolt.name),
+      m('td.type',    'Sensor'),
+      m('td.sensor',  {colspan: 6}, reduceSensorDate(data.sensordata)),
     ]);
   },
   'info':   function ({timestamp, bolt, type, subtype, data}: ILogline) {
@@ -110,21 +124,19 @@ const Logger = Factory.create('Logger', {
     const style = {height: '512px', overflowY: 'scroll'};
 
     return m('div.logger', { style },
-      m('table', {}, [
-        m('thead', {}, m('tr', {}, [
-          m('td', 'TS'),
-          m('td', 'Bolt'),
-          m('td', 'Type'),
-          m('td', 'Name'),
-          m('td.tr', 'ID'),
-          m('td.tr', 'D'),
-          m('td.tr', 'C'),
-          m('td.tr', 'T'),
-          m('td.tr', 'Payload'),
+      m('table', [
+        m('thead', m('tr', [
+          m('td',     'TS'),
+          m('td',     'Bolt'),
+          m('td',     'Type'),
+          m('td',     'Name'),
+          m('td.tr',  'ID'),
+          m('td.tr',  'D'),
+          m('td.tr',  'C'),
+          m('td.tr',  'T'),
+          m('td.tr',  'Payload'),
         ])),
-        m('tbody', {}, log.slice(-500).map( (line: ILogline) => {
-          return formatter[line.type](line);
-        })),
+        m('tbody', {}, log.slice(0, 500).map( (line: ILogline) => formatter[line.type](line) )),
       ])
     );
 

@@ -1,4 +1,5 @@
 import { CONSTANTS as C } from './constants';
+import { ISensorData } from './interfaces';
 
 export function  ab2str(buf: ArrayBuffer): string {
   return String.fromCharCode.apply(null, new Uint16Array(buf));
@@ -100,13 +101,13 @@ export function flatSensorMask (sensorMask: number[]) {
   return sensorMask.reduce((bits, m) => { return (bits |= m); }, 0);
 }
 
-export function parseSensorResponse (data: any, mask: any) {
+export function parseSensorResponse (data: any, mask: any): ISensorData {
 
 	let state = {
     data,
 		mask,
 		offset: 0,
-		response: {},
+		response: {} as ISensorData,
 	};
 
 	state = fillAngle(state);

@@ -316,7 +316,11 @@ export class Receiver {
       message.command === C.CMD.Sensor.sensorResponse ) {
 
       const sensordata = parseSensorResponse(message.payload, this.bolt.status.rawMask);
-      this.fire('sensordata', { sensordata });
+      if (sensordata.locator) {
+        this.fire('sensordata', { sensordata });
+      } else {
+        console.log('fireEvent.incomplete.sensor.data', sensordata);
+      }
 
     } else if (
       message.device  === C.Device.sensor &&

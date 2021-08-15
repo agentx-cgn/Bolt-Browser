@@ -18,7 +18,7 @@ div.logger {
 
     tbody {
 
-      tr.info {
+      tr.info, tr.key {
         td.type, td.subtype { background-color: #eee }
       }
       tr.action {
@@ -44,6 +44,7 @@ div.logger {
           background-color: #fff8;
           color: #888
         }
+        &.sensor { background-color: #fffD; }
 
 
 

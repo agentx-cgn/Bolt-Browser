@@ -41,7 +41,7 @@ const LayoutComponent = Factory.create('Layout', {
         m(Panel, {title: 'Plotter', width: '512px'},
           m(Plotter, {size: 512} )
         ),
-        m(Panel, {title: 'Logger', width: '540px' },
+        m(Panel, {title: 'Logger', width: '800px' },
           m(Logger,  {bolt: Bolts.get('SB-FAKE') })
         ),
         Bolts.map(( bolt: Bolt ) => {
