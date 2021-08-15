@@ -113,7 +113,7 @@ export interface IAction {
   response?:    number[],
 }
 
-export interface ICmdMessage {
+export interface IMsgAction {
   name:         string,
   device:       number,
   command:      number,
@@ -124,16 +124,16 @@ export interface ICmdMessage {
 export interface IFlags {
 
 }
-export interface ICommand {
-  targetId?:      number,
-  sourceId?:      number,
+export interface IMessage {
+  id:             number,
+  device:         number,
+  command:        number,
+  source?:        number,
+  target?:        number,
   packet:         number[],
   startOfPacket:  number,
   flags:          any,
-  deviceId:       number,
-  commandId:      number,
-  seqNumber:      number,
-  data:           number[],
+  payload:        number[],
   checksum:       number,
   endOfPacket:    number,
 }

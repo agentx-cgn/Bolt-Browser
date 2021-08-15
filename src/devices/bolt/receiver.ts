@@ -1,7 +1,7 @@
 
 import { CONSTANTS as C } from './constants';
 import { Bolt } from './bolt';
-import { ICommand, IEvent } from './interfaces';
+import { IMessage, IEvent } from './interfaces';
 import { decodeFlags, logDataView, parseSensorResponse } from './utils';
 import * as Mousetrap from 'Mousetrap';
 import { Logger } from '../../components/logger/logger';
@@ -112,16 +112,16 @@ export class Receiver {
   /* If the packet is a notification , calls the right handler, else print the command status */
   processPacket( packet: number[] ) {
 
-    const command = this.decodePacket(packet);
+    const message = this.decodePacket(packet);
 
-    if (command.seqNumber === 255) {
-      this.fireEvent(command);
+    if (message.id === 255) {
+      this.fireEvent(message);
 
     } else {
       // check error here
-      this.fire('ack', { msg: command });
-      // this.bolt.queue.notify(command);
-      this.logOnError(command);
+      this.fire('ack', { msg: message });
+      // this.bolt.queue.notify(message);
+      this.logOnError(message);
 
     }
 
@@ -209,7 +209,7 @@ export class Receiver {
   }
 
   /* Incoming Packet decoder */
-  decodePacket( packet: any ): ICommand {
+  decodePacket( packet: any ): IMessage {
 
     // Packet structure:
     // ---------------------------------
@@ -223,33 +223,33 @@ export class Receiver {
     // - checksum   [1 byte]
     // - end        [1 byte]
 
-    let command = { data: [], packet: [ ...packet ] } as ICommand;
+    let message = { payload: [], packet: [ ...packet ] } as IMessage;
 
-    command.startOfPacket = packet.shift();
-    command.flags         = decodeFlags(packet.shift());
+    message.startOfPacket = packet.shift();
+    message.flags         = decodeFlags(packet.shift());
 
-    command.flags.hasTargetId && (command.targetId = packet.shift());
-    command.flags.hasSourceId && (command.sourceId = packet.shift());
+    message.flags.hasTargetId && (message.target = packet.shift());
+    message.flags.hasSourceId && (message.source = packet.shift());
 
-    command.deviceId  = packet.shift();
-    command.commandId = packet.shift();
-    command.seqNumber = packet.shift();
+    message.device  = packet.shift();
+    message.command = packet.shift();
+    message.id      = packet.shift();
 
     let dataLen = packet.length - 2;
     for (let i = 0; i < dataLen; i++) {
-      command.data.push(packet.shift());
+      message.payload.push(packet.shift());
     }
 
-    command.checksum    = packet.shift();
-    command.endOfPacket = packet.shift();
+    message.checksum    = packet.shift();
+    message.endOfPacket = packet.shift();
 
-    return command;
+    return message;
 
   }
 
 
 
-  fireEvent (command: ICommand) {
+  fireEvent (message: IMessage) {
 
     /**
      * on charging
@@ -267,10 +267,10 @@ export class Receiver {
      */
 
     if (
-      command.deviceId  === C.Device.powerInfo &&
-      command.commandId === C.CMD.Power.batteryStateChange ) {
+      message.device  === C.Device.powerInfo &&
+      message.command === C.CMD.Power.batteryStateChange ) {
 
-      const state = command.data[0];
+      const state = message.payload[0];
 
       if (state === C.Battery.charging    ||
           state === C.Battery.notCharging ||
@@ -280,59 +280,59 @@ export class Receiver {
         this.fire('battery', { sensordata: state });
 
       } else {
-        console.log('Unknown battery state', command);
+        console.log('Unknown battery state', message);
 
       }
 
     } else if (
-      command.deviceId  === C.Device.powerInfo &&
-      command.commandId === C.CMD.Power.willSleepAsync ) {
+      message.device  === C.Device.powerInfo &&
+      message.command === C.CMD.Power.willSleepAsync ) {
 
-      this.fire('willsleep', { msg: command });
-
-    } else if (
-      command.deviceId  === C.Device.powerInfo &&
-      command.commandId === C.CMD.Power.sleepAsync ) {
-
-      this.fire('sleep', { msg: command });
+      this.fire('willsleep', { msg: message });
 
     } else if (
-      command.deviceId  === C.Device.powerInfo &&
-      command.commandId === C.CMD.Sensor.configureCollision ) {
+      message.device  === C.Device.powerInfo &&
+      message.command === C.CMD.Power.sleepAsync ) {
+
+      this.fire('sleep', { msg: message });
+
+    } else if (
+      message.device  === C.Device.powerInfo &&
+      message.command === C.CMD.Sensor.configureCollision ) {
 
       // this.fire('unkown', { msg: command });
-      // console.log('EVENT.unknown', 'powerInfo', 'configureCollision', command.data);
-      const c = command;
-      console.log('EVENT.Unknown', 'src', c.sourceId, 'dev', c.deviceId, 'cmd', c.commandId);
+      // console.log('EVENT.unknown', 'powerInfo', 'configureCollision', command.payload);
+      const c = message;
+      console.log('EVENT.Unknown', 'src', c.source, 'dev', c.device, 'cmd', c.command);
 
     } else if (
-      command.deviceId  === C.Device.sensor &&
-      command.commandId === C.CMD.Sensor.collisionDetectedAsync ) {
+      message.device  === C.Device.sensor &&
+      message.command === C.CMD.Sensor.collisionDetectedAsync ) {
 
-      this.fire('collision', { msg: command });
+      this.fire('collision', { msg: message });
 
     } else if (
-      command.deviceId  === C.Device.sensor &&
-      command.commandId === C.CMD.Sensor.sensorResponse ) {
+      message.device  === C.Device.sensor &&
+      message.command === C.CMD.Sensor.sensorResponse ) {
 
-      const sensordata = parseSensorResponse(command.data, this.bolt.status.rawMask);
+      const sensordata = parseSensorResponse(message.payload, this.bolt.status.rawMask);
       this.fire('sensordata', { sensordata });
 
     } else if (
-      command.deviceId  === C.Device.sensor &&
-      command.commandId === C.CMD.Sensor.compassNotify ) {
+      message.device  === C.Device.sensor &&
+      message.command === C.CMD.Sensor.compassNotify ) {
 
-      let angle = command.data[0] << 8;
-      angle    += command.data[1];
+      let angle = message.payload[0] << 8;
+      angle    += message.payload[1];
 
       this.fire('compass', { sensordata: angle });
 
     } else {
-      console.log('fireEvent', 'UNKNOWN EVENT ', command);
-      console.log('fireEvent', 'UNKNOWN EVENT ', command.packet);
-      this.fire('unkown', { msg: command });
+      console.log('fireEvent', 'UNKNOWN EVENT ', message);
+      console.log('fireEvent', 'UNKNOWN EVENT ', message.packet);
+      this.fire('unkown', { msg: message });
 
-      // this.printCommandStatus(command)
+      // this.printCommandStatus(message)
 
       // after wake :   UNKNOWN EVENT 141, 40,  1, 19, 17, 255, 179, 216
       // put in cradle  UNKNOWN EVENT 141, 56, 17,  1, 19,  28, 255,   1, 134, 216]
@@ -349,9 +349,9 @@ export class Receiver {
 
   /* Prints the status of a command */
   logOnError(command: any) {
-    switch (command.data[0]) {
+    switch (command.payload[0]) {
       case C.Errors.success:
-        // console.log(this.bolt.name, 'Success', command.seqNumber, command.data, command.flags);
+        // console.log(this.bolt.name, 'Success', command.seqNumber, command.payload, command.flags);
         break;
       case C.Errors.badDeviceId:
         console.log('Error: Bad device id');

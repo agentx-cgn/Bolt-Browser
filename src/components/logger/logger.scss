@@ -6,24 +6,25 @@ div.logger {
     font-family: monospace;
     border-collapse: collapse;
 
+    td.id, td.device, td.target, td.source, td.command {
+      text-align: right;
+    }
+
     thead {
-      font-weight: 800;
+      font-weight: 700;
       background-color: #666;
       color: white;
     }
 
     tbody {
 
-      font-size: 12px;
+      font-size: 13px;
 
       td {
         padding: 0 2px;
 
         &.timestamp {
           background-color: #ffffff44;
-        }
-        &.id {
-          text-align: right;
         }
 
       }

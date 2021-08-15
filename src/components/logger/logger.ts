@@ -24,35 +24,39 @@ const formatter = {
   //   ]);
   // },
   'action': function ({timestamp, bolt, type, subtype, data}: ILogline) {
-    return m('tr', {style: {backgroundColor: bolt.config.colors.log}}, [
+    const className = [type, subtype].join(' ');
+    return m('tr', { className, style: {backgroundColor: bolt.config.colors.log}}, [
       m('td.timestamp', time(timestamp)), m('td.bolt', bolt.name),
       m('td.type',    'Action'), m('td.subtype', subtype),
       m('td.id',      data.id),
       m('td.device',  data.device),
       m('td.command', data.command),
       m('td.target',  data.target || ' '),
-      m('td.data',    data.payload.join(' ')),
+      m('td.payload', data.payload.join(' ')),
     ]);
   },
   'event':   function ({timestamp, bolt, type, subtype, data}: ILogline) {
-    return m('tr', {style: {backgroundColor: bolt.config.colors.log}}, [
+    const className = [type, subtype].join(' ');
+    return m('tr', {className, style: {backgroundColor: bolt.config.colors.log}}, [
       m('td.timestamp', time(timestamp)), m('td.bolt', bolt.name),
       m('td.type',    'Event'), m('td.subtype', subtype),
-      m('td.id',      data.msg?.seqNumber || ' '),
-      m('td.device',  data.msg?.deviceId  || ' '),
-      m('td.command', data.msg.command    || ' '),
-      m('td.target',  data.msg?.targetId  || ' '),
-      m('td.data',    data.msg?.packet.join(' ')),
+      m('td.id',      data.msg?.id        || ' '),
+      m('td.device',  data.msg?.device    || ' '),
+      m('td.command', data.msg?.command   || ' '),
+      m('td.target',  data.msg?.target    || ' '),
+      m('td.payload', data.msg?.payload.join(' ')),
     ]);
   },
   'key':   function ({timestamp, bolt, type, subtype, data}: ILogline) {
-    return m('tr', {style: {backgroundColor: bolt.config.colors.log}}, [
+    const className = [type, subtype].join(' ');
+    return m('tr', { className, style: {backgroundColor: bolt.config.colors.log}}, [
       m('td.timestamp', time(timestamp)), m('td.bolt', bolt.name),
       m('td.type',   'Event'), m('td.subtype', subtype),
     ]);
   },
   'sensor':   function ({timestamp, bolt, type, subtype, data}: ILogline) {
-    return m('tr', {style: {backgroundColor: bolt.config.colors.log}}, [
+    const className = [type, subtype].join(' ');
+    return m('tr', {className, style: {backgroundColor: bolt.config.colors.log}}, [
       m('td.timestamp', time(timestamp)), m('td.bolt', bolt.name),
       m('td.type',    'Sensor'), m('td.subtype', subtype),
       m('td.id',      ' '),
@@ -63,7 +67,8 @@ const formatter = {
     ]);
   },
   'info':   function ({timestamp, bolt, type, subtype, data}: ILogline) {
-    return m('tr.info', {style: {backgroundColor: bolt.config.colors.log}}, [
+    const className = [type, subtype].join(' ');
+    return m('tr', {className, style: {backgroundColor: bolt.config.colors.log}}, [
       m('td.timestamp', time(timestamp)), m('td.bolt', bolt.name),
       m('td.type', 'Info'), m('td.subtype', subtype),
     ]);
@@ -82,7 +87,8 @@ export interface ILogline {
 
 const Logger = Factory.create('Logger', {
 
-  push : Array.prototype.push.bind(log),
+  // push : Array.prototype.push.bind(log),
+  push : Array.prototype.unshift.bind(log),
   sort : function(column='timsstamp') {
     log.sort( (a:any, b: any) => a[column] - b[column]);
   },
@@ -117,11 +123,11 @@ const Logger = Factory.create('Logger', {
           m('td', 'Bolt'),
           m('td', 'Type'),
           m('td', 'Name'),
-          m('td', 'ID'),
-          m('td', 'Dev'),
-          m('td', 'Cmd'),
-          m('td', 'Tgt'),
-          m('td', 'DATA'),
+          m('td.tr', 'ID'),
+          m('td.tr', 'D'),
+          m('td.tr', 'C'),
+          m('td.tr', 'T'),
+          m('td.tr', 'Payload'),
         ])),
         m('tbody', {}, log.slice(-500).map( (line: ILogline) => {
           return formatter[line.type](line);

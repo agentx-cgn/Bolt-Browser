@@ -1,6 +1,6 @@
 import m from "mithril";
 
-import { IAction, ICommand, IEvent, ICmdMessage } from './interfaces';
+import { IAction, IMessage, IEvent, IMsgAction } from './interfaces';
 import { CONSTANTS as C } from './constants';
 import { Bolt } from './bolt';
 import { pushByte } from './utils';
@@ -33,7 +33,7 @@ export class Queue {
   }
 
   /* Put a command message on the queue, might execute */
-  async queueMessage( message: ICmdMessage ): Promise<any> {
+  async queueMessage( message: IMsgAction ): Promise<any> {
 
     const prefix = ['%c' + this.bolt.name, 'color: ' + this.bolt.config.colors.console];
 
@@ -135,26 +135,26 @@ export class Queue {
   /** An action got acknowledged */
   onAcknowledgement ( event: IEvent ) {
 
-    const command: ICommand = event.msg;
-    const action:  IAction  = this.find( (action: IAction) => action.id === command.seqNumber );
+    const command: IMessage = event.msg;
+    const action:  IAction  = this.find( (action: IAction) => action.id === command.id );
 
     if (!action) debugger;
 
-    switch ( command.data[0] ) {
+    switch ( command.payload[0] ) {
 
       case C.Errors.success:
 
-        action.response = command.data.slice(1); //, -1 ??
+        action.response = command.payload.slice(1); //, -1 ??
         action.onSuccess();
 
         // don't log if only success
-        if ( (command.data.length > 1) ) {
+        if ( (command.payload.length > 1) ) {
           if ( !(
             // no longer interested in these
             action.name === 'batteryVoltage' ||
             action.name === 'ambientLight'
           )) {
-            console.log(this.bolt.name, 'Queue.notify.data', action.name, command.data)
+            console.log(this.bolt.name, 'Queue.notify.data', action.name, command.payload)
           }
         }
 
@@ -197,7 +197,7 @@ export class Queue {
   }
 
   /* Packet encoder */
-  createBytes( id: number, message: ICmdMessage ) {
+  createBytes( id: number, message: IMsgAction ) {
 
     const { device, command, target, data } = message;
     const flags = C.Flags.requestsResponse | C.Flags.resetsInactivityTimeout | (target ? C.Flags.commandHasTargetId : 0) ;
