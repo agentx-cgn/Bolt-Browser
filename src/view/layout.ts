@@ -41,13 +41,13 @@ const LayoutComponent = Factory.create('Layout', {
         m(Panel, {title: 'Plotter', width: '512px'},
           m(Plotter, {size: 512} )
         ),
-        m(Panel, {title: 'Logger', width: '800px' },
+        m(Panel, {title: 'Logger', width: '600px' },
           m(Logger,  {bolt: Bolts.get('SB-FAKE') })
         ),
         Bolts.map(( bolt: Bolt ) => {
-          return m(Panel, {title: bolt.name + ' - Status', width: '128px'}, [ m(BoltStatus, { bolt }) ])
+          return m(Panel, {title: bolt.name + ' - Status', width: '164px'}, [ m(BoltStatus, { bolt }) ])
         }),
-        m(Panel, {title: 'Meta', width: '128px'}, [
+        m(Panel, {title: 'Meta', width: '164px'}, [
           m('pre.plotterstatus.f7.mono.c333.pa2', { style },
           JSON.stringify(Plotter.meta(), null, 2))
         ]),
