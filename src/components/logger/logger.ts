@@ -16,16 +16,9 @@ function time(timestamp: number) {
 }
 
 const formatter = {
-  // 'message': function ({timestamp, bolt, type, subtype, data}: ILogline) {
-  //   return m('tr', {style: {backgroundColor: bolt.config.colors.log}}, [
-  //     m('td.timestamp', time(timestamp)), m('td.bolt', bolt.name),
-  //     m('td.type', type), m('td.subtype', subtype),
-  //     m('td.id', data.id),
-  //   ]);
-  // },
   'action': function ({timestamp, bolt, type, subtype, data}: ILogline) {
-    const className = [type, subtype].join(' ');
-    return m('tr', { className, style: {backgroundColor: bolt.config.colors.log}}, [
+    const className = [bolt.name, type, subtype].join(' ');
+    return m('tr', {  className }, [
       m('td.timestamp', time(timestamp)), m('td.bolt', bolt.name),
       m('td.type',    'Action'), m('td.subtype', subtype),
       m('td.id',      data.id),
@@ -36,8 +29,8 @@ const formatter = {
     ]);
   },
   'event':   function ({timestamp, bolt, type, subtype, data}: ILogline) {
-    const className = [type, subtype].join(' ');
-    return m('tr', {className, style: {backgroundColor: bolt.config.colors.log}}, [
+    const className = [bolt.name, type, subtype].join(' ');
+    return m('tr', { className }, [
       m('td.timestamp', time(timestamp)), m('td.bolt', bolt.name),
       m('td.type',    'Event'), m('td.subtype', subtype),
       m('td.id',      data.msg?.id        || ' '),
@@ -48,15 +41,15 @@ const formatter = {
     ]);
   },
   'key':   function ({timestamp, bolt, type, subtype, data}: ILogline) {
-    const className = [type, subtype].join(' ');
-    return m('tr', { className, style: {backgroundColor: bolt.config.colors.log}}, [
+    const className = [bolt.name, type, subtype].join(' ');
+    return m('tr', {  className }, [
       m('td.timestamp', time(timestamp)), m('td.bolt', bolt.name),
       m('td.type',   'Event'), m('td.subtype', subtype),
     ]);
   },
   'sensor':   function ({timestamp, bolt, type, subtype, data}: ILogline) {
-    const className = [type, subtype].join(' ');
-    return m('tr', {className, style: {backgroundColor: bolt.config.colors.log}}, [
+    const className = [bolt.name, type, subtype].join(' ');
+    return m('tr', { className }, [
       m('td.timestamp', time(timestamp)), m('td.bolt', bolt.name),
       m('td.type',    'Sensor'), m('td.subtype', subtype),
       m('td.id',      ' '),
@@ -67,8 +60,8 @@ const formatter = {
     ]);
   },
   'info':   function ({timestamp, bolt, type, subtype, data}: ILogline) {
-    const className = [type, subtype].join(' ');
-    return m('tr', {className, style: {backgroundColor: bolt.config.colors.log}}, [
+    const className = [bolt.name, type, subtype].join(' ');
+    return m('tr', { className }, [
       m('td.timestamp', time(timestamp)), m('td.bolt', bolt.name),
       m('td.type', 'Info'), m('td.subtype', subtype),
     ]);

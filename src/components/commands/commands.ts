@@ -14,17 +14,18 @@ const BoltCommands = Factory.create('Layout', {
 
     const bolt: Bolt = vnode.attrs.bolt;
     // const style = { background: bolt.config.colors.backcolor, height: '34px' };
-    const style = { background: bolt.config.colors.backcolor};
+    // const style = { background: bolt.config.colors.backcolor};
+    const className = bolt.name
 
     // https://www.w3schools.com/charsets/ref_utf_arrows.asp
     // ⇧⇦⇨⇩
 
     return  ( !bolt.connected
-      ? m('div.commands.w-100.pa2', { style }, m('[', [
+      ? m('div.commands.w-100.pa2', { className }, m('[', [
           m('div.di.ma2.f3.mono', bolt.name),
           m('span.ml3.f5.mono', `Connecting: rssi: ${bolt.status.rssi}, txPOwer: ${bolt.status.txPower}`)
         ]))
-      : m('div.commands.w-100.pa2', { style }, [
+      : m('div.commands.w-100.pa2', { className }, [
           m('div.di.f3.ma2.mono', bolt.name),
           m('button.br2.mh1.cmd', { onclick: () => Bolts.disconnect(bolt) },                             'Disconnect'),
           m('button.br2.mh1.cmd', { onclick: bolt.actuators.sleep.bind(bolt.actuators) },                'Sleep'),

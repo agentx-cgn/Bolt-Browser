@@ -83,6 +83,14 @@ class bolts {
     // allows: await Bolts.get('SB-9129').actuators.roll(0, 90) in console
     window.Bolts = this;
 
+    // make css for bolt names
+    const style = document.createElement('style');
+    for (const [key, config] of Object.entries(this.configs)) {
+      style.innerHTML += `.${key} { background-color: ${config.colors.backcolor}; }`;
+    }
+    document.getElementsByTagName('head')[0].appendChild(style);
+
+
     this.autoaction();
 
 	}
