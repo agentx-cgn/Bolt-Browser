@@ -2,9 +2,9 @@
 
 import m from "mithril";
 
-import { CONSTANTS as C }  from '../constants';
+import { CONSTANTS as C }  from './constants';
 import { Bolt } from './bolt';
-import { Logger } from '../../view/logger';
+import { Logger } from '../../components/logger/logger';
 import { Scripter } from './scripter';
 import { IConfig } from './interfaces';
 
@@ -164,6 +164,7 @@ class bolts {
         const bolt: Bolt = this.find( (bolt: Bolt) => bolt.name === device.name );
         if (bolt) {
           bolt.status.rssi    = event.rssi;
+          // Math.min(Math.max(2 * (txPower + 100), 0), 100)
           bolt.status.txPower = event.txPower;
         }
         // console.log(device.name, 'advertisementreceived', {rssi: event.rssi, txPower: event.txPower});
@@ -340,7 +341,7 @@ class bolts {
       await charac.startNotifications();
     }
 
-    const characteristicvaluechanged = bolt.receiver.getCharacteristicValueParser();
+    const characteristicvaluechanged = bolt.receiver.getCharacteristicValueParser(charac.uuid);
 
 		bolt.characs.set(charac.uuid, charac);
     charac.addEventListener('characteristicvaluechanged', characteristicvaluechanged);

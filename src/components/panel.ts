@@ -4,7 +4,7 @@ import m from "mithril";
 
 // // import { H }        from '../view/services/helper';
 // import { Nothing }  from './components/misc';
-import Factory      from '../components/factory';
+import Factory      from './factory';
 
 export const Panel = Factory.create('Panel', {
 

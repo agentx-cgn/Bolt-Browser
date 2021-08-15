@@ -1,4 +1,4 @@
-import { CONSTANTS as C } from '../constants';
+import { CONSTANTS as C } from './constants';
 
 export function  ab2str(buf: ArrayBuffer): string {
   return String.fromCharCode.apply(null, new Uint16Array(buf));

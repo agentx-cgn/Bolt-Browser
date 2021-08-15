@@ -1,4 +1,4 @@
-import { CONSTANTS as C } from '../constants';
+import { CONSTANTS as C } from './constants';
 import { maskToRaw, flatSensorMask } from './utils';
 
 import { Bolt } from './bolt';

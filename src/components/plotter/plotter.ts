@@ -1,11 +1,11 @@
 import m from "mithril";
-import Factory   from './factory';
+import Factory   from '../factory';
 
-import { Bolts } from '../devices/bolt/bolts';
-import { Bolt } from "../devices/bolt/bolt";
+import { Bolts } from '../../devices/bolt/bolts';
+import { Bolt } from "../../devices/bolt/bolt";
 
-import { ISensorData } from '../devices/bolt/interfaces';
-import { H } from "../services/helper";
+import { ISensorData } from '../../devices/bolt/interfaces';
+import { H } from "../../services/helper";
 
 
 let series = [] as any;

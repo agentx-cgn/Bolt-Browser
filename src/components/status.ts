@@ -3,8 +3,8 @@ import m from "mithril";
 // import './status.scss';
 // import { H }        from '../view/services/helper';
 
-import Factory from '../components/factory';
-import { Bolt } from './../devices/bolt/bolt';
+import Factory from './factory';
+import { Bolt } from '../devices/bolt/bolt';
 
 const BoltStatus = Factory.create('Layout', {
 

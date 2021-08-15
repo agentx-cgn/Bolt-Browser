@@ -103,7 +103,7 @@ export interface IAction {
   device:       number,
   target:       number,
   command:      number,
-  bytes:        number[],
+  bytes:        Uint8Array,
   charac:       BluetoothRemoteGATTCharacteristic,
   acknowledged: boolean,
   executed:     boolean,

@@ -5,9 +5,9 @@ import './logger.scss';
 
 // import { H }        from '../view/services/helper';
 
-import Factory from '../components/factory';
-import { Bolt } from './../devices/bolt/bolt';
-import { IAction, IEvent } from "./../devices/bolt/interfaces";
+import Factory from '../factory';
+import { Bolt } from '../../devices/bolt/bolt';
+import { IAction, IEvent } from "../../devices/bolt/interfaces";
 
 const log = [] as ILogline[];
 
@@ -107,7 +107,9 @@ const Logger = Factory.create('Logger', {
 
 
   view( vnode: any ) {
+
     const style = {height: '512px', overflowY: 'scroll'};
+
     return m('div.logger', { style },
       m('table', {}, [
         m('thead', {}, m('tr', {}, [

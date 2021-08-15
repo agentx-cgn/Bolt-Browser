@@ -1,6 +1,6 @@
 import m from "mithril";
 
-import { CONSTANTS as C }  from '../constants';
+import { CONSTANTS as C }  from './constants';
 import { IStatus, IMagic, TColor, IEvent, IAction, ISensorData, IConfig } from "./interfaces";
 import { wait } from './utils'
 
@@ -9,10 +9,10 @@ import { Receiver } from './receiver';
 import { Actuators } from './actuators';
 import { Sensors } from './sensors';
 import { Scripter } from './scripter';
-import { Logger } from '../../view/logger';
+import { Logger } from '../../components/logger/logger';
 import { Queue } from './queue';
 import { H } from "../../services/helper";
-import { Plotter } from "../../components/plotter";
+import { Plotter } from "../../components/plotter/plotter";
 
 export class Bolt {
 

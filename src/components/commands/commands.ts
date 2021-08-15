@@ -3,10 +3,10 @@ import m from "mithril";
 import './commands.scss';
 
 // import { H }        from '../view/services/helper';
-import Factory      from '../components/factory';
+import Factory      from '../factory';
 
-import { Bolts }  from './../devices/bolt/bolts';
-import { Bolt }   from './../devices/bolt/bolt';
+import { Bolts }  from '../../devices/bolt/bolts';
+import { Bolt }   from '../../devices/bolt/bolt';
 
 const BoltCommands = Factory.create('Layout', {
 

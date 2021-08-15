@@ -12,5 +12,5 @@
       "esModuleInterop": true,
     },
     "exclude": ["node_modules", "**/*.spec.ts", "**/*.test.ts"],
-    "include": ["src", "index.d.ts"]
+    "include": ["src", "index.d.ts", "stuff/bolts.ts", "stuff/home.component.ts"]
   }

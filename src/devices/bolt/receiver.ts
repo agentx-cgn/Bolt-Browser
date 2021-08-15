@@ -1,10 +1,10 @@
 
-import { CONSTANTS as C } from '../constants';
+import { CONSTANTS as C } from './constants';
 import { Bolt } from './bolt';
 import { ICommand, IEvent } from './interfaces';
 import { decodeFlags, logDataView, parseSensorResponse } from './utils';
 import * as Mousetrap from 'Mousetrap';
-import { Logger } from '../../view/logger';
+import { Logger } from '../../components/logger/logger';
 
 
 export class Receiver {
@@ -127,7 +127,7 @@ export class Receiver {
 
   }
 
-  getCharacteristicValueParser() {
+  getCharacteristicValueParser(uuid: string) {
 
     let i, packet: any[], sum: number, escaped: boolean;
 
@@ -145,6 +145,8 @@ export class Receiver {
     return function onCharacteristicValueChanged (event: any) {
 
       let len = event.target.value.byteLength;
+
+      if (uuid !== '00010002-574f-4f20-5370-6865726f2121') { console.log('CharacChanged', uuid, len); }
 
       for (i = 0; i < len; i++) {
 

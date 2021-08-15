@@ -1,8 +1,8 @@
 import m from "mithril";
 
-import { Bolts }  from '../devices/bolt/bolts';
-import { Bolt }   from '../devices/bolt/bolt';
-import { IAction } from "../devices/bolt/interfaces";
+import { Bolts }  from '../src/devices/bolt/bolts';
+import { Bolt }   from '../src/devices/bolt/bolt';
+import { IAction } from "../src/devices/bolt/interfaces";
 
 const HomeComponent = class {
 

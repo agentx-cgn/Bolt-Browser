@@ -3,7 +3,7 @@ import m from "mithril";
 
 import Factory     from '../factory';
 import { Bolts }  from '../../devices/bolt/bolts';
-import { Plotter } from '../plotter';
+import { Plotter } from '../plotter/plotter';
 import { Bolt }   from '../../devices/bolt/bolt';
 
 import iconBluetooth from './../../assets/bluetooth.icon.256.png';

@@ -1,6 +1,6 @@
 
 
-import { CONSTANTS as C } from '../constants';
+import { CONSTANTS as C } from './constants';
 import { Bolt } from './bolt';
 import { IEvent, TColor, TNum, IPoint, ISensorData } from './interfaces';
 import { maskToRaw, flatSensorMask, wait } from './utils';

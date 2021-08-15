@@ -1,10 +1,10 @@
 import m from "mithril";
 
 import { IAction, ICommand, IEvent, ICmdMessage } from './interfaces';
-import { CONSTANTS as C } from '../constants';
+import { CONSTANTS as C } from './constants';
 import { Bolt } from './bolt';
 import { pushByte } from './utils';
-import { Logger } from "../../view/logger";
+import { Logger } from "../../components/logger/logger";
 
 export class Queue {
 
@@ -50,7 +50,7 @@ export class Queue {
         device:       message.device,
         command:      message.command,
         target:       message.target || NaN,
-        bytes:        this.createCommand(this.incrementer, message),
+        bytes:        new Uint8Array(this.createBytes(this.incrementer, message)),
         charac:       this.bolt.characs.get(C.APIV2_CHARACTERISTIC),
         acknowledged: false,
         executed:     false,
@@ -103,7 +103,7 @@ export class Queue {
       this.write( nextAction, (lastAction: IAction) => {
 
         this.waiting = false;
-        lastAction.executed = true;
+        // lastAction.executed = true;
         this.execute(this.findNextAction());
         m.redraw();
 
@@ -118,13 +118,14 @@ export class Queue {
 
     try {
       Logger.action(this.bolt, action);
-      await action.charac.writeValue(new Uint8Array(action.command));
+      // await action.charac.writeValue(new Uint8Array(action.bytes));
+      await action.charac.writeValue(action.bytes);
 
     } catch(error) {
-      action.executed = true;
       console.log('Queue.write.error', error.message);
 
     } finally {
+      action.executed = true;
       callback(action);
 
     }
@@ -196,7 +197,7 @@ export class Queue {
   }
 
   /* Packet encoder */
-  createCommand( id: number, message: ICmdMessage ) {
+  createBytes( id: number, message: ICmdMessage ) {
 
     const { device, command, target, data } = message;
     const flags = C.Flags.requestsResponse | C.Flags.resetsInactivityTimeout | (target ? C.Flags.commandHasTargetId : 0) ;
