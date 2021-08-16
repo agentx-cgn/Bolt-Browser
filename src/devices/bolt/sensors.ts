@@ -4,16 +4,21 @@ import { maskToRaw, flatSensorMask } from './utils';
 import { Bolt } from './bolt';
 import { Receiver } from './receiver';
 import { TNum, IEvent, ISensorData } from './interfaces';
+import { Logger } from '../../components/logger/logger';
 
 export class Sensors {
 
 	private bolt:     Bolt;
 	private receiver: Receiver;
 
+  // power  = 19, // 0x13
+  // sensor = 24, // 0x18
+
 	private sensors = {
-    batteryVoltage:     { device: C.Device.powerInfo,     command: C.CMD.Power.batteryVoltage,      target: 0x11,   data: [] as TNum },
-    batteryState:       { device: C.Device.powerInfo,     command: C.CMD.Power.batteryState,        target: 0x11,   data: [] as TNum },
-    ambientLight:       { device: C.Device.sensor,        command: C.CMD.Sensor.ambientLight,       target: 0x12,   data: [] as TNum },
+    batteryVoltage:     { device: C.Device.powerInfo,     command: C.CMD.Power.batteryVoltage,       target: 0x11,   data: [] as TNum },
+    batteryState:       { device: C.Device.powerInfo,     command: C.CMD.Power.batteryVoltageState,  target: 0x11,   data: [] as TNum },
+    chargerState:       { device: C.Device.powerInfo,     command: C.CMD.Power.chargerState,         target: 0x11,   data: [] as TNum },
+    ambientLight:       { device: C.Device.sensor,        command: C.CMD.Sensor.ambientLight,        target: 0x12,   data: [] as TNum },
 
     // batteryPercentage: { device: C.Device.powerInfo, command: C.CMD.Power.get_battery_percentage,     target: 0x11, data: [] as TNum },
 
@@ -30,16 +35,82 @@ export class Sensors {
     return await this.bolt.queue.queueMessage(message);
   }
 
-	/** TODOs
-	 *
-	 *  deal with sensor drift
-	 *  deal with swapping North and South
-	 *
-	 */
+	async activate() {
+    await this.enableCollisionEvent();
+    await this.enableGyroEvent();
+    await this.enableChargerEvent();
+    await this.enableBatteryEvent();
+    await this.enableInfraredEvent(4);  // bad data length
+    return Promise.resolve(true);
+  }
 
-	activate() {
+  async enableCollisionEvent(xThreshold = 100, yThreshold = 100, xSpeed = 100, ySpeed = 100, deadTime = 10, method = 0x01) {
+    return await this.bolt.queue.queueMessage({
+      name:    'enableCollisionEvent',
+      device:  C.Device.sensor,
+      command: C.CMD.Sensor.collisionEvent, // SensorCommandIds.configureCollision,
+      target:  0x12,
+      data:   [method, xThreshold, xSpeed, yThreshold, ySpeed, deadTime]
+    });
+  }
+  async disableCollisionEvent() {
+    return await this.bolt.queue.queueMessage({
+      name:    'enableCollisionEvent',
+      device:  C.Device.sensor,
+      command: 0x14, //C.CMD.Sensor.collisionEvent, // SensorCommandIds.configureCollision,
+      target:  0x12,
+      data:   [0]
+    });
+  }
 
-	}
+  async enableBatteryEvent() {
+    return await this.bolt.queue.queueMessage({
+      name:      'enableBatteryEvent',
+      device:    C.Device.powerInfo,
+      command:   C.CMD.Power.batteryEvent,
+      target:    0x11,
+      data: [1]
+    });
+  }
+  async enableChargerEvent() {
+    return await this.bolt.queue.queueMessage({
+      name:      'enableChargerEvent',
+      device:    C.Device.powerInfo,
+      command:   0x20, //C.CMD.Power.chargerEvent,
+      target:    0x11,
+      data: [1]
+    });
+  }
+  async enableGyroEvent() {
+    return await this.bolt.queue.queueMessage({
+      name:      'enableGyroEvent',
+      device:    C.Device.sensor,
+      command:   0x0F, // C.CMD.Sensor.gyroEvent,
+      target:    0x12,
+      data: [1]
+    });
+  }
+  async disbaleGyroEvent() {
+    return await this.bolt.queue.queueMessage({
+      name:      'enableGyroEvent',
+      device:    C.Device.sensor,
+      command:   0x0F, // C.CMD.Sensor.gyroEvent,
+      target:    0x12,
+      data: [0]
+    });
+  }
+  async enableInfraredEvent(channel: number) {
+    return await this.bolt.queue.queueMessage({
+      name:      'enableInfraredEvent',
+      device:    C.Device.sensor,
+      command:   0x2B, //C.CMD.Sensor.infraredListenEvent,
+      target:    0x12,
+      // data: [1, channel], // Bad Data Length
+      // data: [1],          // Bad Data Length
+      // data: [1,1,1]
+      data: [1,2,3,4, 5]// Bad Data Length
+    });
+  }
 
 // EDU: current firmware versions 4.2.41, 4.2.44
 
@@ -53,31 +124,41 @@ export class Sensors {
 //  getBotToBotInfraredReadings(): Promise<string | never>;
 //  /**
 
-async info() {
-	// await this.batteryVoltage();
-	// await this.ambientLight();
-	// await this.batteryPercentage(); bad command ID
-	// await this.getInfo(C.CMD.SystemInfo.mainApplicationVersion);
-	// await this.getInfo(C.CMD.SystemInfo.bootloaderVersion);
-	// await this.getBTName(17, 0x19, 0x04);
-	// await this.getBTAdName(17, 0x19, 0x05);
-}
+  async info() {
+    Logger.info('Sensor.info');
+    await this.batteryState();
+    await this.chargerState();
+    await this.batteryVoltage();
+    await this.ambientLight();
+    return Promise.resolve(true);
+  }
 
-
-  // "Will Sleep Notify", "0x13", "0x19"),
-  // "Did Sleep Notify", "0x13", "0x1A"),
-  // "Battery Voltage State Change Notify", "0x13", "0x1C"),
-  // "Charger State Changed Notify", "0x13", "0x21"),
-  // "Sensor Streaming Data Notify", "0x18", "0x02"),
-  // "Gyro Max Notify", "0x18", "0x10"),
-  // "Collision Detected Notify", "0x18", "0x12"),
-  // "Magnetometer North Yaw Notify", "0x18", "0x26"),
-  // "Robot To Robot Infrared Message Received Notify", "0x18", "0x2C"),
-  // "Set Compressed Frame Player Text Scrolling Notify", "0x1A", "0x3C"),
-  // "Compressed Frame Player Animation Complete Notify", "0x1A", "0x3F"),
-
-
-
+  async batteryVoltage() {
+    return await this
+      .queue('batteryVoltage')
+      // .then(cmd => { this.bolt.status.voltage = cmd.responseData.slice(-1).join(' '); })
+      .then(action => { console.log('batteryVoltage', action.response); })
+    ;
+  }
+  async batteryState() {
+    return await this
+      .queue('batteryState')
+      .then(action => { console.log('batteryState', action.response); })
+    ;
+  }
+  async chargerState() {
+    return await this
+      .queue('chargerState')
+      .then(action => { console.log('chargerState', action.response); })
+    ;
+  }
+  async ambientLight() {
+    return await this
+      .queue('ambientLight')
+      .then(action => { console.log('ambientLight', action.response); })
+      // .then(cmd => this.bolt.status.ambient = cmd.responseData.slice(-3).join(' '))
+    ;
+  }
 
   async disableSensors() {
     this.bolt.status.sensors = {};
@@ -95,7 +176,7 @@ async info() {
     console.log(this.bolt.name, 'sensor.on');
     return Promise.resolve(true);
   }
-  async enableSensorsAll(interval = 2000) {
+  async enableSensorsAll(interval = 1000) {
     this.bolt.status.sensors = {
       locator:     true,
       orientation: true,
@@ -151,54 +232,29 @@ async info() {
   // - - - -  INFO
 
   // https://sdk.sphero.com/docs/sdk_documentation/system_info/
-  async getInfo(what: number) {
-    return await this.bolt.queue.queueMessage({
-      name: 'getInfo-' + String(what),
-      device: C.Device.systeminfo,
-      // command:   C.CMD.systeminfo.mainApplicationVersion,
-      command: what,
-      target: 0x12,
-      data: []
-    });
-  }
+  // async getInfo(what: number) {
+  //   return await this.bolt.queue.queueMessage({
+  //     name: 'getInfo-' + String(what),
+  //     device: C.Device.systeminfo,
+  //     // command:   C.CMD.systeminfo.mainApplicationVersion,
+  //     command: what,
+  //     target: 0x12,
+  //     data: []
+  //   });
+  // }
 
-  async getAmbientLight() {
-    return await this.bolt.queue.queueMessage({
-      name:     'getAmbientLight',
-      device:    C.Device.sensor,
-      command:   C.CMD.Sensor.ambientLight,
-      target:    0x12,
-      data:      []
-    });
-  }
+  // async getAmbientLight() {
+  //   return await this.bolt.queue.queueMessage({
+  //     name:     'getAmbientLight',
+  //     device:    C.Device.sensor,
+  //     command:   C.CMD.Sensor.ambientLight,
+  //     target:    0x12,
+  //     data:      []
+  //   });
+  // }
 
 
-  async enableCollisionEvent(xThreshold = 100, yThreshold = 100, xSpeed = 100, ySpeed = 100, deadTime = 10, method = 0x01) {
-    return await this.bolt.queue.queueMessage({
-      name:    'enableCollisionEvent',
-      device:  C.Device.sensor,
-      command: C.CMD.Sensor.configureCollision, // SensorCommandIds.configureCollision,
-      target:  0x12,
-      data:   [method, xThreshold, xSpeed, yThreshold, ySpeed, deadTime]
-    });
-  }
 
-  async enableBatteryChangeEvent() {
-    return await this.bolt.queue.queueMessage({
-      name:      'enableBatteryChangeEvent',
-      device:    C.Device.powerInfo,
-      command:   C.CMD.Power.batteryChangeNotify,
-      data: []
-    });
-  }
-  async enableGyroMaxEvent() {
-    return await this.bolt.queue.queueMessage({
-      name:      'enableGyroMaxEvent',
-      device:    C.Device.sensor,
-      command:   C.CMD.Sensor.gyroMax,
-      data: []
-    });
-  }
 
 
 

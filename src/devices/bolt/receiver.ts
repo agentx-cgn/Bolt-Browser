@@ -1,7 +1,7 @@
 
 import { CONSTANTS as C } from './constants';
 import { Bolt } from './bolt';
-import { IMessage, IEvent } from './interfaces';
+import { TBatteryState, IMessage, IEvent } from './interfaces';
 import { decodeFlags, logDataView, parseSensorResponse } from './utils';
 import * as Mousetrap from 'Mousetrap';
 import { Logger } from '../../components/logger/logger';
@@ -251,6 +251,18 @@ export class Receiver {
 
   fireEvent (message: IMessage) {
 
+  // "Will Sleep Notify", "0x13", "0x19"),
+  // "Did Sleep Notify", "0x13", "0x1A"),
+  // "Battery Voltage State Change Notify", "0x13", "0x1C"),
+  // "Charger State Changed Notify", "0x13", "0x21"),
+  // "Sensor Streaming Data Notify", "0x18", "0x02"),
+  // "Gyro Max Notify", "0x18", "0x10"),
+  // "Collision Detected Notify", "0x18", "0x12"),
+  // "Magnetometer North Yaw Notify", "0x18", "0x26"),
+  // "Robot To Robot Infrared Message Received Notify", "0x18", "0x2C"),
+  // "Set Compressed Frame Player Text Scrolling Notify", "0x1A", "0x3C"),
+  // "Compressed Frame Player Animation Complete Notify", "0x1A", "0x3F"),
+
     /**
      * on charging
      * on not charging
@@ -266,54 +278,55 @@ export class Receiver {
      * on time
      */
 
+    const device  = message.device;
+    const event   = message.command;
+    const payload = message.payload;
+
     if (
-      message.device  === C.Device.powerInfo &&
-      message.command === C.CMD.Power.batteryStateChange ) {
+      device  === C.Device.powerInfo &&
+      event   === C.Events.battery ) {
 
-      const state = message.payload[0];
-
-      if (state === C.Battery.charging    ||
-          state === C.Battery.notCharging ||
-          state === C.Battery.charged     ) {
-
-        // charging, not charging, charged
-        this.fire('battery', { sensordata: state });
-
-      } else {
-        console.log('Unknown battery state', message);
-
-      }
+      this.fire('battery', { sensordata: payload });
 
     } else if (
-      message.device  === C.Device.powerInfo &&
-      message.command === C.CMD.Power.willSleepAsync ) {
+      device  === C.Device.powerInfo &&
+      event   === C.Events.charger ) {
 
-      this.fire('willsleep', { msg: message });
-
-    } else if (
-      message.device  === C.Device.powerInfo &&
-      message.command === C.CMD.Power.sleepAsync ) {
-
-      this.fire('sleep', { msg: message });
+      this.fire('charger', { sensordata: { charger: payload[0] as TBatteryState } });
 
     } else if (
-      message.device  === C.Device.powerInfo &&
-      message.command === C.CMD.Sensor.configureCollision ) {
+      device  === C.Device.powerInfo &&
+      event   === C.Events.willsleep ) {
 
-      // this.fire('unkown', { msg: command });
-      // console.log('EVENT.unknown', 'powerInfo', 'configureCollision', command.payload);
-      const c = message;
-      console.log('EVENT.Unknown', 'src', c.source, 'dev', c.device, 'cmd', c.command);
+      this.fire('willsleep', { sensordata: payload });
 
     } else if (
-      message.device  === C.Device.sensor &&
-      message.command === C.CMD.Sensor.collisionDetectedAsync ) {
+      device  === C.Device.powerInfo &&
+      event   === C.Events.didsleep ) {
 
-      this.fire('collision', { msg: message });
+      this.fire('didsleep', { sensordata: payload });
 
     } else if (
-      message.device  === C.Device.sensor &&
-      message.command === C.CMD.Sensor.sensorResponse ) {
+      device  === C.Device.sensor &&
+      event   === C.Events.gyro ) {
+
+      this.fire('gyro', { sensordata: payload });
+
+    } else if (
+      device  === C.Device.sensor &&
+      event   === C.Events.collision ) {
+
+      this.fire('collision', { sensordata: payload });
+
+    } else if (
+      device  === C.Device.sensor &&
+      event   === C.Events.infrared ) {
+
+      this.fire('infrared', { sensordata: payload });
+
+    } else if (
+      device  === C.Device.sensor &&
+      event   === C.Events.sensor ) {
 
       const sensordata = parseSensorResponse(message.payload, this.bolt.status.rawMask);
       if (sensordata.locator) {
@@ -323,18 +336,19 @@ export class Receiver {
       }
 
     } else if (
-      message.device  === C.Device.sensor &&
-      message.command === C.CMD.Sensor.compassNotify ) {
+      device  === C.Device.sensor &&
+      event   === C.Events.yaw ) {
 
       let angle = message.payload[0] << 8;
       angle    += message.payload[1];
 
-      this.fire('compass', { sensordata: angle });
+      this.fire('compass', { sensordata: { angle } });
 
     } else {
-      console.log('fireEvent', 'UNKNOWN EVENT ', message);
-      console.log('fireEvent', 'UNKNOWN EVENT ', message.packet);
-      this.fire('unkown', { msg: message });
+      console.log('fireEvent', 'UNKNOWN EVENT ', 'DEV', '0x'+message.device.toString(16), 'CMD', '0x'+message.command.toString(16), 'bytes', message.payload);
+
+      // console.log('fireEvent', 'UNKNOWN EVENT ', message.packet);
+      // this.fire('unkown', { msg: message });
 
       // this.printCommandStatus(message)
 

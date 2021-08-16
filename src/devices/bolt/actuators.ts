@@ -2,8 +2,8 @@
 
 import { CONSTANTS as C } from './constants';
 import { Bolt } from './bolt';
-import { IEvent, TColor, TNum, IPoint, ISensorData } from './interfaces';
-import { maskToRaw, flatSensorMask, wait } from './utils';
+import { IEvent, TColor, TNum, IPoint } from './interfaces';
+import { wait } from './utils';
 import { Aruco } from '../../services/aruco';
 import { H } from "../../services/helper";
 import { math as M } from "../../services/math";
@@ -17,19 +17,13 @@ export class Actuators {
     wake:               { device: C.Device.powerInfo,     command: C.CMD.Power.wake,                                data: [] as TNum },
     sleep:              { device: C.Device.powerInfo,     command: C.CMD.Power.sleep,                               data: [] as TNum },
     hibernate:          { device: C.Device.powerInfo,     command: C.CMD.Power.deepSleep,                           data: [] as TNum },
-    // batteryVoltage:     { device: C.Device.powerInfo,     command: C.CMD.Power.batteryVoltage,      target: 0x11,   data: [] as TNum },
-    // batteryState:       { device: C.Device.powerInfo,     command: C.CMD.Power.batteryState,        target: 0x11,   data: [] as TNum },
-    // ambientLight:       { device: C.Device.sensor,        command: C.CMD.Sensor.ambientLight,       target: 0x12,   data: [] as TNum },
     calibrateCompass:   { device: C.Device.sensor,        command: C.CMD.Sensor.calibrateToNorth,   target: 0x12,   data: [] as TNum },
     resetLocator:       { device: C.Device.sensor,        command: C.CMD.Sensor.resetLocator,       target: 0x12,   data: [] as TNum },
     stabilize:          { device: C.Device.driving,       command: C.CMD.Driving.stabilization,     target: 0x12,   data: [ /* index */] as TNum },
     resetYaw:           { device: C.Device.driving,       command: C.CMD.Driving.resetYaw,          target: 0x12,   data: [] as TNum },
     roll:               { device: C.Device.driving,       command: C.CMD.Driving.driveWithHeading,  target: 0x12,   data: [ /* speed, (heading >> 8) & 0xff, heading & 0xff, flags */] as TNum },
     rotateMatrix:       { device: C.Device.userIO,        command: C.CMD.IO.matrixRotation,         target: 0x12,   data: [ /* 0|1|2|3 */] as TNum },
-    matrixColor:     { device: C.Device.userIO,        command: C.CMD.IO.matrixColor,            target: 0x12,   data: [ /* r, g, b */] as TNum },
-
-    // batteryPercentage: { device: C.Device.powerInfo, command: C.CMD.Power.get_battery_percentage,     target: 0x11, data: [] as TNum },
-
+    matrixColor:        { device: C.Device.userIO,        command: C.CMD.IO.matrixColor,            target: 0x12,   data: [ /* r, g, b */] as TNum },
   } as any;
 
   constructor(bolt: Bolt) {
@@ -68,33 +62,10 @@ export class Actuators {
   async ping() {
     return await this
       .queue('ping')
-      .then(data => { console.log('ping', data); })
+      // .then(data => { console.log('ping', data); })
     ;
   }
-  async batteryVoltage() {
-    return await this
-      .queue('batteryVoltage')
-      .then(cmd => { this.bolt.status.voltage = cmd.responseData.slice(-1).join(' '); })
-    ;
-  }
-  async batteryState() {
-    return await this
-      .queue('batteryState')
-      .then(data => { console.log('batteryState', data); })
-    ;
-  }
-  async batteryPercentage() {
-    return await this
-      .queue('batteryPercentage')
-      .then(cmd => { this.bolt.status.percentage = cmd.responseData; })
-    ;
-  }
-  async ambientLight() {
-    return await this
-      .queue('ambientLight')
-      .then(cmd => this.bolt.status.ambient = cmd.responseData.slice(-3).join(' '))
-    ;
-  }
+
 
 
   // - - - - - DRIVING - - - - //
@@ -220,7 +191,7 @@ export class Actuators {
 
     return new Promise( async (resolve, reject) => {
 
-      const fullStopListener = async (event: IEvent) => {
+      const fullStopListener = async () => {
         await this.bolt.receiver.off('fullstop',   fullStopListener);
         await this.bolt.receiver.off('sensordata', sensorListener);
         resolve('fullstop');
@@ -228,14 +199,12 @@ export class Actuators {
 
       const sensorListener = async (event: IEvent) => {
 
-        let speed: number, x: number, y: number, distance: number, heading: number;
+        let speed: number, distance: number, heading: number;
 
         const location = {
           x: event.sensordata.locator.positionX,
           y: event.sensordata.locator.positionY,
-        }
-                                                  // x        = event.sensordata.locator.positionX;
-                                                  // y        = event.sensordata.locator.positionY;
+        } as IPoint;
         distance = M.distance(target, location);  // Math.hypot(target.x - x, target.y - y);
         heading  = M.heading(location, target);   // Math.atan2(y - target.y, x - target.x) * -180 / Math.PI +270;
         heading  = M.mod(heading);                //(heading + 360) % 360;
@@ -250,15 +219,15 @@ export class Actuators {
 
         console.log(this.bolt.name, 'rollToPoint', 'speed', speed, 'distance', distance);
 
-        if (distance < tolerance) {
+        if (distance > tolerance) {
+          await this.roll(speed, heading);
+
+        } else {
           console.log('rollToPoint.out:', this.bolt.status.position, '=>', target);
           await this.stop();
           await this.bolt.receiver.off('sensordata', sensorListener);
           await this.bolt.receiver.off('fullstop',   fullStopListener);
           resolve(distance);
-
-        } else {
-          await this.roll(speed, heading);
           // console.log('rollToPoint.tck:', this.bolt.status.position, '=>', target, 'd', ~~distance, 'h', ~~heading);
 
         }
@@ -298,17 +267,8 @@ export class Actuators {
           y: event.sensordata.locator.velocityY,
         }
 
-        // posX   = event.sensordata.locator.positionX;
-        // posY   = event.sensordata.locator.positionY;
-        // velX   = event.sensordata.locator.velocityX;
-        // velY   = event.sensordata.locator.velocityY;
-
-        heading = M.mod(M.heading(location, target));
-
-        // heading  = Math.atan2(posY - target.y, posX - target.x) * -180 / Math.PI +270;
-        // heading  = (heading + 360) % 360;
-
-        delta    = M.angleDistance(heading, this.bolt.heading);
+        heading = M.mod(M.heading(location, target))
+        delta   = M.angleDistance(heading, this.bolt.heading);
 
         console.log(this.bolt.name, 'calibrate', this.bolt.heading, heading, delta);
 
@@ -341,7 +301,7 @@ export class Actuators {
 
         this.bolt.receiver.off('compass', listener);
 
-        const angle = e.sensordata;
+        const angle = e.sensordata.angle;
         const color: TColor = this.bolt.config.colors.matrix;
         const black: TColor = [0, 0, 0];
         await wait(1000); // time for calibration pirouette ws 1500

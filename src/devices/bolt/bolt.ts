@@ -166,7 +166,8 @@ export class Bolt {
 
   async activate () {
 
-    this.sensors.activate();
+    await this.sensors.info();
+    await this.sensors.activate();
 
     // Simple Movement
     for (const [key, fn] of Object.entries(this.keymapSimpleCommands)) {
@@ -175,7 +176,7 @@ export class Bolt {
 
     // stop everything on SPACE
     this.receiver.on('key:space',    async (event: IEvent) => {
-      console.log(this.name, 'fullstop');
+      Logger.info('fullstop');
       this.receiver.fire('fullstop');
       await this.actuators.stop();
       await this.sensors.disableSensors();
@@ -184,7 +185,7 @@ export class Bolt {
 
     // keep awake
     this.receiver.on('willsleep', async (event: IEvent) => {
-      console.log(this.name, 'onWillSleepAsync', 'keepAwake', this.status.keepAwake, event.msg);
+      // console.log(this.name, 'onWillSleepAsync', 'keepAwake', this.status.keepAwake, event.msg);
       if (this.status.keepAwake) {
         await this.actuators.wake();
         await this.actuators.piroutte();
@@ -289,7 +290,7 @@ export class Bolt {
     await this.actuators.rotate(90);
     await this.actuators.matrixColor(100, 100, 100);
     await this.actuators.matrixChar('#');
-    await this.actuators.batteryVoltage();
+    // await this.actuators.batteryVoltage();
     await this.actuators.resetLocator();
     await this.actuators.calibrateCompass();
     await this.actuators.resetYaw();

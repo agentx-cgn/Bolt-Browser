@@ -17,7 +17,10 @@ function time(timestamp: number) {
 
 function reduceSensorDate(data: ISensorData): string {
   const loc = data.locator;
-  if(!loc){return JSON.parse(data as any);}
+  if(!loc){
+    // debugger;
+    return JSON.stringify(data as any);
+  }
   return JSON.stringify({
     x:  loc.positionX.toPrecision(3),
     y:  loc.positionY.toPrecision(3),

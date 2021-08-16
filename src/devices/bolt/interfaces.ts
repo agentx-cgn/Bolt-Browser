@@ -19,9 +19,10 @@ declare global {
 
 export type TColor = [number, number, number];
 export type TNum   = number[];
-export interface IUuid {
-  uuid:    string,
-}
+export type TBatteryState = 0|1|2|3;
+
+
+export type TUuid = { uuid: string };
 
 export interface IConfigColors {
   console:   string, // CSS Colors
@@ -106,7 +107,7 @@ export interface IAction {
   bytes:        Uint8Array,
   charac:       BluetoothRemoteGATTCharacteristic,
   acknowledged: boolean,
-  executed:     boolean,
+  written:      boolean,
   success:      boolean,
   onSuccess:    any,
   onError:      any,

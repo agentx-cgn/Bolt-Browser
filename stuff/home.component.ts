@@ -53,7 +53,7 @@ const HomeComponent = class {
           return m('div', [
             m('span.ph1', cmd.bolt.name),
             m('span.ph1', cmd.id),
-            m('span.ph1', cmd.executed     ? 'I' : 'O'),
+            m('span.ph1', cmd.written     ? 'I' : 'O'),
             m('span.ph1', cmd.acknowledged ? 'I' : 'O'),
             m('span.ph1', cmd.name),
             m('span.ph1.washed-blue', cmd.bytes.join(' ')),

@@ -10,8 +10,8 @@ export class Queue {
 
   public map;
   public find;
-  public forEach;
-  public sort;
+  // public forEach;
+  // public sort;
 
   private incrementer = 0;
   private waiting: boolean;
@@ -25,8 +25,8 @@ export class Queue {
     this.queue   = [];
     this.map     = Array.prototype.map.bind(this.queue);
     this.find    = Array.prototype.find.bind(this.queue);
-    this.sort    = Array.prototype.sort.bind(this.queue);
-    this.forEach = Array.prototype.forEach.bind(this.queue);
+    // this.sort    = Array.prototype.sort.bind(this.queue);
+    // this.forEach = Array.prototype.forEach.bind(this.queue);
 
     this.bolt.receiver.on('ack', this.onAcknowledgement.bind(this));
 
@@ -50,10 +50,11 @@ export class Queue {
         device:       message.device,
         command:      message.command,
         target:       message.target || NaN,
-        bytes:        new Uint8Array(this.createBytes(this.incrementer, message)),
+        bytes:        new Uint8Array(this.encodeBytes(this.incrementer, message)),
         charac:       this.bolt.characs.get(C.APIV2_CHARACTERISTIC),
+        response:     [],
         acknowledged: false,
-        executed:     false,
+        written:      false,
         success:      false,
 
         onSuccess:    ( command: any ) => {
@@ -80,7 +81,7 @@ export class Queue {
   }
 
   findNextAction (): IAction {
-    return this.find( (action: IAction) => !action.acknowledged && !action.executed );
+    return this.find( (action: IAction) => !action.acknowledged && !action.written ) ;
   }
 
   execute (action: IAction) {
@@ -88,25 +89,16 @@ export class Queue {
     // happens if queue empty
     if (!action) { return }
 
-    // const findNextAction = () => this.find( (action: IAction) => !action.acknowledged && !action.executed ) as IAction;
-
     this.queue.push(action);
     // TODO RingBuffer
-    this.queue.length > 200 && this.queue.shift();
+    this.queue.length > 250 && this.queue.shift();
 
     if ( !this.waiting ) {
-
       this.waiting = true;
-
-      const nextAction = this.findNextAction();
-
-      this.write( nextAction, (lastAction: IAction) => {
-
+      this.write( this.findNextAction(), () => {
         this.waiting = false;
-        // lastAction.executed = true;
         this.execute(this.findNextAction());
         m.redraw();
-
       });
 
     }
@@ -118,15 +110,14 @@ export class Queue {
 
     try {
       Logger.action(this.bolt, action);
-      // await action.charac.writeValue(new Uint8Array(action.bytes));
       await action.charac.writeValue(action.bytes);
 
     } catch(error) {
       console.log('Queue.write.error', error.message);
 
     } finally {
-      action.executed = true;
-      callback(action);
+      action.written =  true;
+      callback();
 
     }
 
@@ -135,30 +126,16 @@ export class Queue {
   /** An action got acknowledged */
   onAcknowledgement ( event: IEvent ) {
 
-    const command: IMessage = event.msg;
-    const action:  IAction  = this.find( (action: IAction) => action.id === command.id );
+    const message: IMessage = event.msg;
+    const action:  IAction  = this.find( (action: IAction) => action.id === message.id );
 
     if (!action) debugger;
 
-    switch ( command.payload[0] ) {
+    switch ( message.payload[0] ) {
 
       case C.Errors.success:
-
-        action.response = command.payload.slice(1); //, -1 ??
+        action.response.push.apply(action.response, message.payload.slice(1));
         action.onSuccess();
-
-        // don't log if only success
-        if ( (command.payload.length > 1) ) {
-          if ( !(
-            // no longer interested in these
-            action.name === 'batteryVoltage' ||
-            action.name === 'ambientLight'
-          )) {
-            console.log(this.bolt.name, 'Queue.notify.data', action.name, command.payload)
-          }
-        }
-
-
       break;
 
       case C.Errors.badDeviceId:
@@ -197,7 +174,7 @@ export class Queue {
   }
 
   /* Packet encoder */
-  createBytes( id: number, message: IMsgAction ) {
+  encodeBytes( id: number, message: IMsgAction ) {
 
     const { device, command, target, data } = message;
     const flags = C.Flags.requestsResponse | C.Flags.resetsInactivityTimeout | (target ? C.Flags.commandHasTargetId : 0) ;
