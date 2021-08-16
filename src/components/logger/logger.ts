@@ -71,16 +71,19 @@ const formatter = {
     const className = [bolt.name, type, subtype].join(' ');
     return m('tr', { className }, [
       m('td.timestamp', time(timestamp)),
-      m('td.bolt', bolt.name),
-      m('td.type',    'Sensor'),
-      m('td.sensor',  {colspan: 6}, reduceSensorDate(data.sensordata)),
+      m('td.bolt',      bolt.name),
+      m('td.type',      'Sensor'),
+      m('td.subtype',   subtype),
+      m('td.sensor',    { colspan: 5 }, reduceSensorDate(data.sensordata)),
     ]);
   },
   'info':   function ({timestamp, bolt, type, subtype, data}: ILogline) {
     const className = [bolt.name, type, subtype].join(' ');
     return m('tr', { className }, [
-      m('td.timestamp', time(timestamp)), m('td.bolt', bolt.name),
-      m('td.type', 'Info'), m('td.subtype', subtype),
+      m('td.timestamp', time(timestamp)),
+      m('td.bolt', bolt.name),
+      m('td.type', 'Info'),
+      m('td.subtype', {colspan: 6}, subtype),
     ]);
   },
 } as { [key: string]: any; }
@@ -112,12 +115,12 @@ const Logger = Factory.create('Logger', {
   action: function (bolt: Bolt, action: IAction) {
     Logger.append(bolt, 'action', action.name, action);
   },
-  event: function (bolt: Bolt, eventname: string, event: IEvent) {
+  event: function (bolt: Bolt, eventname: string, payload: IEvent) {
     eventname.startsWith('key') ?
       Logger.append(bolt, 'key', eventname) :
-    event.sensordata            ?
-      Logger.append(bolt, 'sensor', eventname , event) :
-      Logger.append(bolt, 'event',  eventname , event)
+    payload.sensordata          ?
+      Logger.append(bolt, 'sensor', eventname , payload) :
+      Logger.append(bolt, 'event',  eventname , payload)
     ;
   },
 

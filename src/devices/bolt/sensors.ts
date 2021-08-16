@@ -27,7 +27,6 @@ export class Sensors {
 	constructor (bolt: Bolt) {
 		this.bolt     = bolt;
 		this.receiver = this.bolt.receiver;
-		// this.activate();
 	}
 
 	async queue(name: string, overwrites: any = {}) {
@@ -36,6 +35,7 @@ export class Sensors {
   }
 
 	async activate() {
+    Logger.info(this.bolt, 'Sensors.activate');
     await this.enableCollisionEvent();
     await this.enableGyroEvent();
     await this.enableChargerEvent();
@@ -105,10 +105,7 @@ export class Sensors {
       device:    C.Device.sensor,
       command:   0x2B, //C.CMD.Sensor.infraredListenEvent,
       target:    0x12,
-      // data: [1, channel], // Bad Data Length
-      // data: [1],          // Bad Data Length
-      // data: [1,1,1]
-      data: [1,2,3,4, 5]// Bad Data Length
+      data:     [1, 2, 3, 4, 5]
     });
   }
 
@@ -125,7 +122,7 @@ export class Sensors {
 //  /**
 
   async info() {
-    Logger.info('Sensor.info');
+    Logger.info(this.bolt, 'Sensor.info');
     await this.batteryState();
     await this.chargerState();
     await this.batteryVoltage();
@@ -136,8 +133,11 @@ export class Sensors {
   async batteryVoltage() {
     return await this
       .queue('batteryVoltage')
-      // .then(cmd => { this.bolt.status.voltage = cmd.responseData.slice(-1).join(' '); })
-      .then(action => { console.log('batteryVoltage', action.response); })
+      .then(action => {
+        let voltage = action.response[0] << 8;
+        voltage    += action.response[1];
+        console.log('batteryVoltage', action.response, voltage / 100);
+      })
     ;
   }
   async batteryState() {
