@@ -136,6 +136,7 @@ export class Sensors {
       .then(action => {
         let voltage = action.response[0] << 8;
         voltage    += action.response[1];
+        this.bolt.status.voltage = voltage / 100;
         console.log('batteryVoltage', action.response, voltage / 100);
       })
     ;
@@ -143,20 +144,19 @@ export class Sensors {
   async batteryState() {
     return await this
       .queue('batteryState')
-      .then(action => { console.log('batteryState', action.response); })
+      .then(action => { this.bolt.status.battery = action.response; })
     ;
   }
   async chargerState() {
     return await this
       .queue('chargerState')
-      .then(action => { console.log('chargerState', action.response); })
+      .then(action => { this.bolt.status.charger = action.response; })
     ;
   }
   async ambientLight() {
     return await this
       .queue('ambientLight')
-      .then(action => { console.log('ambientLight', action.response); })
-      // .then(cmd => this.bolt.status.ambient = cmd.responseData.slice(-3).join(' '))
+      .then(action => { this.bolt.status.ambient = action.response.join(' '); })
     ;
   }
 

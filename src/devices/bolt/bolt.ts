@@ -60,8 +60,9 @@ export class Bolt {
     angles:          {},
     position:        {},
     velocity:        {},
-    voltage:         [],   // seen [0, 1, 124]
-    percentage:      [],   // seen [0, 1, 124]
+    voltage:         NaN,
+    battery:         NaN,
+    charger:         NaN,
     matrix: {
       rotation:       0,
       image:         [],
@@ -119,7 +120,7 @@ export class Bolt {
 
   async reset() {
 
-    Logger.info(this, 'reset');
+    Logger.info(this, 'Bolt.reset');
 
     await this.characs.get(C.ANTIDOS_CHARACTERISTIC).writeValue(C.useTheForce);
     await this.actuators.ping();

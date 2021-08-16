@@ -265,7 +265,7 @@ class bolts {
     if (success) {
       device.addEventListener('gattserverdisconnected', onGattServerDisconnected);
       device.addEventListener('advertisementreceived',  onAdvertisementReceived);
-      Logger.info(bolt, 'connected');
+      Logger.info(bolt, 'Bolt.connected');
       await bolt.reset();
       await bolt.activate();
       await bolt.autoaction();

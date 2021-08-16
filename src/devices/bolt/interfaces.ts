@@ -61,8 +61,9 @@ export interface IStatus {
   angles:        any,
   position:      any,
   velocity:      any,
-  voltage:       number[],
-  percentage:    number[],
+  voltage:       number,
+  battery:       number,
+  charger:       number,
   matrix:        IMatrix,
 }
 
