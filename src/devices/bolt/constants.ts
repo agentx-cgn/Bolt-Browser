@@ -70,9 +70,9 @@ const CMD = {
     batteryVoltage:          0x03,
     wake:                    0x0D,
     batteryVoltageState:     0x17,
-    batteryEvent:            0x1B,
+    eventBattery:            0x1B,
     chargerState:            0x1F, // 31
-    chargerEvent:            0x20,
+    eventCharger:            0x20,
 
     // willSleepAsync:            25,
     // sleepAsync:                26,
@@ -97,8 +97,8 @@ const CMD = {
     sensorMask:                 0,
     sensorResponse:             2,
     sensorMaskExtented:        12,
-    gyroEvent:                 15,
-    collisionEvent:            0x11, //17,
+    eventGyro:                 0x0F, //15,
+    eventCollision:            0x11, //17,
     collisionDetectedAsync:    18,
     resetLocator:              19,
     flagsLocator:              0x17,
@@ -107,7 +107,7 @@ const CMD = {
     infraredStartBroadcast:    0x27,
     infraredStopBroadcast:     0x29,
     infraredSendMessage:       0x2A,
-    infraredListenEvent:       0x2B,
+    eventInfrared:             0x2B,
     ambientLight:              0x30, //48
   }
 

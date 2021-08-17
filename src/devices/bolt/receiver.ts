@@ -286,7 +286,8 @@ export class Receiver {
       device  === C.Device.powerInfo &&
       event   === C.Events.battery ) {
 
-      this.fire('battery', { sensordata: payload });
+      // 0 = unknown, 1 = ok, 2 = low, 3 = critical.
+      this.fire('battery', { sensordata: { battery: payload[0] as TBatteryState } });
 
     } else if (
       device  === C.Device.powerInfo &&
@@ -322,6 +323,7 @@ export class Receiver {
       device  === C.Device.sensor &&
       event   === C.Events.infrared ) {
 
+      // https://sphero.docsapp.io/docs/events#on-ir-message-received
       this.fire('infrared', { sensordata: payload });
 
     } else if (
@@ -342,19 +344,11 @@ export class Receiver {
       let angle = message.payload[0] << 8;
       angle    += message.payload[1];
 
+      // 0° is due north, 90° is due east, 180° is due south, and 270° is due west
       this.fire('compass', { sensordata: { angle } });
 
     } else {
       console.log('fireEvent', 'UNKNOWN EVENT ', 'DEV', '0x'+message.device.toString(16), 'CMD', '0x'+message.command.toString(16), 'bytes', message.payload);
-
-      // console.log('fireEvent', 'UNKNOWN EVENT ', message.packet);
-      // this.fire('unkown', { msg: message });
-
-      // this.printCommandStatus(message)
-
-      // after wake :   UNKNOWN EVENT 141, 40,  1, 19, 17, 255, 179, 216
-      // put in cradle  UNKNOWN EVENT 141, 56, 17,  1, 19,  28, 255,   1, 134, 216]
-
 
     }
 

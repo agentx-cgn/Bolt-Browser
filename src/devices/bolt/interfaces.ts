@@ -20,6 +20,7 @@ declare global {
 export type TColor = [number, number, number];
 export type TNum   = number[];
 export type TBatteryState = 0|1|2|3;
+export type TOnOff        = 0|1;
 
 
 export type TUuid = { uuid: string };
@@ -60,6 +61,7 @@ export interface IStatus {
   sensors:       any,
   angles:        any,
   position:      any,
+  speed:         number,
   velocity:      any,
   voltage:       number,
   battery:       number,

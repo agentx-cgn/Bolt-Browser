@@ -52,17 +52,18 @@ export class Bolt {
     rssi:            NaN,
     txPower:         NaN,
     keepAwake:       true,
-    heading:          0,
-    rawMask:          0,
     stabilization:   NaN,
-    ambient:         [],
-    sensors:         {},
-    angles:          {},
-    position:        {},
-    velocity:        {},
     voltage:         NaN,
     battery:         NaN,
     charger:         NaN,
+    ambient:         [],
+    heading:        NaN,
+    speed:          NaN,
+    rawMask:         {},
+    angles:          {},
+    position:        {},
+    velocity:        {},
+    sensors:         {},
     matrix: {
       rotation:       0,
       image:         [],
@@ -202,6 +203,7 @@ export class Bolt {
         this.status.position.y   = data.locator.positionY;
         this.status.velocity.x   = data.locator.velocityX;
         this.status.velocity.y   = data.locator.velocityY;
+        this.status.speed = Math.hypot(data.locator.velocityX, data.locator.velocityY);
         Plotter.placeBolt(this.name, data.locator, this.config.colors.plot)
         Plotter.render(data.locator, this.config.colors.plot);
 

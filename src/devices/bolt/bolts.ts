@@ -263,9 +263,9 @@ class bolts {
     const onAdvertisementReceived  = bolt.receiver.onAdvertisementReceived.bind(bolt.receiver);
 
     if (success) {
+      Logger.info(bolt, 'Bolt.connected');
       device.addEventListener('gattserverdisconnected', onGattServerDisconnected);
       device.addEventListener('advertisementreceived',  onAdvertisementReceived);
-      Logger.info(bolt, 'Bolt.connected');
       await bolt.reset();
       await bolt.activate();
       await bolt.autoaction();

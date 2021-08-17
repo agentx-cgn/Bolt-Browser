@@ -124,6 +124,7 @@ export class Queue {
   }
 
   /** An action got acknowledged */
+  // https://sdk.sphero.com/docs/api_spec/general_api/#error-codes
   onAcknowledgement ( event: IEvent ) {
 
     const message: IMessage = event.msg;
@@ -174,6 +175,7 @@ export class Queue {
   }
 
   /* Packet encoder */
+  // https://sdk.sphero.com/docs/api_spec/general_api/#packet-structure
   encodeBytes( id: number, message: IMsgAction ) {
 
     const { device, command, target, data } = message;

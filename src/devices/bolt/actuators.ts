@@ -152,7 +152,7 @@ export class Actuators {
       await this.roll(0, heading);
     }
 
-    return Promise.resolve(true);
+    return await wait(200);
 
   }
 
