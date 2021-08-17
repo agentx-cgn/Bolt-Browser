@@ -1,14 +1,15 @@
 import m from "mithril";
 import Factory   from '../factory';
+import { Logger } from '../logger/logger';
 
-import { Bolts } from '../../devices/bolt/bolts';
-import { Bolt } from "../../devices/bolt/bolt";
+// import { Bolts } from '../../devices/bolt/bolts';
 
-import { ISensorData } from '../../devices/bolt/interfaces';
-import { H } from "../../services/helper";
+// import { ISensorData } from '../../devices/bolt/interfaces';
+// import { H } from "../../services/helper";
 
 
 let series = [] as any;
+let marker = [] as any;
 let bolts  = {} as any;
 
 let cvs: HTMLCanvasElement;
@@ -16,18 +17,21 @@ let ctx: CanvasRenderingContext2D;
 
 const size = 512;
 
-const meta = {
-  length:   0,
-  cx:       0,         cy:      0,
-  max:      0,         min:    +Infinity,
-  maxx:     0,         maxy:    0,
-  miny:    +Infinity,  minx:   +Infinity,
-  scale:    1,         transX:  size/2,          transY: size/2,
-  axismax:  200,
-} ;
+const meta = { } as any;
+
+function initMeta () {
+  Object.assign(meta, {
+    length:   0,
+    cx:       0,         cy:      0,
+    max:      0,         min:    +Infinity,
+    maxx:     0,         maxy:    0,
+    miny:    +Infinity,  minx:   +Infinity,
+    scale:    1,         transX:  size/2,          transY: size/2,
+    axismax:  200,
+  });
+}
 
 
-let includes = [];
 const testData = ( function () {
 
   const amount = 100, max = 200, off = 80;
@@ -77,6 +81,8 @@ const plot = {
 
 const Plotter = Factory.create('Plotter', {
 
+  name: 'Plotter',
+
   meta () { return meta },
 
   oncreate ( vnode: any ) {
@@ -97,36 +103,24 @@ const Plotter = Factory.create('Plotter', {
   onClick (event: MouseEvent) {
 
     const rect = cvs.getBoundingClientRect();
-
-    let x = (event.x - rect.left -  meta.transX ) / meta.scale ;
-    let y = (event.y - rect.top  -  meta.transY ) / meta.scale ;
+    const x    = ( event.x - rect.left -  meta.transX ) / meta.scale ;
+    const y    = ( event.y - rect.top  -  meta.transY ) / meta.scale ;
 
     this.render({positionX: x, positionY: y, stroke: 'red', fill: 'red'});
 
-    console.log('Plotter.click', x, y);
+    Logger.info(this, `Click:  x: ${ x }, y: ${ y }`);
 
   },
 
 
   reset () {
 
-    // debugger
-
-    const max = 100;
-
+    Logger.info(this, 'Reset');
     series = [];
-    // series = [{ positionX: 0, positionY: 0, stroke: 'orange', fill: 'orange' }];
-
-    // H.range(4).forEach( i => {
-    //   const x = ~~(Math.random() * max - max /2);
-    //   const y = ~~(Math.random() * max - max /2);
-    //   // console.log(x, y);
-    //   // series.push({ positionX: x, positionY: y, stroke: 'darkred', fill: 'darkred' });
-    // })
-
-    // console.log(series);
-
+    marker = [];
+    initMeta();
     this.render();
+
   },
 
   calculateStepSize(range: number, targetSteps: number){
@@ -186,10 +180,10 @@ const Plotter = Factory.create('Plotter', {
 
 
     // plot data min/max point
-    ctx.strokeStyle = '#0FF';
-    ctx.fillStyle   = '#0FF';
-    plot.fillRect(ctx, meta.minx, meta.miny, 6 / meta.scale);
-    plot.fillRect(ctx, meta.maxx, meta.maxy, 6 / meta.scale);
+    // ctx.strokeStyle = '#0FF';
+    // ctx.fillStyle   = '#0FF';
+    // plot.fillRect(ctx, meta.minx, meta.miny, 6 / meta.scale);
+    // plot.fillRect(ctx, meta.maxx, meta.maxy, 6 / meta.scale);
 
     // plot data center
     // ctx.strokeStyle = '#00F'
@@ -253,6 +247,12 @@ const Plotter = Factory.create('Plotter', {
 
   },
 
+  plotMarker (ctx: CanvasRenderingContext2D, meta: any) {
+    marker.forEach( ( point: any ) => {
+      plot.circle(ctx, point.x, point.y, 3 / meta.scale, marker.fill || '#F00');
+    })
+  },
+
   analyzeData (data: any) {
 
     meta.length = data.length;
@@ -301,13 +301,14 @@ const Plotter = Factory.create('Plotter', {
 
       // cvs.width = cvs.width;
       ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.fillStyle = '#f8f8f8';
+      ctx.fillStyle = '#ddd';
       ctx.fillRect(0, 0, size, size);
 
       ctx.translate(meta.transX, meta.transY);
       ctx.scale(meta.scale, meta.scale);
 
-      Plotter.plotDecoration (ctx, meta);
+      Plotter.plotDecoration(ctx, meta);
+      Plotter.plotMarker(ctx, meta);
       Plotter.plotData(ctx, meta, data);
       Plotter.plotBolts(ctx, meta);
 

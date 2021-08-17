@@ -12,7 +12,7 @@ import { IAction, IEvent, ISensorData } from "../../devices/bolt/interfaces";
 const log = [] as ILogline[];
 
 function time(timestamp: number) {
-  return (new Date(timestamp)).toISOString().slice(-12, -1)
+  return (new Date(timestamp)).toISOString().slice(-13, -1)
 }
 
 function reduceSensorDate(data: ISensorData): string {
@@ -100,6 +100,8 @@ export interface ILogline {
 
 const Logger = Factory.create('Logger', {
 
+  name: 'Logger',
+
   // push : Array.prototype.push.bind(log),
   push : Array.prototype.unshift.bind(log),
   sort : function(column='timsstamp') {
@@ -124,6 +126,10 @@ const Logger = Factory.create('Logger', {
     ;
   },
 
+  reset(){
+    while(log.length) {log.shift()}
+    Logger.info(this, 'Reset');
+  },
 
   view( vnode: any ) {
 

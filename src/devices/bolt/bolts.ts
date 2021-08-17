@@ -7,6 +7,7 @@ import { Bolt } from './bolt';
 import { Logger } from '../../components/logger/logger';
 import { Scripter } from './scripter';
 import { IConfig } from './interfaces';
+import { Plotter } from "../../components/plotter/plotter";
 
 class bolts {
 
@@ -32,7 +33,7 @@ class bolts {
     'SB-9129' : {
       magic:  { rollInterval: 1000, sensorInterval: 400,},
       colors: {
-        console: '#FF0', plot: 'green', backcolor: '#5ec19d', log: '#5ec19d44',
+        console: '#FF0', plot: 'green', backcolor: '#77b57b', log: '#5ec19d44',
         front: [10, 0, 0], back: [ 5, 5, 5], black: [0, 0, 0], matrix: [30, 240, 30]
       },
     } as IConfig,
@@ -40,7 +41,7 @@ class bolts {
     'SB-2B96' : {
       magic:  { rollInterval: 1000, sensorInterval: 400,},
       colors: {
-        console: '#F0F', plot: 'blue',  backcolor: '#5895d4', log: '#5895d444',
+        console: '#F0F', plot: 'blue',  backcolor: '#759cc5', log: '#5895d444',
         front: [10, 0, 0], back: [ 5, 5, 5], black: [0, 0, 0], matrix: [30, 30, 240]
        }
     },
@@ -98,6 +99,14 @@ class bolts {
   async wait (time: number) {
     return new Promise(callback => setTimeout(callback, time));
   };
+
+  reset () {
+
+    Logger.reset();
+    Plotter.reset();
+    this.forEach((bolt: Bolt) => bolt.reset());
+
+  }
 
   async autoaction () {
 
@@ -263,7 +272,7 @@ class bolts {
     const onAdvertisementReceived  = bolt.receiver.onAdvertisementReceived.bind(bolt.receiver);
 
     if (success) {
-      Logger.info(bolt, 'Bolt.connected');
+      Logger.info(bolt, 'Connected');
       device.addEventListener('gattserverdisconnected', onGattServerDisconnected);
       device.addEventListener('advertisementreceived',  onAdvertisementReceived);
       await bolt.reset();
@@ -273,12 +282,12 @@ class bolts {
 
   }
 
-  public disconnectall () {
-    this.forEach(this.disconnect.bind(this));
+  public disconnect () {
+    this.forEach(this.disconnectBolt.bind(this));
   }
 
   // doesnt work Z:150 Cannot read propelayrty 'gatt' of undefined
-  public async disconnect ( bolt?:Bolt ) {
+  public async disconnectBolt ( bolt?:Bolt ) {
 
     console.log(bolt.name, 'Disconnecting ...', );
 

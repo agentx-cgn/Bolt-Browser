@@ -47,10 +47,10 @@ const LayoutComponent = Factory.create('Layout', {
         Bolts.map(( bolt: Bolt ) => {
           return m(Panel, {title: bolt.name + ' - Status', width: '200px'}, [ m(BoltStatus, { bolt }) ])
         }),
-        m(Panel, {title: 'Meta', width: '164px'}, [
-          m('pre.plotterstatus.f7.mono.c333.pa2', { style },
-          JSON.stringify(Plotter.meta(), null, 2))
-        ]),
+        // m(Panel, {title: 'Meta', width: '164px'}, [
+        //   m('pre.plotterstatus.f7.mono.c333.pa2', { style },
+        //   JSON.stringify(Plotter.meta(), null, 2))
+        // ]),
 
       ]),
 

@@ -13,7 +13,10 @@ module.exports = {
     https: {
       key:  fs.readFileSync('../Certificates/macos/private.key'),
       cert: fs.readFileSync('../Certificates/macos/private.crt'),
-  }
+    },
+    host: '0.0.0.0',
+    port: 8080,
+    disableHostCheck: true,
   },
   plugins: [
     new FaviconsWebpackPlugin({

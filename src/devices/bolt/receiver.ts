@@ -3,19 +3,21 @@ import { CONSTANTS as C } from './constants';
 import { Bolt } from './bolt';
 import { TBatteryState, IMessage, IEvent } from './interfaces';
 import { decodeFlags, logDataView, parseSensorResponse } from './utils';
-import * as Mousetrap from 'Mousetrap';
+import Mousetrap from 'Mousetrap';
 import { Logger } from '../../components/logger/logger';
 
 
 export class Receiver {
+
+  public name = 'Receiver';
 
   private bolt:      Bolt;
   private listeners: any;
 
   // register keys
   private keymap = {
-    'space' : () => { this.fire('key:space'); return false; },
-    'esc'   : () => { this.fire('key:esc');   return false; },
+    'space' : () => { Logger.info(this, 'Fullstop'); this.fire('key:space'); return false; },
+    'esc'   : () => { Logger.info(this, 'Escape');   this.fire('key:esc');   return false; },
     'left'  : () => { this.fire('key:left');  return false; },
     'right' : () => { this.fire('key:right'); return false; },
     'up'    : () => { this.fire('key:up');    return false; },
@@ -348,7 +350,7 @@ export class Receiver {
       this.fire('compass', { sensordata: { angle } });
 
     } else {
-      console.log('fireEvent', 'UNKNOWN EVENT ', 'DEV', '0x'+message.device.toString(16), 'CMD', '0x'+message.command.toString(16), 'bytes', message.payload);
+      console.log(this.bolt.name, 'fireEvent', 'UNKNOWN EVENT ', 'DEV', '0x'+message.device.toString(16), 'CMD', '0x'+message.command.toString(16), 'bytes', message.payload);
 
     }
 

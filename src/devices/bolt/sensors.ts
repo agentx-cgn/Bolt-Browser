@@ -10,6 +10,8 @@ import { Logger } from '../../components/logger/logger';
 
 export class Sensors {
 
+  public name = 'Sensors';
+
 	private bolt:     Bolt;
 
 	private sensors = {

@@ -7,7 +7,7 @@
     "npm-config": "npm config list",
     "build": "webpack",
     "watch": "webpack --watch",
-    "start": "webpack serve --https --open chrome"
+    "start": "webpack serve --https"
   },
   "keywords": [],
   "author": "agentx",

@@ -121,18 +121,15 @@ export class Bolt {
 
   async reset() {
 
-    Logger.info(this, 'Bolt.reset');
-
-    await this.characs.get(C.ANTIDOS_CHARACTERISTIC).writeValue(C.useTheForce);
-    await this.actuators.ping();
-
-    this.receiver.logs = { sensor: [] };
+    Logger.info(this, 'Reset');
 
     const colorBolt  = this.config.colors.matrix;
     const colorBlack = this.config.colors.black;
     const colorFront = this.config.colors.front;
     const colorBack  = this.config.colors.back;
 
+    await this.characs.get(C.ANTIDOS_CHARACTERISTIC).writeValue(C.useTheForce);
+    await this.actuators.ping();
 
     await this.actuators.wake();
     await this.actuators.stop();
@@ -141,25 +138,9 @@ export class Bolt {
 
     await this.actuators.setLedsColor(...colorFront, ...colorBack); // red = north
 
-    await this.actuators.matrixColor(...colorBolt);
-    await this.actuators.matrixFill(1, 1, 6, 6, ...colorBolt);
-    await wait(100);
-    // await this.actuators.matrixColor(...colorBlack);
-    // await this.actuators.matrixFill(2, 2, 5, 5, ...colorBolt);
-    // await wait(100);
-    await this.actuators.matrixColor(...colorBlack);
-    await this.actuators.matrixFill(3, 3, 4, 4, ...colorBolt);
-    await wait(100);
-    // await this.actuators.matrixColor(...colorBlack);
-    // await this.actuators.matrixFill(2, 2, 5, 5, ...colorBolt);
-    // await wait(100);
     await this.actuators.matrixColor(...colorBlack);
     await this.actuators.matrixFill(1, 1, 6, 6, ...colorBolt);
-    await wait(100);
-
-    // await this.actuators.info();
-    // await this.actuators.calibrateNorth();
-    // await wait(4000);
+    await this.actuators.matrixFill(3, 3, 4, 4, ...colorBlack);
 
     await this.actuators.resetLocator();
     await wait(1000);
@@ -178,7 +159,7 @@ export class Bolt {
 
     // stop everything on SPACE
     this.receiver.on('key:space',    async (event: IEvent) => {
-      Logger.info('fullstop');
+      Logger.info(this, 'Fullstop');
       this.receiver.fire('fullstop');
       await this.actuators.stop();
       await this.sensors.disableSensors();
