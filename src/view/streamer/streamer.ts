@@ -2,7 +2,7 @@ import m from "mithril";
 
 import './streamer.scss';
 
-import Factory     from '../factory';
+import Factory     from '../../components/factory';
 
 import SimplePeer from 'simple-peer';
 // import * as SimplePeer from 'simple-peer';
@@ -53,7 +53,7 @@ const Streamer = Factory.create('Streamer', {
 
   view( vnode: any ) {
 
-    const width = vnode.attribs.width;
+    // const width = vnode.attribs.width;
 
     return m('div.streamer.w-100',
         m('video#video1', {width: 320, height: 240}),

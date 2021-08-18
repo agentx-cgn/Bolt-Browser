@@ -10,6 +10,8 @@ module.exports = {
   devtool: 'inline-source-map',
   devServer: {
     contentBase: './dist',
+    compress: true,
+    historyApiFallback: false,
     https: {
       key:  fs.readFileSync('../Certificates/macos/private.key'),
       cert: fs.readFileSync('../Certificates/macos/private.crt'),
@@ -17,6 +19,10 @@ module.exports = {
     host: '0.0.0.0',
     port: 8080,
     disableHostCheck: true,
+    onListening: function(server) {
+      const port = server.listeningApp.address().port;
+      console.log('Listening on port:', port);
+    },
   },
   plugins: [
     new FaviconsWebpackPlugin({
