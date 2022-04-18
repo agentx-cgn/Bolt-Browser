@@ -57,6 +57,7 @@ export class Bolt {
     battery:         NaN,
     charger:         NaN,
     ambient:         [],
+    infrared:        [],
     heading:        NaN,
     speed:          NaN,
     rawMask:         {},
@@ -145,6 +146,8 @@ export class Bolt {
     await this.actuators.resetLocator();
     await wait(1000);
 
+    console.log('%c' + this.name + ' reset.out', 'color: darkgreen; font-weight: 800')
+
   };
 
   async activate () {
@@ -184,7 +187,7 @@ export class Bolt {
         this.status.position.y   = data.locator.positionY;
         this.status.velocity.x   = data.locator.velocityX;
         this.status.velocity.y   = data.locator.velocityY;
-        this.status.speed = Math.hypot(data.locator.velocityX, data.locator.velocityY);
+        this.status.speed        = Math.hypot(data.locator.velocityX, data.locator.velocityY);
         Plotter.placeBolt(this.name, data.locator, this.config.colors.plot)
         Plotter.render(data.locator, this.config.colors.plot);
 
@@ -198,10 +201,22 @@ export class Bolt {
       console.log(this.name, 'onCollision.data', event);
     });
 
+    // infrared
+    this.receiver.on('infrared',    (event: IEvent) => {
+      this.sensors.infraredState();
+      console.log(this.name, 'onInfrared.data', JSON.stringify(event));
+      this.sensors.eventInfrared(1);
+    });
+
     // just notify
     this.receiver.on('sleep',       (event: IEvent) => console.log(this.name, 'sleep',       event.msg));
     this.receiver.on('charging',    (event: IEvent) => console.log(this.name, 'charging',    event.msg));
     this.receiver.on('notcharging', (event: IEvent) => console.log(this.name, 'notcharging', event.msg));
+
+    this.actuators.send();
+
+
+    console.log('%c' + this.name + ' activated', 'color: darkgreen; font-weight: 800')
 
     // await this.sensors.enableCollisionEvent();
     // await this.sensors.enableLocationEvent();

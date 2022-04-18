@@ -24,6 +24,7 @@ export class Actuators {
     roll:               { device: C.Device.driving,       command: C.CMD.Driving.driveWithHeading,  target: 0x12,   data: [ /* speed, (heading >> 8) & 0xff, heading & 0xff, flags */] as TNum },
     rotateMatrix:       { device: C.Device.userIO,        command: C.CMD.IO.matrixRotation,         target: 0x12,   data: [ /* 0|1|2|3 */] as TNum },
     matrixColor:        { device: C.Device.userIO,        command: C.CMD.IO.matrixColor,            target: 0x12,   data: [ /* r, g, b */] as TNum },
+    infrared:           { device: C.Device.sensor,        command: 42,                              target: 0x12,   data: [ /* c, f, l, r, b */] as TNum },
   } as any;
 
   constructor(bolt: Bolt) {
@@ -38,8 +39,31 @@ export class Actuators {
 
   // - - - - - ACTUATORS - - - - //
 
+  /*
+  // https://sdk.sphero.com/docs/sdk_documentation/sensor#send-infrared-message
+  // https://sdk.sphero.com/docs/sdk_documentation/sensor#get-bot-to-bot-infrared-readings
 
+    @staticmethod
+    def send_robot_to_robot_infrared_message(toy, s, s2, s3, s4, s5, proc=None):  # Untested / Unknown param names
+        toy._execute(Sensor._encode(toy, 42, proc, [s, s2, s3, s4, s5]))
 
+    @staticmethod
+    def listen_for_robot_to_robot_infrared_message(toy, s, j, proc=None):  # Untested / Unknown param names
+        toy._execute(Sensor._encode(toy, 43, proc, [s, j]))
+
+    robot_to_robot_infrared_message_received_notify = (24, 44, 0xff), lambda listener, p: listener(p.data[0])
+
+      @staticmethod
+    def enable_robot_infrared_message_notify(toy, enable, proc=None):
+        toy._execute(Sensor._encode(toy, 62, proc, [int(enable)]))
+
+    @staticmethod
+    def send_infrared_message(toy, infrared_code, front_strength, left_strength, right_strength, rear_strength,
+                              proc=None):
+        toy._execute(Sensor._encode(
+            toy, 63, proc, [infrared_code, front_strength, left_strength, right_strength, rear_strength]))
+
+*/
 
   // - - - - - BASIC - - - - //
 
@@ -64,6 +88,39 @@ export class Actuators {
       .queue('ping')
       // .then(data => { console.log('ping', data); })
     ;
+  }
+
+
+  // - - - - - INFRARED - - - - //
+
+  async sendSignal() {
+
+
+    for (const i of H.range(10)) {
+      await this.queue('infrared', { data: [0, 255, 255, 255, 255] });
+      await this.queue('infrared', { data: [1, 255, 255, 255, 255] });
+      await this.queue('infrared', { data: [2, 255, 255, 255, 255] });
+      await this.queue('infrared', { data: [3, 255, 255, 255, 255] });
+      await this.queue('infrared', { data: [4, 255, 255, 255, 255] });
+      await this.queue('infrared', { data: [5, 255, 255, 255, 255] });
+      await this.queue('infrared', { data: [6, 255, 255, 255, 255] });
+      await this.queue('infrared', { data: [7, 255, 255, 255, 255] });
+      await wait(1000)
+
+    }
+
+  }
+
+  async send() {
+    await this.queue('infrared', { data: [0, 255, 255, 255, 255] });
+    await this.queue('infrared', { data: [1, 255, 255, 255, 255] });
+    await this.queue('infrared', { data: [2, 255, 255, 255, 255] });
+    await this.queue('infrared', { data: [3, 255, 255, 255, 255] });
+    await this.queue('infrared', { data: [4, 255, 255, 255, 255] });
+    await this.queue('infrared', { data: [5, 255, 255, 255, 255] });
+    await this.queue('infrared', { data: [6, 255, 255, 255, 255] });
+    await this.queue('infrared', { data: [7, 255, 255, 255, 255] });
+    return Promise.resolve(true).then(data => { console.log('send', data); });
   }
 
 
@@ -100,7 +157,7 @@ export class Actuators {
             resolve(true);
           }
           interval = window.setInterval(action, msecsInterval);
-          timeout = window.setTimeout(finish, msecs);
+          timeout  = window.setTimeout(finish, msecs);
 
         });
       }
@@ -116,11 +173,10 @@ export class Actuators {
   }
 
   async roll(speed: number, heading: number, flags: TNum = []) {
-    // "141 26 18 22 7 10 128 0 0  44 216"
     this.bolt.heading = heading;
     return await this
       .queue('roll', { data: [speed, (this.bolt.heading >> 8) & 0xff, this.bolt.heading & 0xff, flags] })
-      ;
+    ;
   }
 
   async rotate(degrees = 0) {
@@ -383,6 +439,7 @@ export class Actuators {
   async matrixChar(char: string) {
     return await this.matrixCharColor(char, ...this.bolt.config.colors.matrix as TColor);
   }
+
   async matrixCharColor(char: string, r: number, g: number, b: number) {
     return await this.bolt.queue.queueMessage({
       name: 'matrixChar',

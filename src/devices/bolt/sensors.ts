@@ -19,6 +19,8 @@ export class Sensors {
     batteryVoltage:     { device: C.Device.powerInfo,     command: C.CMD.Power.batteryVoltage,       target: 0x11,   data: [] as TNum },
     batteryState:       { device: C.Device.powerInfo,     command: C.CMD.Power.batteryVoltageState,  target: 0x11,   data: [] as TNum },
     chargerState:       { device: C.Device.powerInfo,     command: C.CMD.Power.chargerState,         target: 0x11,   data: [] as TNum },
+    infraredState:      { device: C.Device.sensor,        command: 34,                               target: 0x12,   data: [] as TNum },
+
     eventBattery:       { device: C.Device.powerInfo,     command: C.CMD.Power.eventBattery,         target: 0x11,   data: [ /* 0|1 */ ] as TNum },
     eventCharger:       { device: C.Device.powerInfo,     command: C.CMD.Power.eventCharger,         target: 0x11,   data: [ /* 0|1 */ ] as TNum },
 
@@ -58,6 +60,7 @@ export class Sensors {
 
     await this.batteryState();
     await this.chargerState();
+    await this.infraredState();
     await this.ambientLight();
     await this.batteryVoltage();
 
@@ -91,10 +94,21 @@ export class Sensors {
     ;
   }
   async eventInfrared( onoff: TOnOff) {
-    return onoff === 0
-      ? await this.queue('eventInfrared', { data: [ 0, 0, 0, 0, 0 ]})
-      : await this.queue('eventInfrared', { data: [ 1, 2, 3, 4, 5 ]})
-    ;
+    if (onoff === 0) {
+      await this.queue('eventInfrared', { data: [ 0 ]});
+
+    } else {
+      // await this.queue('eventInfrared', { data: [ 0, 255, 255, 255, 255 ]});
+      // await this.queue('eventInfrared', { data: [ 1, 255, 255, 255, 255 ]});
+      // await this.queue('eventInfrared', { data: [ 2, 255, 255, 255, 255 ]});
+      // await this.queue('eventInfrared', { data: [ 3, 255, 255, 255, 255 ]});
+      // await this.queue('eventInfrared', { data: [ 4, 255, 255, 255, 255 ]});
+      // await this.queue('eventInfrared', { data: [ 5, 255, 255, 255, 255 ]});
+      // await this.queue('eventInfrared', { data: [ 6, 255, 255, 255, 255 ]});
+      // await this.queue('eventInfrared', { data: [ 7, 255, 255, 255, 255 ]});
+      await this.queue('eventInfrared', { data: [ 255, 255, 255, 255, 255 ]});
+
+    }
   }
 
 
@@ -114,6 +128,12 @@ export class Sensors {
     return await this
       .queue('batteryState')
       .then(action => { this.bolt.status.battery = action.response[0]; })
+    ;
+  }
+  async infraredState() {
+    return await this
+      .queue('infraredState')
+      .then(action => { this.bolt.status.infrared = action.response.join(' '); })
     ;
   }
   async chargerState() {
@@ -140,7 +160,7 @@ export class Sensors {
     this.bolt.status.rawMask = maskToRaw(mask);
     await this.sensorMask(flatSensorMask(this.bolt.status.rawMask.aol), 0);
     // await this.sensorMaskExtended(flatSensorMask(this.bolt.status.rawMask.gyro));
-    console.log(this.bolt.name, 'sensor.off');
+    // console.log(this.bolt.name, 'sensor.off');
     return Promise.resolve(true);
   }
   async enableSensors(interval: number, mask: number[]) {

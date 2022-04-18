@@ -97,18 +97,18 @@ const CMD = {
     sensorMask:                 0,
     sensorResponse:             2,
     sensorMaskExtented:        12,
-    eventGyro:                 0x0F, //15,
-    eventCollision:            0x11, //17,
+    eventGyro:                 0x0F, // 15,
+    eventCollision:            0x11, // 17,
     collisionDetectedAsync:    18,
     resetLocator:              19,
     flagsLocator:              0x17,
-    calibrateToNorth:          0x25, //37,
+    calibrateToNorth:          0x25, // 37,
     infraredReadings:          0x22,
     infraredStartBroadcast:    0x27,
     infraredStopBroadcast:     0x29,
     infraredSendMessage:       0x2A,
-    eventInfrared:             0x2B,
-    ambientLight:              0x30, //48
+    eventInfrared:             0x2B, // 43
+    ambientLight:              0x30, // 48
   }
 
 }

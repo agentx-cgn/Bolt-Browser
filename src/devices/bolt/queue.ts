@@ -76,7 +76,8 @@ export class Queue {
 
       this.execute(action);
 
-    });
+    })
+    .catch( error => console.log(error));
 
   }
 

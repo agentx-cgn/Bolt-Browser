@@ -67,6 +67,7 @@ export interface IStatus {
   battery:       number,
   charger:       number,
   matrix:        IMatrix,
+  infrared:      any,
 }
 
 export interface IEvent {

@@ -171,7 +171,8 @@ class bolts {
 
       if (!connecting) {
 
-        console.log(device.name, 'connecting...')
+        console.log('%c' + device.name + ' connecting...', 'color: darkorange; font-weight: 800')
+
         connecting = true;
         const bolt = new Bolt(device, this.configs[device.name]);
         this.bolts.push(bolt);
@@ -196,11 +197,10 @@ class bolts {
 
   public async searchBolts () {
 
-    // return navigator.bluetooth.getAvailability()
     return this.isBlueToothAvailable()
-      .then( (availability: boolean) => availability ? navigator.bluetooth.getDevices() : Promise.reject())
+      .then( (availability: boolean) => (availability && navigator.bluetooth.getDevices) ? navigator.bluetooth.getDevices() : Promise.reject('No Bluetooth or getDevices'))
       .then( (devices: BluetoothDevice[] ) => devices.filter( device => device.name.startsWith('SB-') ) )
-      .then( (devices: BluetoothDevice[] ) => { console.log('Bolts.searching...', devices.map( d => d.name)); return devices; })
+      .then( (devices: BluetoothDevice[] ) => { console.log('%cBolts.searching...', 'color: darkorange; font-weight: 800', devices.map( d => d.name)); return devices; })
       .then( (devices: BluetoothDevice[] ) => {
 
         const promises = [];
@@ -232,9 +232,10 @@ class bolts {
         // console.log('watchAdvertisements 1', what)
       })
       .catch(error => {
-        console.log('Argh! ' + error);
+        console.log('searchBolts', error);
       })
     ;
+
   }
 
   public async pairBolt () {
@@ -273,6 +274,7 @@ class bolts {
 
     if (success) {
       Logger.info(bolt, 'Connected');
+      console.log('%c' + bolt.name + ' connected', 'color: darkgreen; font-weight: 800');
       device.addEventListener('gattserverdisconnected', onGattServerDisconnected);
       device.addEventListener('advertisementreceived',  onAdvertisementReceived);
       await bolt.reset();

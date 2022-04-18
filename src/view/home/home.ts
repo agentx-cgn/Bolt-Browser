@@ -22,14 +22,14 @@ const Home = Factory.create('Home', {
 
       m('div.panels.w-100.bg-eee.f6.flex.flex-row', {}, [
 
-        m(Panel, {title: 'Plotter', width: '512px'},
+        m(Panel, {title: 'Plotter', flex: '0 0 512px'},
           m(Plotter, {size: 512} )
         ),
-        m(Panel, {title: 'Logger', width: '768px' },
+        m(Panel, {title: 'Logger', flex: '0 1 600px' },
           m(Logger,  {bolt: Bolts.get('SB-FAKE') })
         ),
         Bolts.map(( bolt: Bolt ) => {
-          return m(Panel, {title: bolt.name + ' - Status', width: '200px'}, [ m(BoltStatus, { bolt }) ])
+          return m(Panel, {title: bolt.name + ' - Status', flex: '1'}, [ m(BoltStatus, { bolt }) ])
         }),
         // m(Panel, {title: 'Meta', width: '164px'}, [
         //   m('pre.plotterstatus.f7.mono.c333.pa2', { style },

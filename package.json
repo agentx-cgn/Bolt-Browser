@@ -36,7 +36,7 @@
     "local-storage": "^2.0.0",
     "mithril": "^2.0.4",
     "mousetrap": "^1.6.5",
-    "simple-peer": "^9.11.0",
+    "simple-peer-light": "^9.10.0",
     "tachyons": "^4.12.0"
   }
 }

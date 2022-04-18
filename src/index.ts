@@ -6,6 +6,7 @@ import './index.scss';
 import { Layout } from './view/layout';
 import { Home } from './view/home/home';
 import { Streamer } from './view/streamer/streamer';
+import { Video } from './view/video/video';
 
 // import './services/aruco/cv.js';
 // import './services/aruco/aruco.js';
@@ -17,12 +18,17 @@ import { Streamer } from './view/streamer/streamer';
 m.route(document.body, '/', {
   '/': {
     render: function() {
-      return m(Layout, m(Home))
+      return m(Layout, m(Home));
     }
   },
   '/streamer': {
     render: function(vnode) {
-      return m(Layout, m(Streamer))
+      return m(Layout, m(Streamer));
+    },
+  },
+  '/video': {
+    render: function(vnode) {
+      return m(Layout, m(Video))
     }
   },
 });

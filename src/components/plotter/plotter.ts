@@ -49,12 +49,12 @@ const testData = ( function () {
 
 const plot = {
 
-  strokeRect (ctx:CanvasRenderingContext2D, cx: number, cy: number, size: number) {
+  strokeRect (ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number) {
     const s2 = size/2;
     ctx.strokeRect(cx - s2, cy -s2, size, size);
   },
 
-  fillRect (ctx:CanvasRenderingContext2D, cx: number, cy: number, size: number) {
+  fillRect (ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number) {
     const s2 = size/2;
     ctx.fillRect(cx - s2, cy -s2, size, size);
   },
